@@ -1,0 +1,13 @@
+{
+  "dependencies": [
+    "glfw3",
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental"
+      ]
+    },
+    "spdlog",
+    "stb"
+  ]
+}
