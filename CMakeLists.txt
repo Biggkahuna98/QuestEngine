@@ -1,16 +1,19 @@
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
-include($ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
-
 # Use folders nicely on Visual Studio
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 project(QuestEngine)
 set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-MP -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-pragma-once-outside-header)
 
 # Set QUEST_ROOT
 set(QUEST_ROOT ${CMAKE_SOURCE_DIR})
+
+# Third party directory
+set(THIRD_PARTY_DIR ${QUEST_ROOT}/ThirdParty)
+
+# Third party (engine) directory
+set(THIRD_PARTY_ENGINE_DIR ${THIRD_PARTY_DIR}/Engine)
 
 # Add the engine
 add_subdirectory(QuestEngine)

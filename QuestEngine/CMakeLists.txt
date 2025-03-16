@@ -27,7 +27,6 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 
 add_library(${TARGET_NAME} ${QUEST_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-add_compile_options(-Wno-pragma-once-outside-header)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE 
 	_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS=1
@@ -42,11 +41,11 @@ target_compile_definitions(${TARGET_NAME} PRIVATE
 )
 
 # Guess I need this line to make sure I can find my local includes
-#target_include_directories(${TARGET_NAME} PRIVATE 
-#	${CMAKE_CURRENT_SOURCE_DIR}/Include/
-#)
+target_include_directories(${TARGET_NAME} PRIVATE 
+	${CMAKE_CURRENT_SOURCE_DIR}/Include/
+)
 
-target_compile_options(${TARGET_NAME} PRIVATE -W4 -Wno-c++98-compat -Wno-c++98-compat-pedantic)
+target_compile_options(${TARGET_NAME} PRIVATE -W4)
 
 # Find Vulkan
 find_package(Vulkan REQUIRED COMPONENTS glslc glslang SPIRV-Tools shaderc_combined)
@@ -62,22 +61,41 @@ set(VULKAN_LIBRARIES
 	${Vulkan_SPIRV-Tools_LIBRARY}
 )
 
-# Get the vcpkg dependencies
-#find_package(glfw3 CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(Stb REQUIRED)
+# Get the 3rd party dependencies
+add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glm ThirdParty/glm)
+add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glfw ThirdParty/glfw)
+add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/spdlog ThirdParty/spdlog)
+add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/assimp ThirdParty/assimp)
+set(ASSIMP_BUILD_SHARED_LIBS OFF)
+#set(ASSIMP_NO_EXPORT ON)
+set(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
+
+# Visual studio subfolder for 3rd party lib projects
+set_target_properties(glm PROPERTIES FOLDER "ThirdParty")
+set_target_properties(glfw PROPERTIES FOLDER "ThirdParty")
+set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
+set_target_properties(assimp PROPERTIES FOLDER "ThirdParty")
+# figure out what these are later
+set_target_properties(unit PROPERTIES FOLDER "ThirdParty")
+set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER "ThirdParty")
+set_target_properties(zlibstatic PROPERTIES FOLDER "ThirdParty")
 
 # Set vendor includes
 set(VENDOR_INCLUDES
-	${Stb_INCLUDE_DIR}
+	${THIRD_PARTY_ENGINE_DIR}/glm/glm
+	${THIRD_PARTY_ENGINE_DIR}/imgui
+	${THIRD_PARTY_ENGINE_DIR}/glfw/include
+	${THIRD_PARTY_ENGINE_DIR}/spdlog/include
+	${THIRD_PARTY_ENGINE_DIR}/assimp/include
+	${THIRD_PARTY_ENGINE_DIR}/stb
 )
 
 # Link Vulkan
-target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glm::glm imgui::imgui spdlog::spdlog)
+target_link_libraries(${TARGET_NAME} PUBLIC ${Vulkan_LIBRARIES} glm glfw spdlog assimp)
 
 # Include vendor includes
-target_include_directories(${TARGET_NAME} PUBLIC ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})
+target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})
+target_include_directories(${TARGET_NAME} PUBLIC ${THIRD_PARTY_ENGINE_DIR}/glm/glm ${THIRD_PARTY_ENGINE_DIR}/imgui)
 
 message("Done building Quest Engine")
