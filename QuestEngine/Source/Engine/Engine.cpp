@@ -1,5 +1,7 @@
 #include "Engine/Engine.h"
 
+#include "Platform/PlatformUtility.h"
+
 namespace QE
 {
 	Engine& Engine::Get()
