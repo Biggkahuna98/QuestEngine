@@ -22,6 +22,8 @@ namespace QE
 
 		void Run();
 
+		void SetWindowShouldClose(bool shouldClose);
+
 		Window& GetWindow();
 		Window* GetWindowPtr();
 		InputManager& GetInput();

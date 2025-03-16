@@ -44,6 +44,12 @@ namespace QE
 			}
 		);
 
+		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
+			{
+				Engine::Get().SetWindowShouldClose(true);
+			}
+		);
+
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
 				auto inputManager = static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window))->GetInputManagerPtr();

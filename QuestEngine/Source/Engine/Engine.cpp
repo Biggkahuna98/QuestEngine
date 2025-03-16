@@ -47,6 +47,11 @@ namespace QE
 		}
 	}
 
+	void Engine::SetWindowShouldClose(bool shouldClose)
+	{
+		m_Running = false;
+	}
+
 	Window& Engine::GetWindow()
 	{
 		return *m_Window;
