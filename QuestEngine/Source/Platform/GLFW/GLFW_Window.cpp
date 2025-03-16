@@ -2,6 +2,9 @@
 
 #include "Core/Log.h"
 
+// FIX LATER WITH EVENTS
+#include "Engine/Engine.h"
+
 namespace QE
 {
 	static void GLFWErrorCallback(int error, const char* description)
@@ -34,6 +37,12 @@ namespace QE
 		s_WindowCount++;
 
 		LOG_TAG(Info, "GLFW_Window", "Created GLFW window: [{0}] ({1}x{2})", windowName, width, height);
+
+		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
+			{
+				Engine::Get().GetGraphicsDevice().UpdateWindowSize(width, height);
+			}
+		);
 
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{

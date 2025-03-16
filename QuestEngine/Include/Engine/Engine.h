@@ -1,8 +1,9 @@
 #pragma once
+
 #include "Core/Core.h"
 #include "Core/Log.h"
-
 #include "Core/Window.h"
+#include "RHI/GraphicsDevice.h"
 
 namespace QE
 {
@@ -25,6 +26,8 @@ namespace QE
 		Window* GetWindowPtr();
 		InputManager& GetInput();
 		InputManager* GetInputPtr();
+		GraphicsDevice& GetGraphicsDevice();
+		GraphicsDevice* GetGraphicsDevicePtr();
 	private:
 		Engine() = default;
 
@@ -32,5 +35,7 @@ namespace QE
 
 		std::unique_ptr<Window> m_Window;
 		InputManager* m_InputManager = nullptr; // active input manager from the active window, updated here for convenience
+
+		std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
 	};
 }

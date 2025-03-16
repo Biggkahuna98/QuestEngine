@@ -22,6 +22,9 @@ namespace QE
 		m_Window = CreateWindowFactory("Quest Engine", 1280, 720);
 		m_InputManager = m_Window->GetInputManagerPtr(); // This is the *ACTIVE* input manager from the active window
 
+		// Initialize graphics device
+		m_GraphicsDevice = CreateGraphicsDeviceFactory(*m_Window);
+
 		m_Running = true;
 	}
 
@@ -62,6 +65,16 @@ namespace QE
 	InputManager* Engine::GetInputPtr()
 	{
 		return &m_Window->GetInputManager();
+	}
+
+	GraphicsDevice& Engine::GetGraphicsDevice()
+	{
+		return *m_GraphicsDevice;
+	}
+
+	GraphicsDevice* Engine::GetGraphicsDevicePtr()
+	{
+		return m_GraphicsDevice.get();
 	}
 }
 
