@@ -20,11 +20,17 @@ namespace QE
 		void Shutdown();
 
 		void Run();
+
+		Window& GetWindow();
+		Window* GetWindowPtr();
+		InputManager& GetInput();
+		InputManager* GetInputPtr();
 	private:
-		Engine() {};
+		Engine() = default;
 
 		bool m_Running = false;
 
 		std::unique_ptr<Window> m_Window;
+		InputManager* m_InputManager; // active input manager from the active window, updated here for convenience
 	};
 }

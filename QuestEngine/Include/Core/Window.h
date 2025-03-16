@@ -35,8 +35,6 @@ namespace QE
 		static int s_WindowCount;
 		bool m_IsMinimized = false;
 		bool m_IsQuit = false;
-
-	friend class Engine;
 	};
 
 	std::unique_ptr<Window> CreateWindowFactory(std::string_view windowName, int width, int height);

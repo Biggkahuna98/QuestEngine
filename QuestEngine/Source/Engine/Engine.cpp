@@ -20,6 +20,7 @@ namespace QE
 	{
 		// Create Window
 		m_Window = CreateWindowFactory("Quest Engine", 1280, 720);
+		m_InputManager = m_Window->GetInputManagerPtr(); // This is the *ACTIVE* input manager from the active window
 
 		m_Running = true;
 	}
@@ -36,11 +37,31 @@ namespace QE
 			m_Window->GetInputManager().ProcessTransitions();
 			m_Window->ProcessEvents();
 
-			if (m_Window->GetInputManager().IsKeyPressed(Key::Escape))
+			if (m_InputManager->IsKeyPressed(Key::Escape))
 			{
 				m_Running = false;
 			}
 		}
+	}
+
+	Window& Engine::GetWindow()
+	{
+		return *m_Window;
+	}
+
+	Window* Engine::GetWindowPtr()
+	{
+		return m_Window.get();
+	}
+
+	InputManager& Engine::GetInput()
+	{
+		return m_Window->GetInputManager();
+	}
+
+	InputManager* Engine::GetInputPtr()
+	{
+		return &m_Window->GetInputManager();
 	}
 }
 
