@@ -24,15 +24,16 @@ namespace QE
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		m_Window = glfwCreateWindow(width, height, windowName.data(), nullptr, nullptr);
+
 		if (!m_Window)
 		{
-			LOG_TAG(Debug, "GLFW_Window", "Failed to initialize GLFW window");
+			LOG_TAG(Debug, "GLFW_Window", "[{}] - Failed to initialize GLFW window", windowName);
 		}
 		// Void pointer to this instance so I can access members in the callbacks
 		glfwSetWindowUserPointer(m_Window, static_cast<void*>(this));
 		s_WindowCount++;
 
-		LOG_TAG(Info, "GLFW_Window", "Created GLFW window: {0} ({1}x{2})", windowName, width, height);
+		LOG_TAG(Info, "GLFW_Window", "Created GLFW window: [{0}] ({1}x{2})", windowName, width, height);
 
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{

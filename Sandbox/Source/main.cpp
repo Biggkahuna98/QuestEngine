@@ -4,7 +4,8 @@
 
 int main(int argc, char** argv)
 {
-	LOG("Engine", Trace, "Hello World");
+	QE::Log::Get().AddLogger("Sandbox");
+	LOG("Sandbox", Info, "Hello, Sandbox!");
 
 	QE::Engine::Get().Initialize();
 	QE::Engine::Get().Run();

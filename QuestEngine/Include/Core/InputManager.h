@@ -4,6 +4,7 @@
 #include "glm/glm.hpp"
 #include <map>
 #include <memory>
+#include <string>
 
 namespace QE
 {
@@ -24,7 +25,7 @@ namespace QE
 	class InputManager
 	{
 	public:
-		InputManager();
+		InputManager(const std::string_view windowName);
 		~InputManager();
 
 		bool IsKeyPressed(KeyCode key);
@@ -47,7 +48,10 @@ namespace QE
 		void UpdatePressedKeysToHeld();
 		void UpdatePressedMouseButtonsToHeld();
 		void ClearReleasedKeys();
+
+		void SetWindowName(const std::string_view windowName);
 	private:
+		std::string m_WindowName; // window name associated with this input manager
 		std::map<KeyCode, KeyData> m_KeyData;
 		std::map<MouseCode, MouseButtonData> m_MouseData;
 		double m_MouseXPosition = 0.0f;

@@ -31,6 +31,6 @@ namespace QE
 		bool m_Running = false;
 
 		std::unique_ptr<Window> m_Window;
-		InputManager* m_InputManager; // active input manager from the active window, updated here for convenience
+		InputManager* m_InputManager = nullptr; // active input manager from the active window, updated here for convenience
 	};
 }
