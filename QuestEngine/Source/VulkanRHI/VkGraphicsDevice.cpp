@@ -7,12 +7,6 @@ constexpr bool enableValidationLayers = true;
 
 namespace QE
 {
-	static VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
-	{
-		LOG_TAG(Debug, "VkGraphicsDevice", "[{0}: {1}] {2}", vkb::to_string_message_severity(messageSeverity), vkb::to_string_message_type(messageType), pCallbackData->pMessage);
-		return VK_FALSE;
-	}
-
 	VkGraphicsDevice::VkGraphicsDevice(const Window& window)
 		: GraphicsDevice(window)
 	{
@@ -31,6 +25,7 @@ namespace QE
 
 		vkb::destroy_debug_utils_messenger(m_VkInstance, m_VkDebugMessenger, nullptr);
 		vkDestroyInstance(m_VkInstance, nullptr);
+		
 	}
 
 	void VkGraphicsDevice::BeginFrame()
@@ -54,6 +49,7 @@ namespace QE
 
 	void VkGraphicsDevice::WaitForDeviceIdle()
 	{
+		vkDeviceWaitIdle(m_VkDevice);
 	}
 
 	void VkGraphicsDevice::InitVulkan(const Window& window)
@@ -61,17 +57,33 @@ namespace QE
 		// Setup the instance
 		vkb::InstanceBuilder builder;
 		
-		auto builderInstance = builder.set_app_name("Quest Engine")
+		builder.set_app_name("Quest Engine")
 			.request_validation_layers(enableValidationLayers)
-			.set_debug_callback_user_data_pointer(VkDebugCallback)
-			.require_api_version(1, 4, 0)
-			.build();
+			.require_api_version(1, 4, 0);
 
-		vkb::Instance vkbInstance = builderInstance.value();
+		builder.set_debug_callback(
+				[](VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+					VkDebugUtilsMessageTypeFlagsEXT messageType,
+					const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+					void* pUserData)
+				-> VkBool32 {
+					auto severity = vkb::to_string_message_severity(messageSeverity);
+					auto type = vkb::to_string_message_type(messageType);
+					LOG(Debug, "[{}: {}] {}", severity, type, pCallbackData->pMessage);
+					return VK_FALSE;
+				}
+		);
+
+		vkb::Instance vkbInstance = builder.build().value();
 
 		m_VkInstance = vkbInstance.instance;
 		m_VkDebugMessenger = vkbInstance.debug_messenger;
 		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan Instance created");
+
+		// Setup the surface
+		// Only using GLFW for now, change this later to detect window backend later if needed
+		glfwCreateWindowSurface(m_VkInstance, static_cast<GLFWwindow*>(const_cast<Window&>(window).GetNativeWindow()), nullptr, &m_VkSurface);
+		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan surface created and linked to GLFWwindow");
 
 		// Vulkan 1.4 features
 		VkPhysicalDeviceVulkan14Features features14{ .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES };
@@ -85,11 +97,6 @@ namespace QE
 		VkPhysicalDeviceVulkan12Features features12{ .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
 		features12.bufferDeviceAddress = true;
 		features12.descriptorIndexing = true;
-
-		// Setup the surface
-		// Only using GLFW for now, change this later to detect window backend later if needed
-		glfwCreateWindowSurface(m_VkInstance, static_cast<GLFWwindow*>(const_cast<Window&>(window).GetNativeWindow()), nullptr, &m_VkSurface);
-		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan surface created and linked to GLFWwindow");
 
 		// Pick a GPU
 		vkb::PhysicalDeviceSelector selector{ vkbInstance };
@@ -119,6 +126,8 @@ namespace QE
 	void VkGraphicsDevice::RecreateSwapchain()
 	{
 		LOG_TAG(Debug, "VkGraphicsDevice", "Recreating Vulkan Swapchain");
+		WaitForDeviceIdle();
+
 		DestroySwapchain();
 		CreateSwapchain(m_VkWindowExtent.width, m_VkWindowExtent.height);
 	}
@@ -147,12 +156,12 @@ namespace QE
 
 	void VkGraphicsDevice::DestroySwapchain()
 	{
-		vkDestroySwapchainKHR(m_VkDevice, m_VkSwapchain, nullptr);
-
 		// Destroy swapchain resources
 		for (int i = 0; i < m_VkSwapchainImageViews.size(); i++)
 		{
 			vkDestroyImageView(m_VkDevice, m_VkSwapchainImageViews[i], nullptr);
 		}
+
+		vkDestroySwapchainKHR(m_VkDevice, m_VkSwapchain, nullptr);
 	}
 }
