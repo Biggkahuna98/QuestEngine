@@ -4,6 +4,7 @@
 #include "Core/Log.h"
 #include "Core/Window.h"
 #include "RHI/GraphicsDevice.h"
+#include "RHI/GraphicsContext.h"
 
 namespace QE
 {
@@ -39,5 +40,6 @@ namespace QE
 		InputManager* m_InputManager = nullptr; // active input manager from the active window, updated here for convenience
 
 		std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
+		std::unique_ptr<GraphicsContext> m_GraphicsContext;
 	};
 }

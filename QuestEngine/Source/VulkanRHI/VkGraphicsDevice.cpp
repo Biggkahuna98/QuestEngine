@@ -3,6 +3,8 @@
 
 #include "GLFW/glfw3.h"
 
+#include "VKGraphicsContext.h"
+
 constexpr bool enableValidationLayers = true;
 
 namespace QE
@@ -45,6 +47,11 @@ namespace QE
 		LOG_TAG(Debug, "VkGraphicsDevice", "Updating window size: {0}x{1}", width, height);
 		m_VkWindowExtent = { width, height };
 		RecreateSwapchain();
+	}
+
+	std::unique_ptr<GraphicsContext> VkGraphicsDevice::CreateGraphicsContext()
+	{
+		return std::make_unique<VkGraphicsContext>(this);
 	}
 
 	void VkGraphicsDevice::WaitForDeviceIdle()

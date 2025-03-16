@@ -19,6 +19,8 @@ namespace QE
 
 		virtual void UpdateWindowSize(uint32_t width, uint32_t height) override;
 
+		virtual std::unique_ptr<GraphicsContext> CreateGraphicsContext() override;
+
 		virtual void WaitForDeviceIdle() override;
 		
 		VkInstance GetVkInstance() const { return m_VkInstance; }
