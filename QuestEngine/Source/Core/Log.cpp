@@ -11,24 +11,7 @@ namespace QE
 	// Create a default engine logger that is guaranteed to exist
 	Log::Log()
 	{
-		std::vector<spdlog::sink_ptr> sinks =
-		{
-			std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/EngineLog.txt", true),
-			std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
-		};
-
-		sinks[0]->set_pattern("[%T] [%l] [%n]: %v");
-		sinks[1]->set_pattern("%^[%T] [%n]: %v%$");
-
-		auto logger = std::make_shared<spdlog::logger>("Engine", begin(sinks), end(sinks));
-		logger->set_level(spdlog::level::trace);
-		AddLogger("Engine", logger);
-		logger->log(spdlog::level::info, "Engine logger initialized");
-	}
-
-	void Log::AddLogger(const std::string_view loggerName, std::shared_ptr<spdlog::logger> logger)
-	{
-		m_Loggers.emplace(loggerName, logger);
+		AddLogger("Engine");
 	}
 
 	void Log::AddLogger(const std::string_view loggerName)
@@ -49,6 +32,11 @@ namespace QE
 		logger->set_level(spdlog::level::trace);
 		AddLogger(loggerName, logger);
 		logger->log(spdlog::level::info, "{} logger initialized", loggerName.data());
+	}
+
+	void Log::AddLogger(const std::string_view loggerName, std::shared_ptr<spdlog::logger> logger)
+	{
+		m_Loggers.emplace(loggerName, logger);
 	}
 
 	std::shared_ptr<spdlog::logger> Log::GetLogger(const std::string_view loggerName)
