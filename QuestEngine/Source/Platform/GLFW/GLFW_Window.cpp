@@ -55,7 +55,7 @@ namespace QE
 		return m_Window;
 	}
 
-	void GLFW_Window::Update()
+	void GLFW_Window::ProcessEvents()
 	{
 		glfwPollEvents();
 	}

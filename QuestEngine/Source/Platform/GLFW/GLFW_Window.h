@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Core/Window.h"
 
 #define GLFW_INCLUDE_NONE
@@ -12,7 +14,7 @@ namespace QE
 		virtual ~GLFW_Window() override;
 
 		virtual void* GetNativeWindow() override;
-		virtual void Update() override;
+		virtual void ProcessEvents() override;
 		virtual void PauseWindow() override;
 	private:
 		GLFWwindow* m_Window;

@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <memory>
+
 namespace QE
 {
 	class Window
@@ -16,7 +17,7 @@ namespace QE
 		bool GetIsQuit() const { return m_IsQuit; }
 
 		virtual void* GetNativeWindow() = 0;
-		virtual void Update() = 0;
+		virtual void ProcessEvents() = 0;
 		virtual void PauseWindow() = 0;
 	protected:
 		std::string m_WindowName = "Quest Engine";
