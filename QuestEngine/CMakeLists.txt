@@ -63,15 +63,19 @@ set(VULKAN_LIBRARIES
 )
 
 # Get the vcpkg dependencies
-find_package(glfw3 CONFIG REQUIRED)
+#find_package(glfw3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(Stb REQUIRED)
 
 # Set vendor includes
 set(VENDOR_INCLUDES
+	${Stb_INCLUDE_DIR}
 )
 
 # Link Vulkan
-target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw3::glfw3)
+target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glm::glm imgui::imgui spdlog::spdlog)
 
 # Include vendor includes
 target_include_directories(${TARGET_NAME} PUBLIC ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
+include($ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+
 # Use folders nicely on Visual Studio
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
