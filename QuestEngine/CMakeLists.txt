@@ -42,7 +42,8 @@ target_compile_definitions(${TARGET_NAME} PRIVATE
 
 # Guess I need this line to make sure I can find my local includes
 target_include_directories(${TARGET_NAME} PRIVATE 
-	${CMAKE_CURRENT_SOURCE_DIR}/Include/
+	${CMAKE_CURRENT_SOURCE_DIR}/Include/ # Public includes
+	${CMAKE_CURRENT_SOURCE_DIR}/Source/  # Private includes
 )
 
 target_compile_options(${TARGET_NAME} PRIVATE -W4)

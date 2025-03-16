@@ -7,9 +7,9 @@
 #include "spdlog/spdlog.h"
 
 // Macros for logging
-#define LOG(logger, level, ...) QE::Log::Get().PrintMessage(#logger, QE::Log::Level::##level, __VA_ARGS__)
-#define LOG_TAG(logger, level, tag, ...) QE::Log::Get().PrintMessageTag(#logger, QE::Log::Level::##level, tag, __VA_ARGS__)
-#define LOG_ASSERT(logger, failurePrefix, ...) QE::Log::Get().PrintAssertMessage(#logger, failurePrefix, __VA_ARGS__)
+#define LOG(logger, level, ...) QE::Log::Get().PrintMessage(logger, QE::Log::Level::##level, __VA_ARGS__)
+#define LOG_TAG(logger, level, tag, ...) QE::Log::Get().PrintMessageTag(logger, QE::Log::Level::##level, tag, __VA_ARGS__)
+#define LOG_ASSERT(logger, failurePrefix, ...) QE::Log::Get().PrintAssertMessage(logger, failurePrefix, __VA_ARGS__)
 
 namespace QE
 {

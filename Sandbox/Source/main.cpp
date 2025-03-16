@@ -2,5 +2,5 @@
 
 int main(int argc, char** argv)
 {
-	LOG(Engine, Trace, "Hello World");
+	LOG("Engine", Trace, "Hello World");
 }
