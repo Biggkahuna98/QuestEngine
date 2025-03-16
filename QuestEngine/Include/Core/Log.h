@@ -7,9 +7,15 @@
 #include "spdlog/spdlog.h"
 
 // Macros for logging
-#define LOG(logger, level, ...) QE::Log::Get().PrintMessage(logger, QE::Log::Level::##level, __VA_ARGS__)
-#define LOG_TAG(logger, level, tag, ...) QE::Log::Get().PrintMessageTag(logger, QE::Log::Level::##level, tag, __VA_ARGS__)
-#define LOG_ASSERT(logger, failurePrefix, ...) QE::Log::Get().PrintAssertMessage(logger, failurePrefix, __VA_ARGS__)
+#ifdef QE_INTERNAL_USE_ONLY // These log macros assume that the logger is "Engine" for internal library use, otherwise the logger name must be specified in the client application
+	#define LOG(level, ...) QE::Log::Get().PrintMessage("Engine", QE::Log::Level::##level, __VA_ARGS__)
+	#define LOG_TAG(level, tag, ...) QE::Log::Get().PrintMessageTag("Engine", QE::Log::Level::##level, tag, __VA_ARGS__)
+	#define LOG_ASSERT(failurePrefix, ...) QE::Log::Get().PrintAssertMessage("Engine", failurePrefix, __VA_ARGS__)
+#else
+	#define LOG(logger, level, ...) QE::Log::Get().PrintMessage(logger, QE::Log::Level::##level, __VA_ARGS__)
+	#define LOG_TAG(logger, level, tag, ...) QE::Log::Get().PrintMessageTag(logger, QE::Log::Level::##level, tag, __VA_ARGS__)
+	#define LOG_ASSERT(logger, failurePrefix, ...) QE::Log::Get().PrintAssertMessage(logger, failurePrefix, __VA_ARGS__)
+#endif
 
 namespace QE
 {

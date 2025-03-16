@@ -6,7 +6,7 @@ namespace QE
 {
 	static void GLFWErrorCallback(int error, const char* description)
 	{
-		LOG_TAG("Engine", Error, "GLFW", "GLFW Error: ({0}): {1}", error, description);
+		LOG_TAG(Error, "GLFW", "GLFW Error: ({0}): {1}", error, description);
 	}
 
 	GLFW_Window::GLFW_Window(std::string_view windowName, int width, int height)
@@ -16,7 +16,7 @@ namespace QE
 		{
 			if (!glfwInit())
 			{
-				LOG_TAG("Engine", Debug, "GLFW_Window", "Failed to initialize GLFW");
+				LOG_TAG(Debug, "GLFW_Window", "Failed to initialize GLFW");
 			}
 			glfwSetErrorCallback(GLFWErrorCallback);
 			s_IsBackendInitialized = true;
@@ -26,13 +26,13 @@ namespace QE
 		m_Window = glfwCreateWindow(width, height, windowName.data(), nullptr, nullptr);
 		if (!m_Window)
 		{
-			LOG_TAG("Engine", Debug, "GLFW_Window", "Failed to initialize GLFW window");
+			LOG_TAG(Debug, "GLFW_Window", "Failed to initialize GLFW window");
 		}
 		// Void pointer to this instance so I can access members in the callbacks
 		glfwSetWindowUserPointer(m_Window, static_cast<void*>(this));
 		s_WindowCount++;
 
-		LOG_TAG("Engine", Info, "GLFW_Window", "Created GLFW window: {0} ({1}x{2})", windowName, width, height);
+		LOG_TAG(Info, "GLFW_Window", "Created GLFW window: {0} ({1}x{2})", windowName, width, height);
 
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
@@ -79,7 +79,7 @@ namespace QE
 
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
 			{
-				LOG_TAG("Engine", Debug, "GLFW_Window", "Scroll: {0}, {1}", xOffset, yOffset);
+				LOG_TAG(Debug, "GLFW_Window", "Scroll: {0}, {1}", xOffset, yOffset);
 			}
 		);
 
@@ -96,15 +96,15 @@ namespace QE
 		glfwDestroyWindow(m_Window);
 		s_WindowCount--;
 
-		LOG_TAG("Engine", Info, "GLFW_Window", "Destroyed GLFW window: {0}", m_WindowName);
-		LOG_TAG("Engine", Debug, "GLFW_Window", "S_WindowCount: {0}", s_WindowCount);
+		LOG_TAG(Info, "GLFW_Window", "Destroyed GLFW window: {0}", m_WindowName);
+		LOG_TAG(Debug, "GLFW_Window", "S_WindowCount: {0}", s_WindowCount);
 			
 		if (s_WindowCount == 0)
 		{
 			glfwTerminate();
 			s_IsBackendInitialized = false;
 
-			LOG_TAG("Engine", Debug, "GLFW_Window", "Terminated GLFW");
+			LOG_TAG(Debug, "GLFW_Window", "Terminated GLFW");
 		}
 	}
 
@@ -120,7 +120,7 @@ namespace QE
 
 	void GLFW_Window::PauseWindow()
 	{
-		LOG_TAG("Engine", Debug, "GLFW_Window", "Paused GLFW window: {0}", m_WindowName);
+		LOG_TAG(Debug, "GLFW_Window", "Paused GLFW window: {0}", m_WindowName);
 
 		int width = 0, height = 0;
 		glfwGetFramebufferSize(m_Window, &width, &height);
@@ -130,6 +130,6 @@ namespace QE
 			glfwWaitEvents();
 		}
 
-		LOG_TAG("Engine", Debug, "GLFW_Window", "GLFW window: {0} is no longer paused", m_WindowName);
+		LOG_TAG(Debug, "GLFW_Window", "GLFW window: {0} is no longer paused", m_WindowName);
 	}
 }
