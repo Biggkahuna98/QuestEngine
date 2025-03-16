@@ -46,6 +46,11 @@ namespace QE
 		return IsMouseButtonPressed(button) || IsMouseButtonHeld(button);
 	}
 
+	bool InputManager::IsMouseButtonReleased(MouseCode button)
+	{
+		return m_MouseData.find(button) != m_MouseData.end() && m_MouseData[button].State == KeyState::Released;
+	}
+
 	glm::vec2 InputManager::GetMousePosition()
 	{
 		return { m_MouseXPosition, m_MouseYPosition };
@@ -64,7 +69,7 @@ namespace QE
 	void InputManager::ProcessTransitions()
 	{
 		UpdatePressedKeysToHeld();
-		UpdatePressedButtonsToHeld();
+		UpdatePressedMouseButtonsToHeld();
 	}
 
 	void InputManager::UpdateKeyState(KeyCode key, KeyState newState)
@@ -75,12 +80,12 @@ namespace QE
 		LOG_TAG(Debug, "Input", "{} is {}", static_cast<char>(key), GetKeyStateString(newState));
 	}
 
-	void InputManager::UpdateButtonState(MouseCode mouse, KeyState newState)
+	void InputManager::UpdateMouseButtonState(MouseCode mouse, KeyState newState)
 	{
 		auto& mouseData = m_MouseData[mouse];
 		mouseData.OldState = mouseData.State;
 		mouseData.State = newState;
-		LOG_TAG(Debug, "Input", "{} is {}", static_cast<char>(mouse), GetKeyStateString(newState));
+		LOG_TAG(Debug, "Input", "{} is {}", GetMouseButtonStringFromCode(mouse), GetKeyStateString(newState));
 	}
 
 	void InputManager::UpdateMousePosition(double x, double y)
@@ -98,12 +103,12 @@ namespace QE
 		}
 	}
 
-	void InputManager::UpdatePressedButtonsToHeld()
+	void InputManager::UpdatePressedMouseButtonsToHeld()
 	{
 		for (const auto& [button, buttonData] : m_MouseData)
 		{
 			if (buttonData.State == KeyState::Pressed)
-				UpdateButtonState(button, KeyState::Held);
+				UpdateMouseButtonState(button, KeyState::Held);
 		}
 	}
 
@@ -118,7 +123,7 @@ namespace QE
 		for (const auto& [button, buttonData] : m_MouseData)
 		{
 			if (buttonData.State == KeyState::Released)
-				UpdateButtonState(button, KeyState::None);
+				UpdateMouseButtonState(button, KeyState::None);
 		}
 	}
 }

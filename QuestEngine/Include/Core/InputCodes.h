@@ -179,4 +179,15 @@ namespace QE
 		default: return "None";
 		}
 	}
+
+	inline const char* GetMouseButtonStringFromCode(MouseCode code)
+	{
+		switch (code)
+		{
+		case Mouse::ButtonLeft: return "Left Mouse Button";
+		case Mouse::ButtonRight: return "Right Mouse Button";
+		case Mouse::ButtonMiddle: return "Middle Mouse Button";
+		default: return "Unknown";
+		}
+	}
 }

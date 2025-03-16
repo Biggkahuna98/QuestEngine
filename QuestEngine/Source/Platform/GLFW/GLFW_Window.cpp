@@ -65,12 +65,12 @@ namespace QE
 				{
 				case GLFW_PRESS:
 				{
-					inputManager->UpdateButtonState(static_cast<MouseCode>(button), KeyState::Pressed);
+					inputManager->UpdateMouseButtonState(static_cast<MouseCode>(button), KeyState::Pressed);
 					break;
 				}
 				case GLFW_RELEASE:
 				{
-					inputManager->UpdateButtonState(static_cast<MouseCode>(button), KeyState::Released);
+					inputManager->UpdateMouseButtonState(static_cast<MouseCode>(button), KeyState::Released);
 					break;
 				}
 				}

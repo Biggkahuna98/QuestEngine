@@ -35,16 +35,17 @@ namespace QE
 		bool IsMouseButtonPressed(MouseCode button);
 		bool IsMouseButtonHeld(MouseCode button);
 		bool IsMouseButtonDown(MouseCode button);
+		bool IsMouseButtonReleased(MouseCode button);
 		glm::vec2 GetMousePosition();
 		double GetMouseX();
 		double GetMouseY();
 
 		void ProcessTransitions();
 		void UpdateKeyState(KeyCode key, KeyState newState);
-		void UpdateButtonState(MouseCode mouse, KeyState newState);
+		void UpdateMouseButtonState(MouseCode mouse, KeyState newState);
 		void UpdateMousePosition(double x, double y);
 		void UpdatePressedKeysToHeld();
-		void UpdatePressedButtonsToHeld();
+		void UpdatePressedMouseButtonsToHeld();
 		void ClearReleasedKeys();
 	private:
 		std::map<KeyCode, KeyData> m_KeyData;
