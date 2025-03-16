@@ -28,9 +28,67 @@ namespace QE
 		{
 			LOG_TAG("Engine", Debug, "GLFW_Window", "Failed to initialize GLFW window");
 		}
+		// Void pointer to this instance so I can access members in the callbacks
+		glfwSetWindowUserPointer(m_Window, static_cast<void*>(this));
 		s_WindowCount++;
 
 		LOG_TAG("Engine", Info, "GLFW_Window", "Created GLFW window: {0} ({1}x{2})", windowName, width, height);
+
+		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+			{
+				auto inputManager = static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window))->GetInputManagerPtr();
+				switch (action)
+				{
+				case GLFW_PRESS:
+				{
+					inputManager->UpdateKeyState(static_cast<KeyCode>(key), KeyState::Pressed);
+					break;
+				}
+				case GLFW_RELEASE:
+				{
+					inputManager->UpdateKeyState(static_cast<KeyCode>(key), KeyState::Released);
+					break;
+				}
+				case GLFW_REPEAT:
+				{
+					inputManager->UpdateKeyState(static_cast<KeyCode>(key), KeyState::Held);
+					break;
+				}
+				}
+			}
+		);
+
+		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods)
+			{
+				auto inputManager = static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window))->GetInputManagerPtr();
+				switch (action)
+				{
+				case GLFW_PRESS:
+				{
+					inputManager->UpdateButtonState(static_cast<MouseCode>(button), KeyState::Pressed);
+					break;
+				}
+				case GLFW_RELEASE:
+				{
+					inputManager->UpdateButtonState(static_cast<MouseCode>(button), KeyState::Released);
+					break;
+				}
+				}
+			}
+		);
+
+		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
+			{
+				LOG_TAG("Engine", Debug, "GLFW_Window", "Scroll: {0}, {1}", xOffset, yOffset);
+			}
+		);
+
+		glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xPos, double yPos)
+			{
+				auto inputManager = static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window))->GetInputManagerPtr();
+				inputManager->UpdateMousePosition(xPos, yPos);
+			}
+		);
 	}
 
 	GLFW_Window::~GLFW_Window()

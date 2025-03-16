@@ -1,0 +1,56 @@
+#pragma once
+
+#include "InputCodes.h"
+#include "glm/glm.hpp"
+#include <map>
+#include <memory>
+
+namespace QE
+{
+	struct KeyData
+	{
+		KeyCode Key;
+		KeyState State = KeyState::None;
+		KeyState OldState = KeyState::None;
+	};
+
+	struct MouseButtonData
+	{
+		MouseCode Button;
+		KeyState State = KeyState::None;
+		KeyState OldState = KeyState::None;
+	};
+
+	class InputManager
+	{
+	public:
+		InputManager();
+		~InputManager();
+
+		bool IsKeyPressed(KeyCode key);
+		bool IsKeyHeld(KeyCode key);
+		bool IsKeyDown(KeyCode key);
+		bool IsKeyReleased(KeyCode key);
+
+		bool IsMouseButtonPressed(MouseCode button);
+		bool IsMouseButtonHeld(MouseCode button);
+		bool IsMouseButtonDown(MouseCode button);
+		glm::vec2 GetMousePosition();
+		double GetMouseX();
+		double GetMouseY();
+
+		void ProcessTransitions();
+		void UpdateKeyState(KeyCode key, KeyState newState);
+		void UpdateButtonState(MouseCode mouse, KeyState newState);
+		void UpdateMousePosition(double x, double y);
+		void UpdatePressedKeysToHeld();
+		void UpdatePressedButtonsToHeld();
+		void ClearReleasedKeys();
+	private:
+		std::map<KeyCode, KeyData> m_KeyData;
+		std::map<MouseCode, MouseButtonData> m_MouseData;
+		double m_MouseXPosition = 0.0f;
+		double m_MouseYPosition = 0.0f;
+	};
+
+}

@@ -31,7 +31,13 @@ namespace QE
 	{
 		while (m_Running)
 		{
+			m_Window->GetInputManager().ProcessTransitions();
 			m_Window->ProcessEvents();
+
+			if (m_Window->GetInputManager().IsKeyPressed(Key::Escape))
+			{
+				m_Running = false;
+			}
 		}
 	}
 }
