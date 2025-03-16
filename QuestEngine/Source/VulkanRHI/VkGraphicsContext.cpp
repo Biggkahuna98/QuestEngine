@@ -3,7 +3,7 @@
 namespace QE
 {
 	VkGraphicsContext::VkGraphicsContext(GraphicsDevice* device)
-		: GraphicsContext(device)
+		: VkRHIContext(device)
 	{
 	}
 	VkGraphicsContext::~VkGraphicsContext()

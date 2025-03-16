@@ -96,12 +96,14 @@ set(VENDOR_INCLUDES
 	${THIRD_PARTY_ENGINE_DIR}/vk-bootstrap/src
 )
 
+message(${Vulkan_INCLUDE_DIRS})
+
 # Link private includes
 target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw spdlog assimp vk-bootstrap)
-target_link_libraries(${TARGET_NAME} PUBLIC ${Vulkan_LIBRARIES} glm spdlog)
+target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog)
 
 # Include vendor includes
-target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})
+target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIRS} ${VENDOR_INCLUDES})
 target_include_directories(${TARGET_NAME} PUBLIC ${THIRD_PARTY_ENGINE_DIR}/glm/glm ${THIRD_PARTY_ENGINE_DIR}/imgui)
 
 message("Done building Quest Engine")
