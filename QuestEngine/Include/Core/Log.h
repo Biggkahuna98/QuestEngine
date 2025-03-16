@@ -28,6 +28,7 @@ namespace QE
 		}
 
 		void AddLogger(const std::string_view loggerName, std::shared_ptr<spdlog::logger> logger);
+		void AddLogger(const std::string_view loggerName);
 		std::shared_ptr<spdlog::logger> GetLogger(const std::string_view loggerName);
 		spdlog::logger* _GetLoggerAsPointer(const std::string_view loggerName);
 
