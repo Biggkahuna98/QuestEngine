@@ -26,18 +26,22 @@ namespace QE
 		VkInstance GetVkInstance() const { return m_VkInstance; }
 		VkPhysicalDevice GetVkPhysicalDevice() const { return m_VkPhysicalDevice; }
 		VkDevice GetVkDevice() const { return m_VkDevice; }
+		VkQueue GetVkGraphicsQueue() const { return m_VkGraphicsQueue; }
 		VkSurfaceKHR GetVkSurface() const { return m_VkSurface; }
 	private:
 		VkInstance m_VkInstance;
 		VkDebugUtilsMessengerEXT m_VkDebugMessenger;
 		VkPhysicalDevice m_VkPhysicalDevice;
 		VkDevice m_VkDevice;
+
+		VkQueue m_VkGraphicsQueue;
+		VkQueue m_VkPresentQueue;
+
 		VkSurfaceKHR m_VkSurface;
 		VkExtent2D m_VkWindowExtent; // window size
 
 		VkSwapchainKHR m_VkSwapchain;
 		VkFormat m_VkSwapchainImageFormat;
-
 		std::vector<VkImage> m_VkSwapchainImages;
 		std::vector<VkImageView> m_VkSwapchainImageViews;
 		VkExtent2D m_VkSwapchainExtent;
