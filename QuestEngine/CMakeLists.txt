@@ -72,7 +72,6 @@ set(ASSIMP_BUILD_SHARED_LIBS OFF)
 #set(ASSIMP_NO_EXPORT ON)
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
-add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/vk-bootstrap ThirdParty/vk-bootstrap)
 
 # Visual studio subfolder for 3rd party lib projects
 set_target_properties(glm PROPERTIES FOLDER "ThirdParty")
@@ -83,7 +82,6 @@ set_target_properties(assimp PROPERTIES FOLDER "ThirdParty")
 set_target_properties(unit PROPERTIES FOLDER "ThirdParty")
 set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER "ThirdParty")
 set_target_properties(zlibstatic PROPERTIES FOLDER "ThirdParty")
-set_target_properties(vk-bootstrap PROPERTIES FOLDER "ThirdParty")
 
 # Set vendor includes
 set(VENDOR_INCLUDES
@@ -93,17 +91,16 @@ set(VENDOR_INCLUDES
 	${THIRD_PARTY_ENGINE_DIR}/spdlog/include
 	${THIRD_PARTY_ENGINE_DIR}/assimp/include
 	${THIRD_PARTY_ENGINE_DIR}/stb
-	${THIRD_PARTY_ENGINE_DIR}/vk-bootstrap/src
 )
 
-message(${Vulkan_INCLUDE_DIRS})
+message(STATUS ${Vulkan_INCLUDE_DIR})
 
 # Link private includes
-target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw spdlog assimp vk-bootstrap)
+target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw spdlog assimp)
 target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog)
 
 # Include vendor includes
-target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIRS} ${VENDOR_INCLUDES})
+target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})
 target_include_directories(${TARGET_NAME} PUBLIC ${THIRD_PARTY_ENGINE_DIR}/glm/glm ${THIRD_PARTY_ENGINE_DIR}/imgui)
 
 message("Done building Quest Engine")

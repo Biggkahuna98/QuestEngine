@@ -26,6 +26,7 @@ namespace QE
 		}
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		m_Window = glfwCreateWindow(width, height, windowName.data(), nullptr, nullptr);
 
 		if (!m_Window)

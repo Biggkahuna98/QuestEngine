@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "VkBootstrap.h"
+#include <vulkan/vulkan.h>
 
 namespace QE
 {
