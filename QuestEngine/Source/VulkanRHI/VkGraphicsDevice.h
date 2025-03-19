@@ -10,7 +10,7 @@ namespace QE
 	class VkGraphicsDevice : public GraphicsDevice
 	{
 	public: 
-		VkGraphicsDevice(const Window& window);
+		VkGraphicsDevice(Window* window);
 		virtual ~VkGraphicsDevice() override;
 
 		virtual void BeginFrame() override;

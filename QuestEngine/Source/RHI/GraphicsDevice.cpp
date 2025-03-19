@@ -4,11 +4,11 @@
 
 namespace QE
 {
-	GraphicsDevice::GraphicsDevice(const Window& window)
+	GraphicsDevice::GraphicsDevice(Window* window)
 	{
 	}
 
-	std::unique_ptr<GraphicsDevice> CreateGraphicsDeviceFactory(const Window& window)
+	std::unique_ptr<GraphicsDevice> CreateGraphicsDeviceFactory(Window* window)
 	{
 		return std::make_unique<VkGraphicsDevice>(window);
 	}

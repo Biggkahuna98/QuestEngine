@@ -23,7 +23,7 @@ namespace QE
 		m_InputManager = m_Window->GetInputManagerPtr(); // This is the *ACTIVE* input manager from the active window
 
 		// Initialize graphics device and context
-		m_GraphicsDevice = CreateGraphicsDeviceFactory(*m_Window);
+		m_GraphicsDevice = CreateGraphicsDeviceFactory(m_Window.get());
 		m_GraphicsContext = m_GraphicsDevice->CreateGraphicsContext();
 
 		m_Running = true;

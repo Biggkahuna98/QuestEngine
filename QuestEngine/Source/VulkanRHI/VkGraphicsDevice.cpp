@@ -11,12 +11,12 @@ constexpr bool enableValidationLayers = true;
 
 namespace QE
 {
-	VkGraphicsDevice::VkGraphicsDevice(const Window& window)
+	VkGraphicsDevice::VkGraphicsDevice(Window* window)
 		: GraphicsDevice(window)
 	{
 		// Set real window size
 		int width, height;
-		glfwGetFramebufferSize(static_cast<GLFWwindow*>(const_cast<Window&>(window).GetNativeWindow()), &width, &height);
+		glfwGetFramebufferSize(static_cast<GLFWwindow*>(window->GetNativeWindow()), &width, &height);
 
 		m_VkWindowExtent = {
 			static_cast<uint32_t>(width),
@@ -38,12 +38,15 @@ namespace QE
 		}
 
 		// Setup debug messenger
-		auto debugMessengerCreateInfo = VkInit::BuildDebugMessengerCreateInfo();
-		VkInit::CreateDebugMessenger(&m_VkInstance, &debugMessengerCreateInfo, &m_VkDebugMessenger);
+		if (VkInit::s_EnableValidationLayers)
+		{
+			auto debugMessengerCreateInfo = VkInit::BuildDebugMessengerCreateInfo();
+			VkInit::CreateDebugMessenger(&m_VkInstance, &debugMessengerCreateInfo, &m_VkDebugMessenger);
+		}
 
 		// Setup the surface
 		// Only using GLFW for now, change this later to detect window backend later if needed
-		glfwCreateWindowSurface(m_VkInstance, static_cast<GLFWwindow*>(const_cast<Window&>(window).GetNativeWindow()), nullptr, &m_VkSurface);
+		glfwCreateWindowSurface(m_VkInstance, static_cast<GLFWwindow*>(window->GetNativeWindow()), nullptr, &m_VkSurface);
 		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan surface created and linked to GLFWwindow");
 
 		// Pick a GPU

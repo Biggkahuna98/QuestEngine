@@ -76,18 +76,6 @@
           }
         },
         {
-            "name": "windows-msvc-debug-user-mode",
-            "displayName": "msvc Debug (User Mode)",
-            "description": "Target Windows with the msvc compiler, debug build type",
-            "inherits": "conf-windows-common",
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "cl",
-                "CMAKE_CXX_COMPILER": "cl",
-                "CMAKE_BUILD_TYPE": "Debug",
-                "ENABLE_DEVELOPER_MODE": "OFF"
-            }
-        },
-        {
             "name": "windows-msvc-release-user-mode",
             "displayName": "msvc Release (User Mode)",
             "description": "Target Windows with the msvc compiler, release build type",
@@ -95,7 +83,7 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl",
-                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_BUILD_TYPE": "Release",
                 "ENABLE_DEVELOPER_MODE": "OFF"
             }
         },
