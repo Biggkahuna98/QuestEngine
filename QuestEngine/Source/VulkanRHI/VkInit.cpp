@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <set>
 #include <algorithm>
+#include <fstream>
 
 namespace VkInit
 {
@@ -12,7 +13,7 @@ namespace VkInit
 		"VK_LAYER_KHRONOS_validation"
 	};
 
-	const std::vector<const char*> s_DeviceExtensions = {
+	static const std::vector<const char*> s_DeviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
@@ -39,7 +40,7 @@ namespace VkInit
 			}
 		}
 
-		void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
+		static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
 		{
 			auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 			if (func != nullptr)
@@ -48,7 +49,7 @@ namespace VkInit
 			}
 		}
 
-		QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
+		static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
 		{
 			QueueFamilyIndices indices;
 
@@ -85,7 +86,7 @@ namespace VkInit
 			return indices;
 		}
 
-		bool CheckDeviceExtensionSupport(VkPhysicalDevice device)
+		static bool CheckDeviceExtensionSupport(VkPhysicalDevice device)
 		{
 			uint32_t extensionCount;
 			vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -103,7 +104,7 @@ namespace VkInit
 			return requiredExtensions.empty();
 		}
 
-		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface)
+		static SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface)
 		{
 			SwapChainSupportDetails details;
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
@@ -129,7 +130,7 @@ namespace VkInit
 			return details;
 		}
 
-		bool IsPhysicalDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface)
+		static bool IsPhysicalDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface)
 		{
 			QueueFamilyIndices indices = FindQueueFamilies(device, surface);
 
@@ -145,7 +146,7 @@ namespace VkInit
 			return indices.IsComplete() && extensionsSupported && swapChainAdequate;
 		}
 
-		VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+		static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 		{
 			for (const auto& availableFormat : availableFormats)
 			{
@@ -158,7 +159,7 @@ namespace VkInit
 			return availableFormats[0];
 		}
 
-		VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+		static VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 		{
 			for (const auto& availablePresentMode : availablePresentModes)
 			{
@@ -171,7 +172,7 @@ namespace VkInit
 			return VK_PRESENT_MODE_FIFO_KHR;
 		}
 
-		VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VkExtent2D actualExtent)
+		static VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VkExtent2D actualExtent)
 		{
 			if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 			{
@@ -184,6 +185,26 @@ namespace VkInit
 
 				return actualExtent;
 			}
+		}
+
+		static std::vector<char> ReadShaderFile(const std::string& filename)
+		{
+			std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+			if (!file.is_open())
+			{
+				throw std::runtime_error("Failed to open shader file");
+			}
+
+			size_t fileSize = (size_t)file.tellg();
+			std::vector<char> buffer(fileSize);
+
+			file.seekg(0);
+			file.read(buffer.data(), fileSize);
+
+			file.close();
+
+			return buffer;
 		}
 	}
 
@@ -218,12 +239,13 @@ namespace VkInit
 		instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
 
+		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 		if (s_EnableValidationLayers)
 		{
 			instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(s_ValidationLayers.size());
 			instanceCreateInfo.ppEnabledLayerNames = s_ValidationLayers.data();
 
-			VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = BuildDebugMessengerCreateInfo();
+			debugCreateInfo = BuildDebugMessengerCreateInfo();
 			instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 		}
 		else
@@ -384,6 +406,38 @@ namespace VkInit
 
 		*swapchainImageFormat = surfaceFormat.format;
 		*swapchainExtent = extent;
+	}
+
+	void CreateSwapchainImageViews(VkDevice* device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews)
+	{
+		swapchainImageViews->resize(swapchainImages->size());
+
+		for (size_t i = 0; i < swapchainImages->size(); i++)
+		{
+			VkImageViewCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = swapchainImages->at(i);
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			createInfo.format = swapchainImageFormat;
+			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			createInfo.subresourceRange.baseMipLevel = 0;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = 0;
+			createInfo.subresourceRange.layerCount = 1;
+			if (vkCreateImageView(*device, &createInfo, nullptr, &swapchainImageViews->at(i)) != VK_SUCCESS)
+			{
+				throw std::runtime_error("Failed to create image views");
+			}
+		}
+	}
+
+	void CreateGraphicsPipeline()
+	{
+		auto vertShaderCode = ReadShaderFile("/vert.spv");
 	}
 
 	// Extra helpers

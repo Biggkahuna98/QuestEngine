@@ -41,18 +41,15 @@ namespace QE
 		VkExtent2D m_VkWindowExtent; // window size
 
 		VkSwapchainKHR m_VkSwapchain;
+		VkExtent2D m_VkSwapchainExtent;
 		VkFormat m_VkSwapchainImageFormat;
 		std::vector<VkImage> m_VkSwapchainImages;
 		std::vector<VkImageView> m_VkSwapchainImageViews;
-		VkExtent2D m_VkSwapchainExtent;
 
 
 		// Initialize Vulkan Resources
-		void InitVulkan(const Window& window);
-		
-		void InitSwapchain();
-		void RecreateSwapchain();
 		void CreateSwapchain(uint32_t width, uint32_t height);
+		void RecreateSwapchain();
 		void DestroySwapchain();
 	};
 }

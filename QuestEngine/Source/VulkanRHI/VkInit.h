@@ -15,6 +15,8 @@ namespace VkInit
 #else
 	static constexpr bool s_EnableValidationLayers = false;
 #endif
+#ifdef QE_PLATFORM_WINDOWS
+#endif
 	// Structs
 	struct QueueFamilyIndices
 	{
@@ -46,6 +48,8 @@ namespace VkInit
 	void CreateSwapchain(VkPhysicalDevice* physicalDevice, VkDevice* device, VkSurfaceKHR* surface, VkExtent2D* windowSize, 
 		std::vector<VkImage>* swapchainImages, std::vector<VkImageView>* swapchainImageViews, VkFormat* swapchainImageFormat,
 		VkExtent2D* swapchainExtent, VkSwapchainKHR* swapchain);
+	void CreateSwapchainImageViews(VkDevice* device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews);
+	void CreateGraphicsPipeline();
 
 	// Extra helpers
 	uint32_t GetVulkanExtensionCount();

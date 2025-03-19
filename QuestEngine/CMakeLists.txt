@@ -1,8 +1,8 @@
-set_property(TARGET PROPERTY USE_FOLDERS ON)
-
 set (TARGET_NAME QuestEngine)
 set (QUEST_LIBRARY_TYPE STATIC)
 set (CMAKE_CXX_STANDARD 20)
+
+set_property(TARGET PROPERTY USE_FOLDERS ON)
 
 message("Building Quest Engine static library...")
 
@@ -23,7 +23,16 @@ file (GLOB_RECURSE SOURCES
 	Tests/*.cpp  
 )
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
+file (GLOB_RECURSE ENGINE_SHADERS
+	Resources/Shaders/*.vert
+	Resources/Shaders/*.frag
+)
+
+message(STATUS ${ENGINE_SHADERS})
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${ENGINE_SHADERS})
+
+#set_source_files_properties(${SHADERS} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 add_library(${TARGET_NAME} ${QUEST_LIBRARY_TYPE} ${SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
@@ -35,10 +44,9 @@ target_compile_definitions(${TARGET_NAME} PRIVATE
 	GLM_FORCE_DEPTH_ZERO_TO_ONE=1
 	QE_PLATFORM_WINDOWS=1
 	QE_INTERNAL_USE_ONLY=1
-)
-target_compile_definitions(${TARGET_NAME} PRIVATE 
-	$<$<CONFIG:DEBUG>:QE_DEBUG_MODE=1> 
-	$<$<CONFIG:RELWITHDEBINFO>:QE_DEBUG_MODE=1>
+
+	$<$<CONFIG:Debug>:QE_DEBUG_MODE=1> 
+	$<$<CONFIG:RelWithDebInfo>:QE_DEBUG_MODE=1>
 )
 
 # Guess I need this line to make sure I can find my local includes
@@ -67,11 +75,11 @@ set(VULKAN_LIBRARIES
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glm ThirdParty/glm)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glfw ThirdParty/glfw)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/spdlog ThirdParty/spdlog)
-add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/assimp ThirdParty/assimp)
-set(ASSIMP_BUILD_SHARED_LIBS OFF)
-#set(ASSIMP_NO_EXPORT ON)
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
+add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/assimp ThirdParty/assimp)
+#set(ASSIMP_BUILD_SHARED_LIBS OFF)
+#set(ASSIMP_NO_EXPORT ON)
 
 # Visual studio subfolder for 3rd party lib projects
 set_target_properties(glm PROPERTIES FOLDER "ThirdParty")
@@ -79,7 +87,7 @@ set_target_properties(glfw PROPERTIES FOLDER "ThirdParty")
 set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
 set_target_properties(assimp PROPERTIES FOLDER "ThirdParty")
 # figure out what these are later
-set_target_properties(unit PROPERTIES FOLDER "ThirdParty")
+#set_target_properties(unit PROPERTIES FOLDER "ThirdParty")
 set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER "ThirdParty")
 set_target_properties(zlibstatic PROPERTIES FOLDER "ThirdParty")
 
@@ -92,8 +100,6 @@ set(VENDOR_INCLUDES
 	${THIRD_PARTY_ENGINE_DIR}/assimp/include
 	${THIRD_PARTY_ENGINE_DIR}/stb
 )
-
-message(STATUS ${Vulkan_INCLUDE_DIR})
 
 # Link private includes
 target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw spdlog assimp)
