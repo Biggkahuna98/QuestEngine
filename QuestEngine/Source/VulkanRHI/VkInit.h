@@ -49,7 +49,7 @@ namespace VkInit
 		std::vector<VkImage>* swapchainImages, std::vector<VkImageView>* swapchainImageViews, VkFormat* swapchainImageFormat,
 		VkExtent2D* swapchainExtent, VkSwapchainKHR* swapchain);
 	void CreateSwapchainImageViews(VkDevice* device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews);
-	void CreateGraphicsPipeline();
+	void CreateGraphicsPipeline(VkDevice* device);
 
 	// Extra helpers
 	uint32_t GetVulkanExtensionCount();
@@ -64,4 +64,6 @@ namespace VkInit
 
 	std::string GetPhysicalDeviceName(VkPhysicalDevice physicalDevice);
 	void LogPhysicalDeviceProperties(VkPhysicalDevice physicalDevice);
+
+	VkShaderModule CreateShaderModule(VkDevice* device, const std::vector<char>& shaderCode);
 }

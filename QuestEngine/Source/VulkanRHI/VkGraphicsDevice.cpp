@@ -59,6 +59,9 @@ namespace QE
 
 		// Swapchain
 		CreateSwapchain(m_VkWindowExtent.width, m_VkWindowExtent.height);
+
+		// Graphics pipeline
+		VkInit::CreateGraphicsPipeline(&m_VkDevice);
 	}
 
 	VkGraphicsDevice::~VkGraphicsDevice()

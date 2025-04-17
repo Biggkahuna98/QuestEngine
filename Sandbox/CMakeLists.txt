@@ -1,4 +1,5 @@
 set_property(TARGET PROPERTY USE_FOLDERS ON)
+set (CMAKE_CXX_STANDARD 23)
 
 file (GLOB_RECURSE SOURCES
 	Source/*.h 
