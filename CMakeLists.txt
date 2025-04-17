@@ -16,7 +16,7 @@ set(THIRD_PARTY_DIR ${QUEST_ROOT}/ThirdParty)
 set(THIRD_PARTY_ENGINE_DIR ${THIRD_PARTY_DIR}/Engine)
 
 # Add the engine
-add_subdirectory(QuestEngine)
+add_subdirectory(Engine)
 
 # Add the test project
 add_subdirectory(Sandbox)
