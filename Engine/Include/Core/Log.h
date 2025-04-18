@@ -6,15 +6,45 @@
 
 #include "spdlog/spdlog.h"
 
+namespace QE
+{
+	extern std::string s_ClientLoggerName;
+}
+
 // Macros for logging
+// Prefer to use the tagged macros for better readability/usability to track down errors
 #ifdef QE_INTERNAL_USE_ONLY // These log macros assume that the logger is "Engine" for internal library use, otherwise the logger name must be specified in the client application
-	#define LOG(level, ...) QE::Log::Get().PrintMessage("Engine", QE::Log::Level::##level, __VA_ARGS__)
-	#define LOG_TAG(level, tag, ...) QE::Log::Get().PrintMessageTag("Engine", QE::Log::Level::##level, tag, __VA_ARGS__)
-	#define LOG_ASSERT(failurePrefix, ...) QE::Log::Get().PrintAssertMessage("Engine", failurePrefix, __VA_ARGS__)
+	#define LOG_TRACE(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Trace, __VA_ARGS__)
+	#define LOG_DEBUG(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Debug, __VA_ARGS__)
+	#define LOG_INFO(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Info, __VA_ARGS__)
+	#define LOG_WARN(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Warning, __VA_ARGS__)
+	#define LOG_ERROR(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Error, __VA_ARGS__)
+	#define LOG_FATAL(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Fatal, __VA_ARGS__)
+
+	#define LOG_TRACE_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Trace, tag, __VA_ARGS__)
+	#define LOG_DEBUG_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Debug, tag, __VA_ARGS__)
+	#define LOG_INFO_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Info, tag, __VA_ARGS__)
+	#define LOG_WARN_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Warning, tag, __VA_ARGS__)
+	#define LOG_ERROR_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Error, tag, __VA_ARGS__)
+	#define LOG_FATAL_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Fatal, tag, __VA_ARGS__)
+	
+	#define LOG_ASSERT(failurePrefix, ...) QE::Log::PrintAssertMessage("Engine", failurePrefix, __VA_ARGS__)
 #else
-	#define LOG(logger, level, ...) QE::Log::Get().PrintMessage(logger, QE::Log::Level::##level, __VA_ARGS__)
-	#define LOG_TAG(logger, level, tag, ...) QE::Log::Get().PrintMessageTag(logger, QE::Log::Level::##level, tag, __VA_ARGS__)
-	#define LOG_ASSERT(logger, failurePrefix, ...) QE::Log::Get().PrintAssertMessage(logger, failurePrefix, __VA_ARGS__)
+	#define LOG_TRACE(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Trace, __VA_ARGS__)
+	#define LOG_DEBUG(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Debug, __VA_ARGS__)
+	#define LOG_INFO(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Info, __VA_ARGS__)
+	#define LOG_WARN(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Warning, __VA_ARGS__)
+	#define LOG_ERROR(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Error, __VA_ARGS__)
+	#define LOG_FATAL(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Fatal, __VA_ARGS__)
+
+	#define LOG_TRACE_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Trace, tag, __VA_ARGS__)
+	#define LOG_DEBUG_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Debug, tag, __VA_ARGS__)
+	#define LOG_INFO_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Info, tag, __VA_ARGS__)
+	#define LOG_WARN_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Warning, tag, __VA_ARGS__)
+	#define LOG_ERROR_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Error, tag, __VA_ARGS__)
+	#define LOG_FATAL_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Fatal, tag, __VA_ARGS__)
+
+	#define LOG_ASSERT(failurePrefix, ...) QE::Log::PrintAssertMessage(QE::s_ClientLoggerName, failurePrefix, __VA_ARGS__)
 #endif
 
 namespace QE
@@ -27,32 +57,24 @@ namespace QE
 			Trace = 0, Debug, Info, Warning, Error, Fatal
 		};
 
-		static Log& Get()
-		{
-			static Log instance;
-			return instance;
-		}
+		static void Init();
 
-		void AddLogger(const std::string_view loggerName);
-		void AddLogger(const std::string_view loggerName, std::shared_ptr<spdlog::logger> logger);
-		std::shared_ptr<spdlog::logger> GetLogger(const std::string_view loggerName);
-		spdlog::logger* _GetLoggerAsPointer(const std::string_view loggerName);
+		static void AddLogger(const std::string_view loggerName);
+		static void AddLogger(const std::string_view loggerName, std::shared_ptr<spdlog::logger> logger);
+		static std::shared_ptr<spdlog::logger> GetLogger(const std::string_view loggerName);
+		static spdlog::logger* _GetLoggerAsPointer(const std::string_view loggerName);
 
-		void SetLoggerLevel(const std::string_view loggerName, const Level level);
+		static void SetLoggerLevel(const std::string_view loggerName, const Level level);
 
 		template<typename... Args>
-		constexpr void PrintMessage(const std::string_view loggerName, const Log::Level level, fmt::format_string<Args...> format, Args&&... args);
+		static constexpr void PrintMessage(const std::string_view loggerName, const Log::Level level, fmt::format_string<Args...> format, Args&&... args);
 		template<typename... Args>
-		constexpr void PrintMessageTag(const std::string_view loggerName, const Log::Level level, const std::string_view tag, fmt::format_string<Args...> format, Args&&... args);
+		static constexpr void PrintMessageTag(const std::string_view loggerName, const Log::Level level, const std::string_view tag, fmt::format_string<Args...> format, Args&&... args);
 		template<typename... Args>
-		constexpr void PrintAssertMessage(const std::string_view loggerName, const std::string_view failurePrefix, fmt::format_string<Args...> format, Args&&... args);
+		static constexpr void PrintAssertMessage(const std::string_view loggerName, const std::string_view failurePrefix, fmt::format_string<Args...> format, Args&&... args);
 
 	private:
-		Log();
-		Log(const Log&) = delete;
-		Log& operator=(const Log&) = delete;
-
-		std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> m_Loggers;
+		static std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> s_Loggers;
 	};
 
 	template<typename ...Args>

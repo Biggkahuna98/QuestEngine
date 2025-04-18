@@ -5,13 +5,16 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
+std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> QE::Log::s_Loggers;
+std::string QE::s_ClientLoggerName = "Application";
 
 namespace QE
 {
 	// Create a default engine logger that is guaranteed to exist
-	Log::Log()
+	void Log::Init()
 	{
 		AddLogger("Engine");
+		AddLogger(s_ClientLoggerName);
 	}
 
 	void Log::AddLogger(const std::string_view loggerName)
@@ -36,27 +39,27 @@ namespace QE
 
 	void Log::AddLogger(const std::string_view loggerName, std::shared_ptr<spdlog::logger> logger)
 	{
-		m_Loggers.emplace(loggerName, logger);
+		s_Loggers.emplace(loggerName, logger);
 	}
 
 	std::shared_ptr<spdlog::logger> Log::GetLogger(const std::string_view loggerName)
 	{
-		auto it = m_Loggers.find(std::string(loggerName));
-		if (it != m_Loggers.end())
+		auto it = s_Loggers.find(std::string(loggerName));
+		if (it != s_Loggers.end())
 		{
 			return it->second;
 		}
-		return m_Loggers["Engine"];
+		return s_Loggers["Engine"];
 	}
 
 	spdlog::logger* Log::_GetLoggerAsPointer(const std::string_view loggerName)
 	{
-		auto it = m_Loggers.find(std::string(loggerName));
-		if (it != m_Loggers.end())
+		auto it = s_Loggers.find(std::string(loggerName));
+		if (it != s_Loggers.end())
 		{
 			return it->second.get();
 		}
-		return m_Loggers["Engine"].get();
+		return s_Loggers["Engine"].get();
 	}
 
 	void Log::SetLoggerLevel(const std::string_view loggerName, const Level level)

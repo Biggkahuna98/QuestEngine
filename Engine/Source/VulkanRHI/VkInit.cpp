@@ -23,7 +23,7 @@ namespace VkInit
 	{
 		static VKAPI_ATTR VkBool32 VKAPI_CALL s_VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 		{
-			LOG(Debug, "[{}: {}] {}", string_VkDebugUtilsMessageSeverityFlagBitsEXT(messageSeverity), string_VkDebugUtilsMessageTypeFlagsEXT(messageType), pCallbackData->pMessage);
+			LOG_DEBUG("[{}: {}] {}", string_VkDebugUtilsMessageSeverityFlagBitsEXT(messageSeverity), string_VkDebugUtilsMessageTypeFlagsEXT(messageType), pCallbackData->pMessage);
 
 			return VK_FALSE;
 		}
@@ -192,11 +192,11 @@ namespace VkInit
 		{
 			std::string filename_ = QE_RESOURCES_FOLDER;
 			filename_.append("ShaderCache/").append(filename);
-			LOG_TAG(Debug, "VkInit", "Shader - {}: path: {}", filename, filename_);
+			LOG_DEBUG_TAG("VkInit", "Shader - {}: path: {}", filename, filename_);
 
 			if (!std::filesystem::exists(filename_))
 			{
-				LOG_TAG(Debug, "VkInit", "File does not exist: {}", filename_);
+				LOG_DEBUG_TAG("VkInit", "File does not exist: {}", filename_);
 				return std::vector<char>();
 			}
 
@@ -287,7 +287,7 @@ namespace VkInit
 	{
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(*instance, &deviceCount, nullptr);
-		LOG(Debug, "Physical Devices detected: {}", deviceCount);
+		LOG_DEBUG("Physical Devices detected: {}", deviceCount);
 
 		if (deviceCount == 0)
 		{
@@ -314,7 +314,7 @@ namespace VkInit
 			throw std::runtime_error("Failed to find a suitable GPU");
 		}
 
-		LOG(Debug, "Device Chosen: {}", GetPhysicalDeviceName((*physicalDevice)));
+		LOG_DEBUG("Device Chosen: {}", GetPhysicalDeviceName((*physicalDevice)));
 	}
 
 	void CreateLogicalDevice(VkPhysicalDevice* physicalDevice, VkSurfaceKHR* surface, VkQueue* graphicsQueue, VkQueue* presentQueue, VkDevice* device)
@@ -564,11 +564,11 @@ namespace VkInit
 		VkPhysicalDeviceProperties deviceProps;
 		vkGetPhysicalDeviceProperties(physicalDevice, &deviceProps);
 		
-		LOG(Debug, "Device Name: {}", deviceProps.deviceName);
-		LOG(Debug, "\tAPI Version: {}", deviceProps.apiVersion);
-		LOG(Debug, "\tDriver Version: {}", deviceProps.driverVersion);
-		LOG(Debug, "\tVendor ID: {}", deviceProps.vendorID);
-		LOG(Debug, "\tDevice Type: {}", string_VkPhysicalDeviceType(deviceProps.deviceType));
+		LOG_DEBUG("Device Name: {}", deviceProps.deviceName);
+		LOG_DEBUG("\tAPI Version: {}", deviceProps.apiVersion);
+		LOG_DEBUG("\tDriver Version: {}", deviceProps.driverVersion);
+		LOG_DEBUG("\tVendor ID: {}", deviceProps.vendorID);
+		LOG_DEBUG("\tDevice Type: {}", string_VkPhysicalDeviceType(deviceProps.deviceType));
 	}
 
 	VkShaderModule CreateShaderModule(VkDevice* device, const std::vector<char>& shaderCode)

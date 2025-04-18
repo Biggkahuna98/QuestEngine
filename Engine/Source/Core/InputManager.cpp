@@ -78,7 +78,7 @@ namespace QE
 		auto& keyData = m_KeyData[key];
 		keyData.OldState = keyData.State;
 		keyData.State = newState;
-		LOG_TAG(Debug, "Input", "[{}]: {} is {}", m_WindowName, static_cast<char>(key), GetKeyStateString(newState));
+		LOG_DEBUG_TAG("Input", "[{}]: {} is {}", m_WindowName, static_cast<char>(key), GetKeyStateString(newState));
 	}
 
 	void InputManager::UpdateMouseButtonState(MouseCode mouse, KeyState newState)
@@ -86,7 +86,7 @@ namespace QE
 		auto& mouseData = m_MouseData[mouse];
 		mouseData.OldState = mouseData.State;
 		mouseData.State = newState;
-		LOG_TAG(Debug, "Input", "[{}]: {} is {}", m_WindowName, GetMouseButtonStringFromCode(mouse), GetKeyStateString(newState));
+		LOG_DEBUG_TAG("Input", "[{}]: {} is {}", m_WindowName, GetMouseButtonStringFromCode(mouse), GetKeyStateString(newState));
 	}
 
 	void InputManager::UpdateMousePosition(double x, double y)

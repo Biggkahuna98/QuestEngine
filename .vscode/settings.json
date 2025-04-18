@@ -88,6 +88,12 @@
         "xloctime": "cpp",
         "xmemory": "cpp",
         "xtr1common": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "future": "cpp",
+        "latch": "cpp",
+        "numbers": "cpp",
+        "ranges": "cpp",
+        "shared_mutex": "cpp",
+        "stdfloat": "cpp"
     },
 }

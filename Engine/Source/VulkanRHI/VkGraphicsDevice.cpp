@@ -26,15 +26,15 @@ namespace QE
 		// Initialize Vulkan and all needed resources
 		// Setup the instance
 		VkInit::CreateInstance(&m_VkInstance);
-		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan Instance created");
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan Instance created");
 
 		// Print extension count
-		LOG_TAG(Debug, "VkGraphicsDevice", "{} Vulkan extensions supported", VkInit::GetVulkanExtensionCount());
+		LOG_DEBUG_TAG("VkGraphicsDevice", "{} Vulkan extensions supported", VkInit::GetVulkanExtensionCount());
 		// Print supported extensions
 		std::vector<VkExtensionProperties> extensions = VkInit::GetSupportedExtensions();
 		for (const auto& extension : extensions)
 		{
-			LOG_TAG(Debug, "VkGraphicsDevice", "\t{}", extension.extensionName);
+			LOG_DEBUG_TAG("VkGraphicsDevice", "\t{}", extension.extensionName);
 		}
 
 		// Setup debug messenger
@@ -47,15 +47,15 @@ namespace QE
 		// Setup the surface
 		// Only using GLFW for now, change this later to detect window backend later if needed
 		glfwCreateWindowSurface(m_VkInstance, static_cast<GLFWwindow*>(window->GetNativeWindow()), nullptr, &m_VkSurface);
-		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan surface created and linked to GLFWwindow");
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan surface created and linked to GLFWwindow");
 
 		// Pick a GPU
 		VkInit::PickPhysicalDevice(&m_VkInstance, &m_VkSurface, &m_VkPhysicalDevice);
-		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan device created");
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan device created");
 
 		// Logical device creation
 		VkInit::CreateLogicalDevice(&m_VkPhysicalDevice, &m_VkSurface, &m_VkGraphicsQueue, &m_VkPresentQueue, &m_VkDevice);
-		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan physical device created");
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan physical device created");
 
 		// Swapchain
 		CreateSwapchain(m_VkWindowExtent.width, m_VkWindowExtent.height);
@@ -92,7 +92,7 @@ namespace QE
 
 	void VkGraphicsDevice::UpdateWindowSize(uint32_t width, uint32_t height)
 	{
-		LOG_TAG(Debug, "VkGraphicsDevice", "Updating window size: {0}x{1}", width, height);
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Updating window size: {0}x{1}", width, height);
 		m_VkWindowExtent = { width, height };
 		RecreateSwapchain();
 	}
@@ -109,15 +109,15 @@ namespace QE
 
 	void VkGraphicsDevice::CreateSwapchain(uint32_t width, uint32_t height)
 	{
-		LOG_TAG(Debug, "VkGraphicsDevice", "Creating Vulkan swapchain");
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Creating Vulkan swapchain");
 		VkInit::CreateSwapchain(&m_VkPhysicalDevice, &m_VkDevice, &m_VkSurface, &m_VkWindowExtent, &m_VkSwapchainImages, &m_VkSwapchainImageViews, &m_VkSwapchainImageFormat, &m_VkSwapchainExtent, &m_VkSwapchain);
 		VkInit::CreateSwapchainImageViews(&m_VkDevice, &m_VkSwapchainImages, m_VkSwapchainImageFormat, &m_VkSwapchainImageViews);
-		LOG_TAG(Debug, "VkGraphicsDevice", "Vulkan Swapchain and views created");
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan Swapchain and views created");
 	}
 
 	void VkGraphicsDevice::RecreateSwapchain()
 	{
-		LOG_TAG(Debug, "VkGraphicsDevice", "Recreating Vulkan Swapchain");
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Recreating Vulkan Swapchain");
 		WaitForDeviceIdle();
 
 		DestroySwapchain();
