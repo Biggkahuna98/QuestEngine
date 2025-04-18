@@ -79,18 +79,7 @@ add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/spdlog ThirdParty/spdlog)
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/assimp ThirdParty/assimp)
-#set(ASSIMP_BUILD_SHARED_LIBS OFF)
-#set(ASSIMP_NO_EXPORT ON)
-
-# Visual studio subfolder for 3rd party lib projects
-set_target_properties(glm PROPERTIES FOLDER "ThirdParty")
-set_target_properties(glfw PROPERTIES FOLDER "ThirdParty")
-set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
-set_target_properties(assimp PROPERTIES FOLDER "ThirdParty")
-# figure out what these are later
-#set_target_properties(unit PROPERTIES FOLDER "ThirdParty")
-set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER "ThirdParty")
-set_target_properties(zlibstatic PROPERTIES FOLDER "ThirdParty")
+add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glaze ThirdParty/glaze)
 
 # Set vendor includes
 set(VENDOR_INCLUDES
@@ -100,11 +89,12 @@ set(VENDOR_INCLUDES
 	${THIRD_PARTY_ENGINE_DIR}/spdlog/include
 	${THIRD_PARTY_ENGINE_DIR}/assimp/include
 	${THIRD_PARTY_ENGINE_DIR}/stb
+	${THIRD_PARTY_ENGINE_DIR}/glaze/include
 )
 
 # Link private includes
 target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw spdlog assimp)
-target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog)
+target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze)
 
 # Include vendor includes
 target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})
