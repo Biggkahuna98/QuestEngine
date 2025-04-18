@@ -9,4 +9,4 @@ QuestEngine is a WIP 2D/3D game engine built in C++.
 - [imgui](https://github.com/ocornut/imgui) - Fast UI library
 - [stb](https://github.com/nothings/stb) - stb_image for texture loading
 - [assimp](https://github.com/assimp/assimp) - Mesh loading
-- [vk-bootstrap](https://github.com/charles-lunarg/vk-bootstrap) - Bootstrapping Vulkan to provide an easier initialization
+- [glaze](https://github.com/stephenberry/glaze) - JSON serialization library
