@@ -408,7 +408,7 @@ namespace VkInit
 		return physicalDevice;
 	}
 
-	VkDevice CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue graphicsQueue, VkQueue presentQueue)
+	VkDevice CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue* graphicsQueue, VkQueue* presentQueue)
 	{
 		QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, surface);
 
@@ -441,7 +441,14 @@ namespace VkInit
 
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(s_DeviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = s_DeviceExtensions.data();
-		LOG_WARN_TAG("VkInit", "Device extensions size: {}", s_DeviceExtensions.size());
+
+		VkPhysicalDeviceSynchronization2Features sync2Features = {};
+		sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+		sync2Features.pNext = nullptr;
+		sync2Features.synchronization2 = VK_TRUE;
+
+		createInfo.pNext = &sync2Features;
+		
 		VkDevice device = VK_NULL_HANDLE;
 
 		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
@@ -449,8 +456,8 @@ namespace VkInit
 			throw std::runtime_error("Failed to create logical device");
 		}
 
-		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, graphicsQueue);
+		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, presentQueue);
 
 		return device;
 	}

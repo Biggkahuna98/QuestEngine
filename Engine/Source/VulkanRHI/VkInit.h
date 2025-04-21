@@ -52,7 +52,7 @@ namespace VkInit
 	VkInstance CreateInstance();
 	VkDebugUtilsMessengerEXT CreateDebugMessenger(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT createInfo);
 	VkPhysicalDevice PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
-	VkDevice CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue graphicsQueue, VkQueue presentQueue);
+	VkDevice CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue* graphicsQueue, VkQueue* presentQueue);
 	VkSwapchainKHR CreateSwapchain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowSize, 
 		std::vector<VkImage>* swapchainImages, VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent);
 	void CreateSwapchainImageViews(VkDevice device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews);

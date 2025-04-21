@@ -52,7 +52,7 @@ namespace QE
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan device created");
 
 		// Logical device creation
-		m_Device = VkInit::CreateLogicalDevice(m_PhysicalDevice, m_Surface, m_GraphicsQueue, m_PresentQueue);
+		m_Device = VkInit::CreateLogicalDevice(m_PhysicalDevice, m_Surface, &m_GraphicsQueue, &m_PresentQueue);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan physical device created");
 
 		// Set the queue family indices
@@ -66,7 +66,7 @@ namespace QE
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan command pools and buffers created");
 
 		// Graphics pipeline
-		VkInit::CreateGraphicsPipeline(m_Device, &m_PipelineLayout);
+		//VkInit::CreateGraphicsPipeline(m_Device, &m_PipelineLayout);
 	}
 
 	VkGraphicsDevice::~VkGraphicsDevice()
@@ -83,7 +83,7 @@ namespace QE
 		}
 
 		// Cleanup all resources
-		vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+		//vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
 
 		DestroySwapchain();
 
@@ -97,6 +97,7 @@ namespace QE
 
 	void VkGraphicsDevice::BeginFrame()
 	{
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Beginning frame: {0}", m_CurrentFrameNumber);
 		// Wait for the previous frame to finish
 		vkWaitForFences(m_Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
 		vkResetFences(m_Device, 1, &GetCurrentFrameData().RenderFence);
@@ -117,13 +118,14 @@ namespace QE
 
 	void VkGraphicsDevice::EndFrame()
 	{
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Ending frame: {0}", m_CurrentFrameNumber);
 		// Come back to the last 2 args
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
 		// Set clear color
 		VkClearColorValue clearColor;
-		float flash = std::abs(std::sin(m_CurrentFrameNumber / 120.f));
-		clearColor = { { 0.0f, 0.0f, flash, 1.0f } };
+		float flash = std::abs(std::sin(m_CurrentFrameNumber / 360.f));
+		clearColor = { { flash/2, flash*3, flash, 1.0f } };
 
 		VkImageSubresourceRange clearRange = VkInit::GetImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -139,6 +141,8 @@ namespace QE
 			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to end command buffer recording");
 		}
 
+		
+
 		// Submit command buffer to the graphics queue
 		VkCommandBufferSubmitInfo cmdSubmitInfo = VkInit::BuildCommandBufferSubmitInfo(GetCurrentFrameData().CommandBuffer);
 
@@ -146,15 +150,19 @@ namespace QE
 		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrameData().RenderSemaphore);	
 	
 		VkSubmitInfo2 submitInfo = VkInit::BuildSubmitInfo2(&cmdSubmitInfo, &signalInfo, &waitInfo);
-
+		LOG_DEBUG_TAG("VkGraphicsDevice", "FIND ME PLZ");
 		if (vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, GetCurrentFrameData().RenderFence) != VK_SUCCESS)
 		{
 			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to submit command buffer to the graphics queue");
+			throw std::runtime_error("Failed to submit command buffer to the graphics queue");
 		}
+
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Command buffer submitted to the graphics queue");
 	}
 
 	void VkGraphicsDevice::PresentFrame()
 	{
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Presenting frame: {0}", m_CurrentFrameNumber);
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
