@@ -3,6 +3,8 @@
 
 #include "VkInit.h"
 
+#define VMA_IMPLEMENTATION
+#include <vma/vk_mem_alloc.h>
 #include "GLFW/glfw3.h"
 
 #include "VKGraphicsContext.h"
@@ -67,6 +69,18 @@ namespace QE
 
 		// Graphics pipeline
 		//VkInit::CreateGraphicsPipeline(m_Device, &m_PipelineLayout);
+
+		// VMA Allocator
+		VmaAllocatorCreateInfo allocatorInfo = {};
+		allocatorInfo.physicalDevice = m_PhysicalDevice;
+		allocatorInfo.device = m_Device;
+		allocatorInfo.instance = m_Instance;
+		allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+		vmaCreateAllocator(&allocatorInfo, &m_Allocator);
+
+		m_CleanupQueue.PushFunction([&]() {
+			vmaDestroyAllocator(m_Allocator);
+		});
 	}
 
 	VkGraphicsDevice::~VkGraphicsDevice()
@@ -81,6 +95,9 @@ namespace QE
 			vkDestroySemaphore(m_Device, m_FrameData[i].RenderSemaphore, nullptr);
 			vkDestroySemaphore(m_Device, m_FrameData[i].SwapchainSemaphore, nullptr);
 		}
+
+		// Flush global lifetime deletion queue
+		m_CleanupQueue.Flush();
 
 		// Cleanup all resources
 		//vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
@@ -101,6 +118,9 @@ namespace QE
 		// Wait for the previous frame to finish
 		vkWaitForFences(m_Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
 		vkResetFences(m_Device, 1, &GetCurrentFrameData().RenderFence);
+
+		// See if there is a better place later
+		GetCurrentFrameData().CleanupQueue.Flush();
 
 		// Request the image from the swapchain
 		vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
@@ -141,8 +161,6 @@ namespace QE
 			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to end command buffer recording");
 		}
 
-		
-
 		// Submit command buffer to the graphics queue
 		VkCommandBufferSubmitInfo cmdSubmitInfo = VkInit::BuildCommandBufferSubmitInfo(GetCurrentFrameData().CommandBuffer);
 
@@ -150,7 +168,6 @@ namespace QE
 		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrameData().RenderSemaphore);	
 	
 		VkSubmitInfo2 submitInfo = VkInit::BuildSubmitInfo2(&cmdSubmitInfo, &signalInfo, &waitInfo);
-		LOG_DEBUG_TAG("VkGraphicsDevice", "FIND ME PLZ");
 		if (vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, GetCurrentFrameData().RenderFence) != VK_SUCCESS)
 		{
 			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to submit command buffer to the graphics queue");

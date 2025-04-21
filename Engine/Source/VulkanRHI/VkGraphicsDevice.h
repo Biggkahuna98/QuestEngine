@@ -4,7 +4,10 @@
 #include <cstdint>
 
 #include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 #include "VkInit.h"
+
+#include "Core/DeletionQueue.h"
 
 namespace QE
 {
@@ -16,6 +19,8 @@ namespace QE
 		VkSemaphore SwapchainSemaphore;
 		VkSemaphore RenderSemaphore;
 		VkFence RenderFence;
+
+		DeletionQueue CleanupQueue;
 	};
 
 	constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 2;
@@ -69,6 +74,9 @@ namespace QE
 		// Frame data
 		FrameData m_FrameData[MAX_FRAMES_IN_FLIGHT];
 		uint32_t m_CurrentFrameNumber = 0;
+
+		VmaAllocator m_Allocator;
+		DeletionQueue m_CleanupQueue;
 
 		// Initialize Vulkan Resources
 		void CreateSwapchain(VkExtent2D windowExtent);
