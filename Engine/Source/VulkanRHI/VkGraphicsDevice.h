@@ -12,6 +12,10 @@ namespace QE
 	{
 		VkCommandPool CommandPool;
 		VkCommandBuffer CommandBuffer;
+
+		VkSemaphore SwapchainSemaphore;
+		VkSemaphore RenderSemaphore;
+		VkFence RenderFence;
 	};
 
 	constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 2;
@@ -38,7 +42,7 @@ namespace QE
 		VkQueue GetVkGraphicsQueue() const { return m_GraphicsQueue; }
 		VkSurfaceKHR GetVkSurface() const { return m_Surface; }
 
-		int GetCurrentFrameNumber() const { return m_CurrentFrameNumber; }
+		uint32_t GetCurrentFrameNumber() const { return m_CurrentFrameNumber; }
 		FrameData& GetCurrentFrameData();
 	private:
 		VkInstance m_Instance;
@@ -58,12 +62,13 @@ namespace QE
 		VkFormat m_SwapchainImageFormat;
 		std::vector<VkImage> m_SwapchainImages;
 		std::vector<VkImageView> m_SwapchainImageViews;
+		uint32_t m_CurrentSwapchainImageIndex;
 
 		VkPipelineLayout m_PipelineLayout;
 
 		// Frame data
 		FrameData m_FrameData[MAX_FRAMES_IN_FLIGHT];
-		int m_CurrentFrameNumber = 0;
+		uint32_t m_CurrentFrameNumber = 0;
 
 		// Initialize Vulkan Resources
 		void CreateSwapchain(VkExtent2D windowExtent);

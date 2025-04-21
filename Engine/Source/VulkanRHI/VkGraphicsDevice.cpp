@@ -27,7 +27,7 @@ namespace QE
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan Instance created");
 
 		// Print extension count
-		LOG_DEBUG_TAG("VkGraphicsDevice", "{} Vulkan extensions supported", VkInit::GetVulkanExtensionCount());
+		LOG_DEBUG_TAG("VkGraphicsDevice", "{} Vulkan Instance extensions supported", VkInit::GetVulkanExtensionCount());
 		// Print supported extensions
 		std::vector<VkExtensionProperties> extensions = VkInit::GetSupportedExtensions();
 		for (const auto& extension : extensions)
@@ -76,6 +76,10 @@ namespace QE
 		{
 			vkFreeCommandBuffers(m_Device, m_FrameData[i].CommandPool, 1, &m_FrameData[i].CommandBuffer);
 			vkDestroyCommandPool(m_Device, m_FrameData[i].CommandPool, nullptr);
+
+			vkDestroyFence(m_Device, m_FrameData[i].RenderFence, nullptr);
+			vkDestroySemaphore(m_Device, m_FrameData[i].RenderSemaphore, nullptr);
+			vkDestroySemaphore(m_Device, m_FrameData[i].SwapchainSemaphore, nullptr);
 		}
 
 		// Cleanup all resources
@@ -93,14 +97,82 @@ namespace QE
 
 	void VkGraphicsDevice::BeginFrame()
 	{
+		// Wait for the previous frame to finish
+		vkWaitForFences(m_Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
+		vkResetFences(m_Device, 1, &GetCurrentFrameData().RenderFence);
+
+		// Request the image from the swapchain
+		vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
+
+		// Reset command buffer
+		vkResetCommandBuffer(GetCurrentFrameData().CommandBuffer, 0);
+
+		// Begin the buffer for recording
+		VkCommandBufferBeginInfo beginInfo = VkInit::BuildCommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		if (vkBeginCommandBuffer(GetCurrentFrameData().CommandBuffer, &beginInfo) != VK_SUCCESS)
+		{
+			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to begin command buffer recording");
+		}
 	}
 
 	void VkGraphicsDevice::EndFrame()
 	{
+		// Come back to the last 2 args
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+		// Set clear color
+		VkClearColorValue clearColor;
+		float flash = std::abs(std::sin(m_CurrentFrameNumber / 120.f));
+		clearColor = { { 0.0f, 0.0f, flash, 1.0f } };
+
+		VkImageSubresourceRange clearRange = VkInit::GetImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+
+		// Clear image
+		vkCmdClearColorImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_GENERAL, &clearColor, 1, &clearRange);
+
+		// Make swapchain image into presentable state
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+		// End command buffer recording
+		if (vkEndCommandBuffer(GetCurrentFrameData().CommandBuffer) != VK_SUCCESS)
+		{
+			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to end command buffer recording");
+		}
+
+		// Submit command buffer to the graphics queue
+		VkCommandBufferSubmitInfo cmdSubmitInfo = VkInit::BuildCommandBufferSubmitInfo(GetCurrentFrameData().CommandBuffer);
+
+		VkSemaphoreSubmitInfo waitInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,GetCurrentFrameData().SwapchainSemaphore);
+		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrameData().RenderSemaphore);	
+	
+		VkSubmitInfo2 submitInfo = VkInit::BuildSubmitInfo2(&cmdSubmitInfo, &signalInfo, &waitInfo);
+
+		if (vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, GetCurrentFrameData().RenderFence) != VK_SUCCESS)
+		{
+			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to submit command buffer to the graphics queue");
+		}
 	}
 
 	void VkGraphicsDevice::PresentFrame()
 	{
+		VkPresentInfoKHR presentInfo = {};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.pNext = nullptr;
+		presentInfo.pSwapchains = &m_Swapchain;
+		presentInfo.swapchainCount = 1;
+
+		presentInfo.pWaitSemaphores = &GetCurrentFrameData().SwapchainSemaphore;
+		presentInfo.waitSemaphoreCount = 1;
+
+		presentInfo.pImageIndices = &m_CurrentSwapchainImageIndex;
+
+		// Change to present queue later
+		if (vkQueuePresentKHR(m_GraphicsQueue, &presentInfo) != VK_SUCCESS)
+		{
+			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to present swapchain image");
+		}
+
+		m_CurrentFrameNumber++;
 	}
 
 	void VkGraphicsDevice::UpdateWindowSize(uint32_t width, uint32_t height)
@@ -158,8 +230,16 @@ namespace QE
 	{
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			m_FrameData[i].CommandPool = VkInit::CreateCommandPool(m_Device, m_QueueFamilyIndices.graphicsFamily.value());
+			// Command pools and buffers
+			m_FrameData[i].CommandPool = VkInit::CreateCommandPool(m_Device, m_QueueFamilyIndices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 			m_FrameData[i].CommandBuffer = VkInit::CreateCommandBuffer(m_Device, m_FrameData[i].CommandPool);
+
+			// Semaphores
+			m_FrameData[i].SwapchainSemaphore = VkInit::CreateSemaphore(m_Device);
+			m_FrameData[i].RenderSemaphore = VkInit::CreateSemaphore(m_Device);
+
+			// Fences
+			m_FrameData[i].RenderFence = VkInit::CreateFence(m_Device, VK_FENCE_CREATE_SIGNALED_BIT);
 		}
 	}
 }

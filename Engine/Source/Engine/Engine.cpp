@@ -45,12 +45,16 @@ namespace QE
 			{
 				m_Running = false;
 			}
+
+			m_GraphicsDevice->BeginFrame();
+			m_GraphicsDevice->EndFrame();
+			m_GraphicsDevice->PresentFrame();
 		}
 	}
 
 	void Engine::SetWindowShouldClose(bool shouldClose)
 	{
-		m_Running = false;
+		m_Running = shouldClose;
 	}
 
 	Window& Engine::GetWindow()

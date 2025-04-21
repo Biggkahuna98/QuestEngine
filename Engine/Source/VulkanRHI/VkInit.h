@@ -41,6 +41,12 @@ namespace VkInit
 	VkDebugUtilsMessengerCreateInfoEXT BuildDebugMessengerCreateInfo();
 	VkCommandPoolCreateInfo BuildCommandPoolCreateInfo(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
 	VkCommandBufferAllocateInfo BuildCommandBufferAllocateInfo(VkCommandPool commandPool, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY, uint32_t commandBufferCount = 1);
+	VkFenceCreateInfo BuildFenceCreateInfo(VkFenceCreateFlags flags = 0);
+	VkSemaphoreCreateInfo BuildSemaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0);
+	VkSemaphoreSubmitInfo BuildSemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
+	VkCommandBufferBeginInfo BuildCommandBufferBeginInfo(VkCommandBufferUsageFlags flags = 0);
+	VkCommandBufferSubmitInfo BuildCommandBufferSubmitInfo(VkCommandBuffer commandBuffer);
+	VkSubmitInfo2 BuildSubmitInfo2(VkCommandBufferSubmitInfo* cmdSubmitInfo, VkSemaphoreSubmitInfo* signalSemaphoreInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo);
 
 	// Vulkan initialization functions - use these in order
 	VkInstance CreateInstance();
@@ -52,8 +58,11 @@ namespace VkInit
 	void CreateSwapchainImageViews(VkDevice device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews);
 	void CreateGraphicsPipeline(VkDevice device, VkPipelineLayout* pipelineLayout);
 
-	VkCommandPool CreateCommandPool(VkDevice device, uint32_t queueFamilyIndex);
+	VkCommandPool CreateCommandPool(VkDevice device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
 	VkCommandBuffer CreateCommandBuffer(VkDevice device, VkCommandPool commandPool);
+
+	VkFence CreateFence(VkDevice device, VkFenceCreateFlags flags = 0);
+	VkSemaphore CreateSemaphore(VkDevice device, VkSemaphoreCreateFlags flags = 0);
 
 	// Extra helpers
 	uint32_t GetVulkanExtensionCount();
@@ -70,6 +79,9 @@ namespace VkInit
 
 	std::string GetPhysicalDeviceName(VkPhysicalDevice physicalDevice);
 	void LogPhysicalDeviceProperties(VkPhysicalDevice physicalDevice);
+
+	VkImageSubresourceRange GetImageSubresourceRange(VkImageAspectFlags aspectMask);
+	void TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 	VkShaderModule CreateShaderModule(VkDevice* device, const std::vector<char>& shaderCode);
 }

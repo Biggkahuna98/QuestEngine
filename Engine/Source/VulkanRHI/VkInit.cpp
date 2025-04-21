@@ -15,7 +15,14 @@ namespace VkInit
 	};
 
 	static const std::vector<const char*> s_DeviceExtensions = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		// 1.3 extensions
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+		VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+
+		// 1.2 extensions
+		VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+		VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
 	};
 
 	// Debug messenger
@@ -57,13 +64,31 @@ namespace VkInit
 		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
+		for (const auto& extension : s_DeviceExtensions)
+		{
+			LOG_WARN_TAG("VkInit", "Required device extension: {}", extension);
+		}
+
+		// for (const auto& extension : availableExtensions)
+		// {
+		// 	LOG_DEBUG_TAG("VkInit", "Device Extension: {}", extension.extensionName);
+		// }
+
 		std::set<std::string> requiredExtensions(s_DeviceExtensions.begin(), s_DeviceExtensions.end());
+		for (const auto& extension : requiredExtensions)
+		{
+			LOG_DEBUG_TAG("VkInit", "Selected required device extension: {}", extension);
+		}
 
 		for (const auto& extension : availableExtensions)
 		{
 			requiredExtensions.erase(extension.extensionName);
 		}
-
+		LOG_WARN_TAG("VkInit", "Required extension side {}", requiredExtensions.size());
+		for (const auto& extension : requiredExtensions)
+		{
+			LOG_DEBUG_TAG("VkInit", "Missing device extension: {}", extension);
+		}
 		return requiredExtensions.empty();
 	}
 
@@ -214,6 +239,78 @@ namespace VkInit
 
 		return commandBufferAllocateInfo;
 	}
+	
+	VkFenceCreateInfo BuildFenceCreateInfo(VkFenceCreateFlags flags)
+	{
+		VkFenceCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		info.pNext = nullptr;
+		info.flags = flags;
+
+		return info;
+	}
+
+	VkSemaphoreCreateInfo BuildSemaphoreCreateInfo(VkSemaphoreCreateFlags flags)
+	{
+		VkSemaphoreCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		info.pNext = nullptr;
+		info.flags = flags;
+
+		return info;
+	}
+
+	VkSemaphoreSubmitInfo BuildSemaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore)
+	{
+		VkSemaphoreSubmitInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+		info.pNext = nullptr;
+		info.stageMask = stageMask;
+		info.semaphore = semaphore;
+		info.deviceIndex = 0;
+		info.value = 1;
+
+		return info;
+	}
+
+	VkCommandBufferBeginInfo BuildCommandBufferBeginInfo(VkCommandBufferUsageFlags flags)
+	{
+		VkCommandBufferBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		info.pNext = nullptr;
+		info.flags = flags;
+
+		return info;
+	}
+
+	VkCommandBufferSubmitInfo BuildCommandBufferSubmitInfo(VkCommandBuffer commandBuffer)
+	{
+		VkCommandBufferSubmitInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+		info.pNext = nullptr;
+		info.commandBuffer = commandBuffer;
+		info.deviceMask = 0;
+
+		return info;
+	}
+
+	VkSubmitInfo2 BuildSubmitInfo2(VkCommandBufferSubmitInfo* cmdSubmitInfo, VkSemaphoreSubmitInfo* signalSemaphoreInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo)
+	{
+		VkSubmitInfo2 info = {};
+		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+		info.pNext = nullptr;
+	
+		info.waitSemaphoreInfoCount = waitSemaphoreInfo == nullptr ? 0 : 1;
+		info.pWaitSemaphoreInfos = waitSemaphoreInfo;
+	
+		info.signalSemaphoreInfoCount = signalSemaphoreInfo == nullptr ? 0 : 1;
+		info.pSignalSemaphoreInfos = signalSemaphoreInfo;
+	
+		info.commandBufferInfoCount = 1;
+		info.pCommandBufferInfos = cmdSubmitInfo;
+	
+		return info;
+	}
 
 	// Vulkan object builders
 	VkInstance CreateInstance()
@@ -224,7 +321,7 @@ namespace VkInit
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "Quest Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_4;
+		appInfo.apiVersion = VK_API_VERSION_1_3;
 
 		VkInstanceCreateInfo instanceCreateInfo{};
 		instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -344,7 +441,7 @@ namespace VkInit
 
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(s_DeviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = s_DeviceExtensions.data();
-
+		LOG_WARN_TAG("VkInit", "Device extensions size: {}", s_DeviceExtensions.size());
 		VkDevice device = VK_NULL_HANDLE;
 
 		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
@@ -372,6 +469,8 @@ namespace VkInit
 			imageCount = swapChainSupport.capabilities.maxImageCount;
 		}
 
+		// Change image usage back to VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+		//VK_IMAGE_USAGE_TRANSFER_DST_BIT
 		VkSwapchainCreateInfoKHR createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		createInfo.surface = surface;
@@ -381,7 +480,7 @@ namespace VkInit
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
 		createInfo.imageExtent = extent;
 		createInfo.imageArrayLayers = 1;
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 		QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, surface);
 		uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -538,11 +637,11 @@ namespace VkInit
     	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 	}
 
-	VkCommandPool CreateCommandPool(VkDevice device, uint32_t queueFamilyIndex)
+	VkCommandPool CreateCommandPool(VkDevice device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags)
 	{
 		//create a command pool for commands submitted to the graphics queue.
 		//we also want the pool to allow for resetting of individual command buffers
-		VkCommandPoolCreateInfo commandPoolInfo =  VkInit::BuildCommandPoolCreateInfo(queueFamilyIndex);
+		VkCommandPoolCreateInfo commandPoolInfo =  VkInit::BuildCommandPoolCreateInfo(queueFamilyIndex, flags);
 		
 		VkCommandPool commandPool = VK_NULL_HANDLE;
 		if(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &commandPool) != VK_SUCCESS)
@@ -564,6 +663,32 @@ namespace VkInit
 		}
 
 		return commandBuffer;
+	}
+
+	VkFence CreateFence(VkDevice device, VkFenceCreateFlags flags)
+	{
+		VkFenceCreateInfo fenceInfo = VkInit::BuildFenceCreateInfo(flags);
+
+		VkFence fence = VK_NULL_HANDLE;
+		if (vkCreateFence(device, &fenceInfo, nullptr, &fence) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create fence");
+		}
+
+		return fence;
+	}
+
+	VkSemaphore CreateSemaphore(VkDevice device, VkSemaphoreCreateFlags flags)
+	{
+		VkSemaphoreCreateInfo semaphoreInfo = VkInit::BuildSemaphoreCreateInfo(flags);
+
+		VkSemaphore semaphore = VK_NULL_HANDLE;
+		if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &semaphore) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create semaphore");
+		}
+
+		return semaphore;
 	}
 
 	// Extra helpers
@@ -700,6 +825,46 @@ namespace VkInit
 		LOG_DEBUG("\tDriver Version: {}", deviceProps.driverVersion);
 		LOG_DEBUG("\tVendor ID: {}", deviceProps.vendorID);
 		LOG_DEBUG("\tDevice Type: {}", string_VkPhysicalDeviceType(deviceProps.deviceType));
+	}
+
+	VkImageSubresourceRange GetImageSubresourceRange(VkImageAspectFlags aspectMask)
+	{
+		VkImageSubresourceRange subImage {};
+		subImage.aspectMask = aspectMask;
+		subImage.baseMipLevel = 0;
+		subImage.levelCount = VK_REMAINING_MIP_LEVELS;
+		subImage.baseArrayLayer = 0;
+		subImage.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+		return subImage;
+	}
+
+	void TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
+	{
+		VkImageMemoryBarrier2 imageBarrier = {};
+		imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+		imageBarrier.pNext = nullptr;
+
+		imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+		imageBarrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
+		imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+		imageBarrier.dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+
+		imageBarrier.oldLayout = oldLayout;
+		imageBarrier.newLayout = newLayout;
+
+		VkImageAspectFlags aspectMask = (newLayout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+		imageBarrier.subresourceRange = GetImageSubresourceRange(aspectMask);
+		imageBarrier.image = image;
+	
+		VkDependencyInfo depInfo {};
+		depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+		depInfo.pNext = nullptr;
+	
+		depInfo.imageMemoryBarrierCount = 1;
+		depInfo.pImageMemoryBarriers = &imageBarrier;
+	
+		vkCmdPipelineBarrier2(cmdBuffer, &depInfo);
 	}
 
 	VkShaderModule CreateShaderModule(VkDevice* device, const std::vector<char>& shaderCode)
