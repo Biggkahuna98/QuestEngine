@@ -18,14 +18,14 @@ namespace QE
 		int width, height;
 		glfwGetFramebufferSize(static_cast<GLFWwindow*>(window->GetNativeWindow()), &width, &height);
 
-		m_VkWindowExtent = {
+		m_WindowExtent = {
 			static_cast<uint32_t>(width),
 			static_cast<uint32_t>(height)
 		};
 
 		// Initialize Vulkan and all needed resources
 		// Setup the instance
-		VkInit::CreateInstance(&m_VkInstance);
+		m_Instance = VkInit::CreateInstance();
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan Instance created");
 
 		// Print extension count
@@ -41,27 +41,27 @@ namespace QE
 		if (VkInit::s_EnableValidationLayers)
 		{
 			auto debugMessengerCreateInfo = VkInit::BuildDebugMessengerCreateInfo();
-			VkInit::CreateDebugMessenger(&m_VkInstance, &debugMessengerCreateInfo, &m_VkDebugMessenger);
+			m_DebugMessenger = VkInit::CreateDebugMessenger(m_Instance, debugMessengerCreateInfo);
 		}
 
 		// Setup the surface
 		// Only using GLFW for now, change this later to detect window backend later if needed
-		glfwCreateWindowSurface(m_VkInstance, static_cast<GLFWwindow*>(window->GetNativeWindow()), nullptr, &m_VkSurface);
+		glfwCreateWindowSurface(m_Instance, static_cast<GLFWwindow*>(window->GetNativeWindow()), nullptr, &m_Surface);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan surface created and linked to GLFWwindow");
 
 		// Pick a GPU
-		VkInit::PickPhysicalDevice(&m_VkInstance, &m_VkSurface, &m_VkPhysicalDevice);
+		m_PhysicalDevice = VkInit::PickPhysicalDevice(m_Instance, m_Surface);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan device created");
 
 		// Logical device creation
-		VkInit::CreateLogicalDevice(&m_VkPhysicalDevice, &m_VkSurface, &m_VkGraphicsQueue, &m_VkPresentQueue, &m_VkDevice);
+		m_Device = VkInit::CreateLogicalDevice(m_PhysicalDevice, m_Surface, m_GraphicsQueue, m_PresentQueue);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan physical device created");
 
 		// Swapchain
-		CreateSwapchain(m_VkWindowExtent.width, m_VkWindowExtent.height);
+		CreateSwapchain(m_WindowExtent);
 
 		// Graphics pipeline
-		VkInit::CreateGraphicsPipeline(&m_VkDevice);
+		VkInit::CreateGraphicsPipeline(m_Device);
 	}
 
 	VkGraphicsDevice::~VkGraphicsDevice()
@@ -69,12 +69,12 @@ namespace QE
 		// Cleanup all resources
 		DestroySwapchain();
 
-		vkDestroySurfaceKHR(m_VkInstance, m_VkSurface, nullptr);
-		vkDestroyDevice(m_VkDevice, nullptr);
+		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
+		vkDestroyDevice(m_Device, nullptr);
 
 		if (VkInit::s_EnableValidationLayers)
-			VkInit::DestroyDebugMessenger(&m_VkInstance, &m_VkDebugMessenger);
-		vkDestroyInstance(m_VkInstance, nullptr);
+			VkInit::DestroyDebugMessenger(&m_Instance, &m_DebugMessenger);
+		vkDestroyInstance(m_Instance, nullptr);
 		
 	}
 
@@ -93,7 +93,7 @@ namespace QE
 	void VkGraphicsDevice::UpdateWindowSize(uint32_t width, uint32_t height)
 	{
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Updating window size: {0}x{1}", width, height);
-		m_VkWindowExtent = { width, height };
+		m_WindowExtent = { width, height };
 		RecreateSwapchain();
 	}
 
@@ -104,14 +104,14 @@ namespace QE
 
 	void VkGraphicsDevice::WaitForDeviceIdle()
 	{
-		vkDeviceWaitIdle(m_VkDevice);
+		vkDeviceWaitIdle(m_Device);
 	}
 
-	void VkGraphicsDevice::CreateSwapchain(uint32_t width, uint32_t height)
+	void VkGraphicsDevice::CreateSwapchain(VkExtent2D windowExtent)
 	{
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Creating Vulkan swapchain");
-		VkInit::CreateSwapchain(&m_VkPhysicalDevice, &m_VkDevice, &m_VkSurface, &m_VkWindowExtent, &m_VkSwapchainImages, &m_VkSwapchainImageViews, &m_VkSwapchainImageFormat, &m_VkSwapchainExtent, &m_VkSwapchain);
-		VkInit::CreateSwapchainImageViews(&m_VkDevice, &m_VkSwapchainImages, m_VkSwapchainImageFormat, &m_VkSwapchainImageViews);
+		m_Swapchain = VkInit::CreateSwapchain(m_PhysicalDevice, m_Device, m_Surface, windowExtent, &m_SwapchainImages, &m_SwapchainImageViews, &m_SwapchainImageFormat, &m_SwapchainExtent);
+		VkInit::CreateSwapchainImageViews(m_Device, &m_SwapchainImages, m_SwapchainImageFormat, &m_SwapchainImageViews);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan Swapchain and views created");
 	}
 
@@ -121,17 +121,17 @@ namespace QE
 		WaitForDeviceIdle();
 
 		DestroySwapchain();
-		CreateSwapchain(m_VkWindowExtent.width, m_VkWindowExtent.height);
+		CreateSwapchain(m_WindowExtent);
 	}
 
 	void VkGraphicsDevice::DestroySwapchain()
 	{
 		// Destroy swapchain resources
-		for (int i = 0; i < m_VkSwapchainImageViews.size(); i++)
+		for (int i = 0; i < m_SwapchainImageViews.size(); i++)
 		{
-			vkDestroyImageView(m_VkDevice, m_VkSwapchainImageViews[i], nullptr);
+			vkDestroyImageView(m_Device, m_SwapchainImageViews[i], nullptr);
 		}
 
-		vkDestroySwapchainKHR(m_VkDevice, m_VkSwapchain, nullptr);
+		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
 	}
 }

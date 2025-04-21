@@ -232,7 +232,7 @@ namespace VkInit
 	}
 
 	// Vulkan object builders
-	void CreateInstance(VkInstance* instance)
+	VkInstance CreateInstance()
 	{
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -269,24 +269,31 @@ namespace VkInit
 		if (s_EnableValidationLayers && !CheckValidationLayerSupport())
 			throw std::runtime_error("Validation layers requested, none available");
 
-		VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, instance);
+		VkInstance instance;
+		VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
 
 		if (result != VK_SUCCESS)
 			throw std::runtime_error("Failed to create Vulkan Instance");
+		
+		return instance;
 	}
 
-	void CreateDebugMessenger(VkInstance* instance, VkDebugUtilsMessengerCreateInfoEXT* createInfo, VkDebugUtilsMessengerEXT* messenger)
+	VkDebugUtilsMessengerEXT CreateDebugMessenger(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT createInfo)
 	{
-		if (CreateDebugUtilsMessengerEXT(*instance, createInfo, nullptr, messenger) != VK_SUCCESS)
+		VkDebugUtilsMessengerEXT messenger;
+
+		if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &messenger) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to set up debug messenger");
 		}
+
+		return messenger;
 	}
 
-	void PickPhysicalDevice(VkInstance* instance, VkSurfaceKHR* surface, VkPhysicalDevice* physicalDevice)
+	VkPhysicalDevice PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 	{
 		uint32_t deviceCount = 0;
-		vkEnumeratePhysicalDevices(*instance, &deviceCount, nullptr);
+		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 		LOG_DEBUG("Physical Devices detected: {}", deviceCount);
 
 		if (deviceCount == 0)
@@ -295,16 +302,17 @@ namespace VkInit
 		}
 
 		std::vector<VkPhysicalDevice> devices(deviceCount);
-		vkEnumeratePhysicalDevices(*instance, &deviceCount, devices.data());
+		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
+		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		bool isDeviceFound = false;
 		for (const auto& device : devices)
 		{
 			LogPhysicalDeviceProperties(device);
 
-			if (!isDeviceFound && IsPhysicalDeviceSuitable(device, *surface))
+			if (!isDeviceFound && IsPhysicalDeviceSuitable(device, surface))
 			{
-				*physicalDevice = device;
+				physicalDevice = device;
 				isDeviceFound = true;
 			}
 		}
@@ -314,12 +322,14 @@ namespace VkInit
 			throw std::runtime_error("Failed to find a suitable GPU");
 		}
 
-		LOG_DEBUG("Device Chosen: {}", GetPhysicalDeviceName((*physicalDevice)));
+		LOG_DEBUG("Device Chosen: {}", GetPhysicalDeviceName((physicalDevice)));
+
+		return physicalDevice;
 	}
 
-	void CreateLogicalDevice(VkPhysicalDevice* physicalDevice, VkSurfaceKHR* surface, VkQueue* graphicsQueue, VkQueue* presentQueue, VkDevice* device)
+	VkDevice CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue graphicsQueue, VkQueue presentQueue)
 	{
-		QueueFamilyIndices indices = FindQueueFamilies(*physicalDevice, *surface);
+		QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, surface);
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		std::set<uint32_t> uniqueQueueFamilies = {
@@ -351,22 +361,26 @@ namespace VkInit
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(s_DeviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = s_DeviceExtensions.data();
 
-		if (vkCreateDevice(*physicalDevice, &createInfo, nullptr, device) != VK_SUCCESS)
+		VkDevice device = VK_NULL_HANDLE;
+
+		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create logical device");
 		}
 
-		vkGetDeviceQueue(*device, indices.graphicsFamily.value(), 0, graphicsQueue);
-		vkGetDeviceQueue(*device, indices.presentFamily.value(), 0, presentQueue);
+		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+
+		return device;
 	}
 
-	void CreateSwapchain(VkPhysicalDevice* physicalDevice, VkDevice* device, VkSurfaceKHR* surface, VkExtent2D* windowSize, std::vector<VkImage>* swapchainImages, std::vector<VkImageView>* swapchainImageViews, VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent, VkSwapchainKHR* swapchain)
+	VkSwapchainKHR CreateSwapchain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowSize, std::vector<VkImage>* swapchainImages, std::vector<VkImageView>* swapchainImageViews, VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent)
 	{
-		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(*physicalDevice, *surface);
+		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(physicalDevice, surface);
 
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
 		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
-		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, *windowSize);
+		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, windowSize);
 
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
@@ -376,7 +390,7 @@ namespace VkInit
 
 		VkSwapchainCreateInfoKHR createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		createInfo.surface = *surface;
+		createInfo.surface = surface;
 
 		createInfo.minImageCount = imageCount;
 		createInfo.imageFormat = surfaceFormat.format;
@@ -385,7 +399,7 @@ namespace VkInit
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		QueueFamilyIndices indices = FindQueueFamilies(*physicalDevice, *surface);
+		QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, surface);
 		uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
 		if (indices.graphicsFamily != indices.presentFamily)
@@ -406,20 +420,24 @@ namespace VkInit
 
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-		if (vkCreateSwapchainKHR(*device, &createInfo, nullptr, swapchain) != VK_SUCCESS)
+		VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+
+		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create swap chain");
 		}
 
-		vkGetSwapchainImagesKHR(*device, *swapchain, &imageCount, nullptr);
+		vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
 		swapchainImages->resize(imageCount);
-		vkGetSwapchainImagesKHR(*device, *swapchain, &imageCount, swapchainImages->data());
+		vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages->data());
 
 		*swapchainImageFormat = surfaceFormat.format;
 		*swapchainExtent = extent;
+
+		return swapchain;
 	}
 
-	void CreateSwapchainImageViews(VkDevice* device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews)
+	void CreateSwapchainImageViews(VkDevice device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews)
 	{
 		swapchainImageViews->resize(swapchainImages->size());
 
@@ -439,20 +457,20 @@ namespace VkInit
 			createInfo.subresourceRange.levelCount = 1;
 			createInfo.subresourceRange.baseArrayLayer = 0;
 			createInfo.subresourceRange.layerCount = 1;
-			if (vkCreateImageView(*device, &createInfo, nullptr, &swapchainImageViews->at(i)) != VK_SUCCESS)
+			if (vkCreateImageView(device, &createInfo, nullptr, &swapchainImageViews->at(i)) != VK_SUCCESS)
 			{
 				throw std::runtime_error("Failed to create image views");
 			}
 		}
 	}
 
-	void CreateGraphicsPipeline(VkDevice* device)
+	void CreateGraphicsPipeline(VkDevice device)
 	{
 		auto vertShaderCode = ReadShaderFile("triangle-vert.spv");
 		auto fragShaderCode = ReadShaderFile("triangle-frag.spv");
 
-		VkShaderModule vertShaderModule = CreateShaderModule(device, vertShaderCode);
-		VkShaderModule fragShaderModule = CreateShaderModule(device, fragShaderCode);
+		VkShaderModule vertShaderModule = CreateShaderModule(&device, vertShaderCode);
+		VkShaderModule fragShaderModule = CreateShaderModule(&device, fragShaderCode);
 
 		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -468,8 +486,8 @@ namespace VkInit
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
-		vkDestroyShaderModule(*device, fragShaderModule, nullptr);
-    	vkDestroyShaderModule(*device, vertShaderModule, nullptr);
+		vkDestroyShaderModule(device, fragShaderModule, nullptr);
+    	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 	}
 
 	// Extra helpers

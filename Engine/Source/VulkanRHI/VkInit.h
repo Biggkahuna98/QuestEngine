@@ -41,15 +41,15 @@ namespace VkInit
 	VkDebugUtilsMessengerCreateInfoEXT BuildDebugMessengerCreateInfo();
 
 	// Vulkan initialization functions - use these in order
-	void CreateInstance(VkInstance* instance);
-	void CreateDebugMessenger(VkInstance* instance, VkDebugUtilsMessengerCreateInfoEXT* createInfo, VkDebugUtilsMessengerEXT* messenger);
-	void PickPhysicalDevice(VkInstance* instance, VkSurfaceKHR* surface, VkPhysicalDevice* physicalDevice);
-	void CreateLogicalDevice(VkPhysicalDevice* physicalDevice, VkSurfaceKHR* surface, VkQueue* graphicsQueue, VkQueue* presentQueue, VkDevice* device);
-	void CreateSwapchain(VkPhysicalDevice* physicalDevice, VkDevice* device, VkSurfaceKHR* surface, VkExtent2D* windowSize, 
+	VkInstance CreateInstance();
+	VkDebugUtilsMessengerEXT CreateDebugMessenger(VkInstance instance, VkDebugUtilsMessengerCreateInfoEXT createInfo);
+	VkPhysicalDevice PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
+	VkDevice CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue graphicsQueue, VkQueue presentQueue);
+	VkSwapchainKHR CreateSwapchain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowSize, 
 		std::vector<VkImage>* swapchainImages, std::vector<VkImageView>* swapchainImageViews, VkFormat* swapchainImageFormat,
-		VkExtent2D* swapchainExtent, VkSwapchainKHR* swapchain);
-	void CreateSwapchainImageViews(VkDevice* device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews);
-	void CreateGraphicsPipeline(VkDevice* device);
+		VkExtent2D* swapchainExtent);
+	void CreateSwapchainImageViews(VkDevice device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews);
+	void CreateGraphicsPipeline(VkDevice device);
 
 	// Extra helpers
 	uint32_t GetVulkanExtensionCount();
