@@ -7,8 +7,6 @@
 
 #include "VKGraphicsContext.h"
 
-constexpr bool enableValidationLayers = true;
-
 namespace QE
 {
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
@@ -57,16 +55,32 @@ namespace QE
 		m_Device = VkInit::CreateLogicalDevice(m_PhysicalDevice, m_Surface, m_GraphicsQueue, m_PresentQueue);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan physical device created");
 
+		// Set the queue family indices
+		m_QueueFamilyIndices = VkInit::FindQueueFamilies(m_PhysicalDevice, m_Surface);
+
 		// Swapchain
 		CreateSwapchain(m_WindowExtent);
 
+		// Command pools and buffers
+		InitializeFrameData();
+		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan command pools and buffers created");
+
 		// Graphics pipeline
-		VkInit::CreateGraphicsPipeline(m_Device);
+		VkInit::CreateGraphicsPipeline(m_Device, &m_PipelineLayout);
 	}
 
 	VkGraphicsDevice::~VkGraphicsDevice()
 	{
+		WaitForDeviceIdle();
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			vkFreeCommandBuffers(m_Device, m_FrameData[i].CommandPool, 1, &m_FrameData[i].CommandBuffer);
+			vkDestroyCommandPool(m_Device, m_FrameData[i].CommandPool, nullptr);
+		}
+
 		// Cleanup all resources
+		vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+
 		DestroySwapchain();
 
 		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
@@ -75,7 +89,6 @@ namespace QE
 		if (VkInit::s_EnableValidationLayers)
 			VkInit::DestroyDebugMessenger(&m_Instance, &m_DebugMessenger);
 		vkDestroyInstance(m_Instance, nullptr);
-		
 	}
 
 	void VkGraphicsDevice::BeginFrame()
@@ -107,10 +120,16 @@ namespace QE
 		vkDeviceWaitIdle(m_Device);
 	}
 
+	FrameData& VkGraphicsDevice::GetCurrentFrameData()
+	{
+		return m_FrameData[m_CurrentFrameNumber % MAX_FRAMES_IN_FLIGHT];
+	}
+
+	// PRIVATE FUNCTIONS
 	void VkGraphicsDevice::CreateSwapchain(VkExtent2D windowExtent)
 	{
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Creating Vulkan swapchain");
-		m_Swapchain = VkInit::CreateSwapchain(m_PhysicalDevice, m_Device, m_Surface, windowExtent, &m_SwapchainImages, &m_SwapchainImageViews, &m_SwapchainImageFormat, &m_SwapchainExtent);
+		m_Swapchain = VkInit::CreateSwapchain(m_PhysicalDevice, m_Device, m_Surface, windowExtent, &m_SwapchainImages, &m_SwapchainImageFormat, &m_SwapchainExtent);
 		VkInit::CreateSwapchainImageViews(m_Device, &m_SwapchainImages, m_SwapchainImageFormat, &m_SwapchainImageViews);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan Swapchain and views created");
 	}
@@ -133,5 +152,14 @@ namespace QE
 		}
 
 		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
+	}
+
+	void VkGraphicsDevice::InitializeFrameData()
+	{
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			m_FrameData[i].CommandPool = VkInit::CreateCommandPool(m_Device, m_QueueFamilyIndices.graphicsFamily.value());
+			m_FrameData[i].CommandBuffer = VkInit::CreateCommandBuffer(m_Device, m_FrameData[i].CommandPool);
+		}
 	}
 }

@@ -39,6 +39,8 @@ namespace VkInit
 
 	// Vulkan Create Info structs
 	VkDebugUtilsMessengerCreateInfoEXT BuildDebugMessengerCreateInfo();
+	VkCommandPoolCreateInfo BuildCommandPoolCreateInfo(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
+	VkCommandBufferAllocateInfo BuildCommandBufferAllocateInfo(VkCommandPool commandPool, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY, uint32_t commandBufferCount = 1);
 
 	// Vulkan initialization functions - use these in order
 	VkInstance CreateInstance();
@@ -46,10 +48,12 @@ namespace VkInit
 	VkPhysicalDevice PickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
 	VkDevice CreateLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue graphicsQueue, VkQueue presentQueue);
 	VkSwapchainKHR CreateSwapchain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowSize, 
-		std::vector<VkImage>* swapchainImages, std::vector<VkImageView>* swapchainImageViews, VkFormat* swapchainImageFormat,
-		VkExtent2D* swapchainExtent);
+		std::vector<VkImage>* swapchainImages, VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent);
 	void CreateSwapchainImageViews(VkDevice device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews);
-	void CreateGraphicsPipeline(VkDevice device);
+	void CreateGraphicsPipeline(VkDevice device, VkPipelineLayout* pipelineLayout);
+
+	VkCommandPool CreateCommandPool(VkDevice device, uint32_t queueFamilyIndex);
+	VkCommandBuffer CreateCommandBuffer(VkDevice device, VkCommandPool commandPool);
 
 	// Extra helpers
 	uint32_t GetVulkanExtensionCount();
@@ -61,6 +65,8 @@ namespace VkInit
 	std::vector<const char*> GetRequiredExtensions();
 
 	void DestroyDebugMessenger(VkInstance* instance, VkDebugUtilsMessengerEXT* messenger, const VkAllocationCallbacks* allocator = nullptr);
+
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 
 	std::string GetPhysicalDeviceName(VkPhysicalDevice physicalDevice);
 	void LogPhysicalDeviceProperties(VkPhysicalDevice physicalDevice);

@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 # Use folders nicely on Visual Studio
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 project(QuestEngine)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 # Set QUEST_ROOT
 set(QUEST_ROOT ${CMAKE_SOURCE_DIR})

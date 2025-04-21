@@ -19,204 +19,165 @@ namespace VkInit
 	};
 
 	// Debug messenger
-	namespace
+	static VKAPI_ATTR VkBool32 VKAPI_CALL s_VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
-		static VKAPI_ATTR VkBool32 VKAPI_CALL s_VkDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
-		{
-			LOG_DEBUG("[{}: {}] {}", string_VkDebugUtilsMessageSeverityFlagBitsEXT(messageSeverity), string_VkDebugUtilsMessageTypeFlagsEXT(messageType), pCallbackData->pMessage);
+		(void)pUserData; // Mark pUserData as unused
+		LOG_DEBUG("[{}: {}] {}", string_VkDebugUtilsMessageSeverityFlagBitsEXT(messageSeverity), string_VkDebugUtilsMessageTypeFlagsEXT(messageType), pCallbackData->pMessage);
+	
+		return VK_FALSE;
+	}
 
-			return VK_FALSE;
+	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
+	{
+		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+		if (func != nullptr)
+		{
+			return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+		}
+		else
+		{
+			return VK_ERROR_EXTENSION_NOT_PRESENT;
+		}
+	}
+
+	static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
+	{
+		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+		if (func != nullptr)
+		{
+			func(instance, debugMessenger, pAllocator);
+		}
+	}
+
+	static bool CheckDeviceExtensionSupport(VkPhysicalDevice device)
+	{
+		uint32_t extensionCount;
+		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+		std::set<std::string> requiredExtensions(s_DeviceExtensions.begin(), s_DeviceExtensions.end());
+
+		for (const auto& extension : availableExtensions)
+		{
+			requiredExtensions.erase(extension.extensionName);
 		}
 
-		VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
+		return requiredExtensions.empty();
+	}
+
+	static SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface)
+	{
+		SwapChainSupportDetails details;
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+
+		uint32_t formatCount;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+		if (formatCount != 0)
 		{
-			auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-			if (func != nullptr)
-			{
-				return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-			}
-			else
-			{
-				return VK_ERROR_EXTENSION_NOT_PRESENT;
-			}
+			details.formats.resize(formatCount);
+			vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
 		}
 
-		static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
+		uint32_t presentModeCount;
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+
+		if (presentModeCount != 0)
 		{
-			auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-			if (func != nullptr)
-			{
-				func(instance, debugMessenger, pAllocator);
-			}
+			details.presentModes.resize(presentModeCount);
+			vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
 		}
 
-		static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
+		return details;
+	}
+
+	static bool IsPhysicalDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface)
+	{
+		QueueFamilyIndices indices = FindQueueFamilies(device, surface);
+
+		bool extensionsSupported = CheckDeviceExtensionSupport(device);
+
+		bool swapChainAdequate = false;
+		if (extensionsSupported)
 		{
-			QueueFamilyIndices indices;
-
-			uint32_t queueFamilyCount = 0;
-			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-			std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-			int i = 0;
-			for (const auto& queueFamily : queueFamilies)
-			{
-				if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-				{
-					indices.graphicsFamily = i;
-				}
-
-				VkBool32 presentSupport = false;
-				vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-
-				if (presentSupport)
-				{
-					indices.presentFamily = i;
-				}
-
-				if (indices.IsComplete())
-				{
-					break;
-				}
-
-				i++;
-			}
-
-			return indices;
+			SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device, surface);
+			swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 		}
+		
+		return indices.IsComplete() && extensionsSupported && swapChainAdequate;
+	}
 
-		static bool CheckDeviceExtensionSupport(VkPhysicalDevice device)
+	static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+	{
+		for (const auto& availableFormat : availableFormats)
 		{
-			uint32_t extensionCount;
-			vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-			std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-			vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-			std::set<std::string> requiredExtensions(s_DeviceExtensions.begin(), s_DeviceExtensions.end());
-
-			for (const auto& extension : availableExtensions)
+			if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 			{
-				requiredExtensions.erase(extension.extensionName);
-			}
-
-			return requiredExtensions.empty();
-		}
-
-		static SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface)
-		{
-			SwapChainSupportDetails details;
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
-
-			uint32_t formatCount;
-			vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
-
-			if (formatCount != 0)
-			{
-				details.formats.resize(formatCount);
-				vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
-			}
-
-			uint32_t presentModeCount;
-			vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
-
-			if (presentModeCount != 0)
-			{
-				details.presentModes.resize(presentModeCount);
-				vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
-			}
-
-			return details;
-		}
-
-		static bool IsPhysicalDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface)
-		{
-			QueueFamilyIndices indices = FindQueueFamilies(device, surface);
-
-			bool extensionsSupported = CheckDeviceExtensionSupport(device);
-
-			bool swapChainAdequate = false;
-			if (extensionsSupported)
-			{
-				SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device, surface);
-				swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
-			}
-			
-			return indices.IsComplete() && extensionsSupported && swapChainAdequate;
-		}
-
-		static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
-		{
-			for (const auto& availableFormat : availableFormats)
-			{
-				if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-				{
-					return availableFormat;
-				}
-			}
-
-			return availableFormats[0];
-		}
-
-		static VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
-		{
-			for (const auto& availablePresentMode : availablePresentModes)
-			{
-				if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-				{
-					return availablePresentMode;
-				}
-			}
-
-			return VK_PRESENT_MODE_FIFO_KHR;
-		}
-
-		static VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VkExtent2D actualExtent)
-		{
-			if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-			{
-				return capabilities.currentExtent;
-			}
-			else
-			{
-				actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-				actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-
-				return actualExtent;
+				return availableFormat;
 			}
 		}
 
-		static std::vector<char> ReadShaderFile(const std::string& filename)
+		return availableFormats[0];
+	}
+
+	static VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+	{
+		for (const auto& availablePresentMode : availablePresentModes)
 		{
-			std::string filename_ = QE_RESOURCES_FOLDER;
-			filename_.append("ShaderCache/").append(filename);
-			LOG_DEBUG_TAG("VkInit", "Shader - {}: path: {}", filename, filename_);
-
-			if (!std::filesystem::exists(filename_))
+			if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
 			{
-				LOG_DEBUG_TAG("VkInit", "File does not exist: {}", filename_);
-				return std::vector<char>();
+				return availablePresentMode;
 			}
-
-			std::ifstream file(filename_, std::ios::ate | std::ios::binary);
-
-			if (!file.is_open())
-			{
-				throw std::runtime_error("Failed to open shader file");
-			}
-
-			size_t fileSize = (size_t)file.tellg();
-			std::vector<char> buffer(fileSize);
-
-			file.seekg(0);
-			file.read(buffer.data(), fileSize);
-
-			file.close();
-
-			return buffer;
 		}
+
+		return VK_PRESENT_MODE_FIFO_KHR;
+	}
+
+	static VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, VkExtent2D actualExtent)
+	{
+		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+		{
+			return capabilities.currentExtent;
+		}
+		else
+		{
+			actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+			actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+			return actualExtent;
+		}
+	}
+
+	static std::vector<char> ReadShaderFile(const std::string& filename)
+	{
+		std::string filename_ = QE_RESOURCES_FOLDER;
+		filename_.append("ShaderCache/").append(filename);
+		LOG_DEBUG_TAG("VkInit", "Shader - {}: path: {}", filename, filename_);
+
+		if (!std::filesystem::exists(filename_))
+		{
+			LOG_DEBUG_TAG("VkInit", "File does not exist: {}", filename_);
+			return std::vector<char>();
+		}
+
+		std::ifstream file(filename_, std::ios::ate | std::ios::binary);
+
+		if (!file.is_open())
+		{
+			throw std::runtime_error("Failed to open shader file");
+		}
+
+		size_t fileSize = (size_t)file.tellg();
+		std::vector<char> buffer(fileSize);
+
+		file.seekg(0);
+		file.read(buffer.data(), fileSize);
+
+		file.close();
+
+		return buffer;
 	}
 
 	// Create info functions
@@ -229,6 +190,29 @@ namespace VkInit
 		createInfo.pfnUserCallback = s_VkDebugCallback;
 
 		return createInfo;
+	}
+
+	VkCommandPoolCreateInfo BuildCommandPoolCreateInfo(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags)
+	{
+		VkCommandPoolCreateInfo commandPoolInfo = {};
+		commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		commandPoolInfo.pNext = nullptr;
+		commandPoolInfo.queueFamilyIndex = queueFamilyIndex;
+		commandPoolInfo.flags = flags;
+
+		return commandPoolInfo;
+	}
+
+	VkCommandBufferAllocateInfo BuildCommandBufferAllocateInfo(VkCommandPool commandPool, VkCommandBufferLevel level, uint32_t commandBufferCount)
+	{
+		VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
+		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		commandBufferAllocateInfo.pNext = nullptr;
+		commandBufferAllocateInfo.commandPool = commandPool;
+		commandBufferAllocateInfo.level = level;
+		commandBufferAllocateInfo.commandBufferCount = commandBufferCount;
+
+		return commandBufferAllocateInfo;
 	}
 
 	// Vulkan object builders
@@ -374,7 +358,7 @@ namespace VkInit
 		return device;
 	}
 
-	VkSwapchainKHR CreateSwapchain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowSize, std::vector<VkImage>* swapchainImages, std::vector<VkImageView>* swapchainImageViews, VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent)
+	VkSwapchainKHR CreateSwapchain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowSize, std::vector<VkImage>* swapchainImages, VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent)
 	{
 		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(physicalDevice, surface);
 
@@ -464,7 +448,7 @@ namespace VkInit
 		}
 	}
 
-	void CreateGraphicsPipeline(VkDevice device)
+	void CreateGraphicsPipeline(VkDevice device, VkPipelineLayout* pipelineLayout)
 	{
 		auto vertShaderCode = ReadShaderFile("triangle-vert.spv");
 		auto fragShaderCode = ReadShaderFile("triangle-frag.spv");
@@ -486,8 +470,100 @@ namespace VkInit
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
+		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.vertexBindingDescriptionCount = 0;
+        vertexInputInfo.vertexAttributeDescriptionCount = 0;
+
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+        inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+        VkPipelineViewportStateCreateInfo viewportState{};
+        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportState.viewportCount = 1;
+        viewportState.scissorCount = 1;
+
+        VkPipelineRasterizationStateCreateInfo rasterizer{};
+        rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterizer.depthClampEnable = VK_FALSE;
+        rasterizer.rasterizerDiscardEnable = VK_FALSE;
+        rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+        rasterizer.lineWidth = 1.0f;
+        rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizer.depthBiasEnable = VK_FALSE;
+
+        VkPipelineMultisampleStateCreateInfo multisampling{};
+        multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampling.sampleShadingEnable = VK_FALSE;
+        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+        colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        colorBlendAttachment.blendEnable = VK_FALSE;
+
+        VkPipelineColorBlendStateCreateInfo colorBlending{};
+        colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlending.logicOpEnable = VK_FALSE;
+        colorBlending.logicOp = VK_LOGIC_OP_COPY;
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &colorBlendAttachment;
+        colorBlending.blendConstants[0] = 0.0f;
+        colorBlending.blendConstants[1] = 0.0f;
+        colorBlending.blendConstants[2] = 0.0f;
+        colorBlending.blendConstants[3] = 0.0f;
+
+        std::vector<VkDynamicState> dynamicStates = {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR
+        };
+
+        VkPipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+        dynamicState.pDynamicStates = dynamicStates.data();
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = 0;
+        pipelineLayoutInfo.pushConstantRangeCount = 0;
+
+        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, pipelineLayout) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create pipeline layout");
+        }
+
 		vkDestroyShaderModule(device, fragShaderModule, nullptr);
     	vkDestroyShaderModule(device, vertShaderModule, nullptr);
+	}
+
+	VkCommandPool CreateCommandPool(VkDevice device, uint32_t queueFamilyIndex)
+	{
+		//create a command pool for commands submitted to the graphics queue.
+		//we also want the pool to allow for resetting of individual command buffers
+		VkCommandPoolCreateInfo commandPoolInfo =  VkInit::BuildCommandPoolCreateInfo(queueFamilyIndex);
+		
+		VkCommandPool commandPool = VK_NULL_HANDLE;
+		if(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &commandPool) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create command pool");
+		}
+
+		return commandPool;
+	}
+
+	VkCommandBuffer CreateCommandBuffer(VkDevice device, VkCommandPool commandPool)
+	{
+		VkCommandBufferAllocateInfo cmdAllocInfo = VkInit::BuildCommandBufferAllocateInfo(commandPool);
+
+		VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+		if (vkAllocateCommandBuffers(device, &cmdAllocInfo, &commandBuffer) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to allocate command buffer");
+		}
+
+		return commandBuffer;
 	}
 
 	// Extra helpers
@@ -567,6 +643,43 @@ namespace VkInit
 	void DestroyDebugMessenger(VkInstance* instance, VkDebugUtilsMessengerEXT* messenger, const VkAllocationCallbacks* allocator)
 	{
 		DestroyDebugUtilsMessengerEXT(*instance, *messenger, allocator);
+	}
+
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
+	{
+		QueueFamilyIndices indices;
+
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+		int i = 0;
+		for (const auto& queueFamily : queueFamilies)
+		{
+			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+			{
+				indices.graphicsFamily = i;
+			}
+
+			VkBool32 presentSupport = false;
+			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+			if (presentSupport)
+			{
+				indices.presentFamily = i;
+			}
+
+			if (indices.IsComplete())
+			{
+				break;
+			}
+
+			i++;
+		}
+
+		return indices;
 	}
 
 	std::string GetPhysicalDeviceName(VkPhysicalDevice physicalDevice)
