@@ -49,6 +49,8 @@ namespace VkInit
 	VkSubmitInfo2 BuildSubmitInfo2(VkCommandBufferSubmitInfo* cmdSubmitInfo, VkSemaphoreSubmitInfo* signalSemaphoreInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo);
 	VkImageCreateInfo BuildImageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent);
 	VkImageViewCreateInfo BuildImageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
+	VkRenderingAttachmentInfo BuildRenderingAttachmentInfo(VkImageView view, VkClearValue* clear, VkImageLayout layout);
+	VkRenderingInfo BuildRenderingInfo(VkExtent2D renderExtent, VkRenderingAttachmentInfo* colorAttachment, VkRenderingAttachmentInfo* depthAttachment);
 
 	// Vulkan initialization functions - use these in order
 	VkInstance CreateInstance();

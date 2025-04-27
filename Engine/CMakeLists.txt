@@ -28,13 +28,23 @@ file (GLOB_RECURSE ENGINE_SHADERS
 	Resources/Shaders/*.frag
 )
 
+set (IMGUI_SOURCES
+	${THIRD_PARTY_ENGINE_DIR}/imgui/imgui.cpp
+	${THIRD_PARTY_ENGINE_DIR}/imgui/imgui_demo.cpp
+	${THIRD_PARTY_ENGINE_DIR}/imgui/imgui_draw.cpp
+	${THIRD_PARTY_ENGINE_DIR}/imgui/imgui_tables.cpp
+	${THIRD_PARTY_ENGINE_DIR}/imgui/imgui_widgets.cpp
+	${THIRD_PARTY_ENGINE_DIR}/imgui/backends/imgui_impl_vulkan.cpp
+	${THIRD_PARTY_ENGINE_DIR}/imgui/backends/imgui_impl_glfw.cpp
+)
+
 message(STATUS ${ENGINE_SHADERS})
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${ENGINE_SHADERS})
 
 #set_source_files_properties(${SHADERS} PROPERTIES HEADER_FILE_ONLY TRUE)
 
-add_library(${TARGET_NAME} ${QUEST_LIBRARY_TYPE} ${SOURCES})
+add_library(${TARGET_NAME} ${QUEST_LIBRARY_TYPE} ${SOURCES} ${IMGUI_SOURCES})
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE 

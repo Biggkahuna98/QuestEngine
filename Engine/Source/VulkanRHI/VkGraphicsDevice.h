@@ -52,6 +52,7 @@ namespace QE
 		uint32_t GetCurrentFrameNumber() const { return m_CurrentFrameNumber; }
 		FrameData& GetCurrentFrameData();
 	private:
+		Window* m_Window;
 		VkInstance m_Instance;
 		VkDebugUtilsMessengerEXT m_DebugMessenger;
 		VkPhysicalDevice m_PhysicalDevice;
@@ -92,6 +93,11 @@ namespace QE
 		VkPipeline m_GradientPipeline;
 		VkPipelineLayout m_GradientPipelineLayout;
 
+		// ImGui stuff (refactor later)
+		VkFence m_ImGuiFence;
+		VkCommandBuffer m_ImGuiCommandBuffer;
+		VkCommandPool m_ImGuiCommandPool;
+
 		// Initialize Vulkan Resources
 		void InitSwapchain(VkExtent2D windowExtent);
 		void CreateSwapchain(VkExtent2D windowExtent);
@@ -101,8 +107,11 @@ namespace QE
 		void InitializeDescriptors();
 		void InitializePipelines();
 		void InitializeBackgroundPipelines();
+		void InitializeImGui();
 
 		// REFACTOR LATER
 		void DrawBackground(VkCommandBuffer cmd);
+		void ImmediateCommandSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
+		void DrawImGui(VkCommandBuffer cmd, VkImageView targetImageView);
 	};
 }
