@@ -54,7 +54,7 @@ namespace QE
 
 	void Engine::SetWindowShouldClose(bool shouldClose)
 	{
-		m_Running = shouldClose;
+		m_Running = !shouldClose;
 	}
 
 	Window& Engine::GetWindow()
