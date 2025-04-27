@@ -312,6 +312,49 @@ namespace VkInit
 		return info;
 	}
 
+	VkImageCreateInfo BuildImageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent)
+	{
+		VkImageCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		info.pNext = nullptr;
+
+		info.imageType = VK_IMAGE_TYPE_2D;
+
+		info.format = format;
+		info.extent = extent;
+
+		info.mipLevels = 1;
+		info.arrayLayers = 1;
+
+		//for MSAA. we will not be using it by default, so default it to 1 sample per pixel.
+		info.samples = VK_SAMPLE_COUNT_1_BIT;
+
+		//optimal tiling, which means the image is stored on the best gpu format
+		info.tiling = VK_IMAGE_TILING_OPTIMAL;
+		info.usage = usageFlags;
+
+		return info;
+	}
+
+	VkImageViewCreateInfo BuildImageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags)
+	{
+		// build a image-view for the depth image to use for rendering
+		VkImageViewCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		info.pNext = nullptr;
+
+		info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		info.image = image;
+		info.format = format;
+		info.subresourceRange.baseMipLevel = 0;
+		info.subresourceRange.levelCount = 1;
+		info.subresourceRange.baseArrayLayer = 0;
+		info.subresourceRange.layerCount = 1;
+		info.subresourceRange.aspectMask = aspectFlags;
+
+		return info;
+	}
+
 	// Vulkan object builders
 	VkInstance CreateInstance()
 	{
@@ -442,12 +485,19 @@ namespace VkInit
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(s_DeviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = s_DeviceExtensions.data();
 
+		// Synchronization 2 extension
 		VkPhysicalDeviceSynchronization2Features sync2Features = {};
 		sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
 		sync2Features.pNext = nullptr;
 		sync2Features.synchronization2 = VK_TRUE;
 
-		createInfo.pNext = &sync2Features;
+		// Buffer Device Address extension
+		VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures = {};
+		bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+		bufferDeviceAddressFeatures.pNext = &sync2Features;
+		bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+
+		createInfo.pNext = &bufferDeviceAddressFeatures;
 		
 		VkDevice device = VK_NULL_HANDLE;
 
@@ -559,8 +609,8 @@ namespace VkInit
 		auto vertShaderCode = ReadShaderFile("triangle-vert.spv");
 		auto fragShaderCode = ReadShaderFile("triangle-frag.spv");
 
-		VkShaderModule vertShaderModule = CreateShaderModule(&device, vertShaderCode);
-		VkShaderModule fragShaderModule = CreateShaderModule(&device, fragShaderCode);
+		VkShaderModule vertShaderModule = CreateShaderModule(device, vertShaderCode);
+		VkShaderModule fragShaderModule = CreateShaderModule(device, fragShaderCode);
 
 		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -874,7 +924,62 @@ namespace VkInit
 		vkCmdPipelineBarrier2(cmdBuffer, &depInfo);
 	}
 
-	VkShaderModule CreateShaderModule(VkDevice* device, const std::vector<char>& shaderCode)
+	void CopyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination,VkExtent2D srcSize, VkExtent2D dstSize)
+	{
+		VkImageBlit2 blitRegion{ .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2, .pNext = nullptr };
+
+		blitRegion.srcOffsets[1].x = srcSize.width;
+		blitRegion.srcOffsets[1].y = srcSize.height;
+		blitRegion.srcOffsets[1].z = 1;
+
+		blitRegion.dstOffsets[1].x = dstSize.width;
+		blitRegion.dstOffsets[1].y = dstSize.height;
+		blitRegion.dstOffsets[1].z = 1;
+
+		blitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blitRegion.srcSubresource.baseArrayLayer = 0;
+		blitRegion.srcSubresource.layerCount = 1;
+		blitRegion.srcSubresource.mipLevel = 0;
+
+		blitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blitRegion.dstSubresource.baseArrayLayer = 0;
+		blitRegion.dstSubresource.layerCount = 1;
+		blitRegion.dstSubresource.mipLevel = 0;
+
+		VkBlitImageInfo2 blitInfo{ .sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2, .pNext = nullptr };
+		blitInfo.dstImage = destination;
+		blitInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		blitInfo.srcImage = source;
+		blitInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		blitInfo.filter = VK_FILTER_LINEAR;
+		blitInfo.regionCount = 1;
+		blitInfo.pRegions = &blitRegion;
+
+		vkCmdBlitImage2(cmd, &blitInfo);
+	}
+
+	VkShaderModule CreateShaderModule(VkDevice device, const std::string_view& filename)
+	{
+		// Get some kind of error checking for empty shader code
+		auto shaderCode = ReadShaderFile(filename.data());
+
+		VkShaderModuleCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		createInfo.codeSize = shaderCode.size();
+		createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
+		
+
+		VkShaderModule shaderModule;
+		if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create shader module");
+		}
+
+		return shaderModule;
+	}
+
+
+	VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& shaderCode)
 	{
 		VkShaderModuleCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -882,7 +987,7 @@ namespace VkInit
 		createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
 
 		VkShaderModule shaderModule;
-		if (vkCreateShaderModule(*device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) 
+		if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) 
 		{
    			throw std::runtime_error("Failed to create shader module");
 		}

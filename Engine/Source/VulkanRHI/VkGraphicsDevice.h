@@ -6,6 +6,8 @@
 #include <vulkan/vulkan.h>
 #include <vma/vk_mem_alloc.h>
 #include "VkInit.h"
+#include "VkTypes.h"
+#include "VkDescriptors.h"
 
 #include "Core/DeletionQueue.h"
 
@@ -78,10 +80,29 @@ namespace QE
 		VmaAllocator m_Allocator;
 		DeletionQueue m_CleanupQueue;
 
+		// Drawing resources
+		AllocatedImage m_DrawImage;
+		VkExtent2D m_DrawExtent;
+
+		DescriptorAllocator m_DescriptorAllocator;
+		VkDescriptorSet m_DrawImageDescriptors;
+		VkDescriptorSetLayout m_DrawImageDescriptorSetLayout;
+
+		// Pipeline stuff
+		VkPipeline m_GradientPipeline;
+		VkPipelineLayout m_GradientPipelineLayout;
+
 		// Initialize Vulkan Resources
+		void InitSwapchain(VkExtent2D windowExtent);
 		void CreateSwapchain(VkExtent2D windowExtent);
 		void RecreateSwapchain();
 		void DestroySwapchain();
 		void InitializeFrameData();
+		void InitializeDescriptors();
+		void InitializePipelines();
+		void InitializeBackgroundPipelines();
+
+		// REFACTOR LATER
+		void DrawBackground(VkCommandBuffer cmd);
 	};
 }

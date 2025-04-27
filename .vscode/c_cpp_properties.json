@@ -3,6 +3,15 @@
         {
             "name": "CMake Tools",
             "configurationProvider": "ms-vscode.cmake-tools"
+        },
+        {
+            "name": "clangd",
+            "intelliSenseMode": "${default}",
+            "compileCommands": "${workspaceFolder}/Output/Build/windows-msvc-debug-developer-mode/compile_commands.json",
+            "browse": {
+                "path": ["${workspaceFolder}"],
+                "limitSymbolsToIncludedHeaders": true
+            }
         }
         
     ],

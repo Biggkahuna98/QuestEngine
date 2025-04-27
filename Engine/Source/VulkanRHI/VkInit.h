@@ -47,6 +47,8 @@ namespace VkInit
 	VkCommandBufferBeginInfo BuildCommandBufferBeginInfo(VkCommandBufferUsageFlags flags = 0);
 	VkCommandBufferSubmitInfo BuildCommandBufferSubmitInfo(VkCommandBuffer commandBuffer);
 	VkSubmitInfo2 BuildSubmitInfo2(VkCommandBufferSubmitInfo* cmdSubmitInfo, VkSemaphoreSubmitInfo* signalSemaphoreInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo);
+	VkImageCreateInfo BuildImageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent);
+	VkImageViewCreateInfo BuildImageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
 
 	// Vulkan initialization functions - use these in order
 	VkInstance CreateInstance();
@@ -81,7 +83,11 @@ namespace VkInit
 	void LogPhysicalDeviceProperties(VkPhysicalDevice physicalDevice);
 
 	VkImageSubresourceRange GetImageSubresourceRange(VkImageAspectFlags aspectMask);
+	
+	// Next 3 are generally more helpers than initialization functions
 	void TransitionImage(VkCommandBuffer cmdBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void CopyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination,VkExtent2D srcSize, VkExtent2D dstSize);
 
-	VkShaderModule CreateShaderModule(VkDevice* device, const std::vector<char>& shaderCode);
+	VkShaderModule CreateShaderModule(VkDevice device, const std::string_view& filename);
+	VkShaderModule CreateShaderModule(VkDevice device, const std::vector<char>& shaderCode);
 }
