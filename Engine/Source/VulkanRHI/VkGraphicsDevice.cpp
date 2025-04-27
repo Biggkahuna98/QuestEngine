@@ -104,6 +104,8 @@ namespace QE
 	VkGraphicsDevice::~VkGraphicsDevice()
 	{
 		WaitForDeviceIdle();
+		
+
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			vkFreeCommandBuffers(m_Device, m_FrameData[i].CommandPool, 1, &m_FrameData[i].CommandBuffer);
@@ -163,12 +165,27 @@ namespace QE
 		// we will overwrite it all so we dont care about what was the older layout
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-		// move later
-		ImGui::ShowDemoWindow();
+		// IMGUI STUFF, MOVE LATER
+		//ImGui::ShowDemoWindow();
+		if (ImGui::Begin("background"))
+		{
+
+			ComputeEffect& selected = m_BackgroundEffects[m_CurrentBackgroundEffect];
+
+			ImGui::Text("Selected effect: ", selected.Name);
+
+			ImGui::SliderInt("Effect Index", &m_CurrentBackgroundEffect, 0, m_BackgroundEffects.size() - 1);
+
+			ImGui::InputFloat4("data1", (float*)&selected.Data.Data1);
+			ImGui::InputFloat4("data2", (float*)&selected.Data.Data2);
+			ImGui::InputFloat4("data3", (float*)&selected.Data.Data3);
+			ImGui::InputFloat4("data4", (float*)&selected.Data.Data4);
+		}
 	}
 
 	void VkGraphicsDevice::EndFrame()
 	{
+		ImGui::End();
 		ImGui::Render();
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Ending frame: {0}", m_CurrentFrameNumber);
 
@@ -416,6 +433,7 @@ namespace QE
 
 	void VkGraphicsDevice::InitializeBackgroundPipelines()
 	{
+		// Pipeline layout
 		VkPipelineLayoutCreateInfo computeLayout{};
 		computeLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		computeLayout.pNext = nullptr;
@@ -424,14 +442,14 @@ namespace QE
 
 		VK_CHECK(vkCreatePipelineLayout(m_Device, &computeLayout, nullptr, &m_GradientPipelineLayout));
 
-		//layout code
-		VkShaderModule computeDrawShader = VkInit::CreateShaderModule(m_Device, "gradient-comp.spv");
+		VkShaderModule gradientShader = VkInit::CreateShaderModule(m_Device, "gradient-comp.spv");
+		VkShaderModule skyShader = VkInit::CreateShaderModule(m_Device, "sky-comp.spv");
 
 		VkPipelineShaderStageCreateInfo stageinfo{};
 		stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		stageinfo.pNext = nullptr;
 		stageinfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-		stageinfo.module = computeDrawShader;
+		stageinfo.module = gradientShader;
 		stageinfo.pName = "main";
 
 		VkComputePipelineCreateInfo computePipelineCreateInfo{};
@@ -440,14 +458,40 @@ namespace QE
 		computePipelineCreateInfo.layout = m_GradientPipelineLayout;
 		computePipelineCreateInfo.stage = stageinfo;
 
-		VK_CHECK(vkCreateComputePipelines(m_Device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &m_GradientPipeline));
+		ComputeEffect gradient;
+		gradient.PipelineLayout = m_GradientPipelineLayout;
+		gradient.Name = "gradient";
+		gradient.Data = {};
 
-		// Cleanup
-		vkDestroyShaderModule(m_Device, computeDrawShader, nullptr);
+		//default colors
+		gradient.Data.Data1 = glm::vec4(1, 0, 0, 1);
+		gradient.Data.Data2 = glm::vec4(0, 0, 1, 1);
 
-		m_CleanupQueue.PushFunction([&]() {
+		VK_CHECK(vkCreateComputePipelines(m_Device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &gradient.Pipeline));
+
+		//change the shader module only to create the sky shader
+		computePipelineCreateInfo.stage.module = skyShader;
+
+		ComputeEffect sky;
+		sky.PipelineLayout = m_GradientPipelineLayout;
+		sky.Name = "sky";
+		sky.Data = {};
+		//default sky parameters
+		sky.Data.Data1 = glm::vec4(0.1, 0.2, 0.4, 0.97);
+
+		VK_CHECK(vkCreateComputePipelines(m_Device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &sky.Pipeline));
+
+		//add the 2 background effects into the array
+		m_BackgroundEffects.push_back(gradient);
+		m_BackgroundEffects.push_back(sky);
+
+		//destroy structures properly
+		vkDestroyShaderModule(m_Device, gradientShader, nullptr);
+		vkDestroyShaderModule(m_Device, skyShader, nullptr);
+		m_CleanupQueue.PushFunction([=]() {
 			vkDestroyPipelineLayout(m_Device, m_GradientPipelineLayout, nullptr);
-			vkDestroyPipeline(m_Device, m_GradientPipeline, nullptr);
+			vkDestroyPipeline(m_Device, sky.Pipeline, nullptr);
+			vkDestroyPipeline(m_Device, gradient.Pipeline, nullptr);
 		});
 	}
 
@@ -514,6 +558,8 @@ namespace QE
 		// add the destroy the imgui created structures
 		m_CleanupQueue.PushFunction([=]() {
 			ImGui_ImplVulkan_Shutdown();
+			ImGui_ImplGlfw_Shutdown();
+			ImGui::DestroyContext();
 			vkDestroyDescriptorPool(m_Device, imguiPool, nullptr);
 		});
 	}
@@ -528,11 +574,15 @@ namespace QE
 
 		//clear image
 		//vkCmdClearColorImage(commandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
+		ComputeEffect& effect = m_BackgroundEffects[m_CurrentBackgroundEffect];
+
 		// bind the gradient drawing compute pipeline
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_GradientPipeline);
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, effect.Pipeline);
 
 		// bind the descriptor set containing the draw image for the compute pipeline
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_GradientPipelineLayout, 0, 1, &m_DrawImageDescriptors, 0, nullptr);
+
+		vkCmdPushConstants(commandBuffer, m_GradientPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &effect.Data);
 
 		// execute the compute pipeline dispatch. We are using 16x16 workgroup size so we need to divide by it
 		vkCmdDispatch(commandBuffer, std::ceil(m_DrawExtent.width / 16.0), std::ceil(m_DrawExtent.height / 16.0), 1);

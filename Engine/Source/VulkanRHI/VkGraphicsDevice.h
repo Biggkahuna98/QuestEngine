@@ -25,6 +25,24 @@ namespace QE
 		DeletionQueue CleanupQueue;
 	};
 
+	struct ComputePushConstants
+	{
+		glm::vec4 Data1;
+		glm::vec4 Data2;
+		glm::vec4 Data3;
+		glm::vec4 Data4;
+	};
+
+	struct ComputeEffect
+	{
+		const char* Name;
+
+		VkPipeline Pipeline;
+		VkPipelineLayout PipelineLayout;
+
+		ComputePushConstants Data;
+	};
+
 	constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 2;
 
 	class VkGraphicsDevice : public GraphicsDevice
@@ -97,6 +115,10 @@ namespace QE
 		VkFence m_ImGuiFence;
 		VkCommandBuffer m_ImGuiCommandBuffer;
 		VkCommandPool m_ImGuiCommandPool;
+
+		// Compute effects
+		std::vector<ComputeEffect> m_BackgroundEffects;
+		int m_CurrentBackgroundEffect = 0;
 
 		// Initialize Vulkan Resources
 		void InitSwapchain(VkExtent2D windowExtent);

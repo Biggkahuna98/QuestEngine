@@ -19,7 +19,7 @@ namespace QE
 	void Engine::Initialize()
 	{
 		// Create Window
-		m_Window = CreateWindowFactory("Quest Engine", 1280, 720);
+		m_Window = CreateWindowFactory("Quest Engine", 1920, 1080);
 		m_InputManager = m_Window->GetInputManagerPtr(); // This is the *ACTIVE* input manager from the active window
 
 		// Initialize graphics device and context
