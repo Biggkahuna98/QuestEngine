@@ -120,6 +120,10 @@ namespace QE
 		std::vector<ComputeEffect> m_BackgroundEffects;
 		int m_CurrentBackgroundEffect = 0;
 
+		// Triangle
+		VkPipelineLayout m_TrianglePipelineLayout;
+		VkPipeline m_TrianglePipeline;
+
 		// Initialize Vulkan Resources
 		void InitSwapchain(VkExtent2D windowExtent);
 		void CreateSwapchain(VkExtent2D windowExtent);
@@ -129,11 +133,13 @@ namespace QE
 		void InitializeDescriptors();
 		void InitializePipelines();
 		void InitializeBackgroundPipelines();
+		void InitializeTrianglePipeline();
 		void InitializeImGui();
 
 		// REFACTOR LATER
 		void DrawBackground(VkCommandBuffer cmd);
 		void ImmediateCommandSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 		void DrawImGui(VkCommandBuffer cmd, VkImageView targetImageView);
+		void DrawGeometry(VkCommandBuffer cmd);
 	};
 }

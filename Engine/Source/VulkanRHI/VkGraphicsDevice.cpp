@@ -2,6 +2,7 @@
 #include "Core/Log.h"
 
 #include "VkInit.h"
+#include "VkPipelines.h"
 
 #define VMA_IMPLEMENTATION
 #include <vma/vk_mem_alloc.h>
@@ -195,6 +196,9 @@ namespace QE
 		// Transition the draw image and the swapchain image into their correct transfer layouts
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		// Draw geometry
+		DrawGeometry(GetCurrentFrameData().CommandBuffer);
 
 		// Execute a copy from the draw image into the swapchain
 		VkInit::CopyImageToImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, m_SwapchainImages[m_CurrentSwapchainImageIndex], m_DrawExtent, m_SwapchainExtent);
@@ -429,6 +433,7 @@ namespace QE
 	void VkGraphicsDevice::InitializePipelines()
 	{
 		InitializeBackgroundPipelines();
+		InitializeTrianglePipeline();
 	}
 
 	void VkGraphicsDevice::InitializeBackgroundPipelines()
@@ -492,6 +497,52 @@ namespace QE
 			vkDestroyPipelineLayout(m_Device, m_GradientPipelineLayout, nullptr);
 			vkDestroyPipeline(m_Device, sky.Pipeline, nullptr);
 			vkDestroyPipeline(m_Device, gradient.Pipeline, nullptr);
+		});
+	}
+
+	void VkGraphicsDevice::InitializeTrianglePipeline()
+	{
+		VkShaderModule triangleVertexShader = VkInit::CreateShaderModule(m_Device, "colored_triangle-vert.spv");
+		VkShaderModule triangleFragmentShader = VkInit::CreateShaderModule(m_Device, "colored_triangle-frag.spv");
+
+		// build the pipeline layout that controls the inputs/outputs of the shader
+		// we are not using descriptor sets or other systems yet, so no need to use anything other than empty default
+		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo();
+		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_TrianglePipelineLayout));
+
+		PipelineBuilder pipelineBuilder;
+
+		//use the triangle layout we created
+		pipelineBuilder.PipelineLayout = m_TrianglePipelineLayout;
+		//connecting the vertex and pixel shaders to the pipeline
+		pipelineBuilder.SetShaders(triangleVertexShader, triangleFragmentShader);
+		//it will draw triangles
+		pipelineBuilder.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		//filled triangles
+		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
+		//no backface culling
+		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+		//no multisampling
+		pipelineBuilder.SetMultisamplingMode();
+		//no blending
+		pipelineBuilder.DisableBlending();
+		//no depth testing
+		pipelineBuilder.DisableDepthTest();
+
+		//connect the image format we will draw into, from draw image
+		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
+		pipelineBuilder.SetDepthFormat(VK_FORMAT_UNDEFINED);
+
+		//finally build the pipeline
+		m_TrianglePipeline = pipelineBuilder.BuildPipeline(m_Device);
+
+		//clean structures
+		vkDestroyShaderModule(m_Device, triangleFragmentShader, nullptr);
+		vkDestroyShaderModule(m_Device, triangleVertexShader, nullptr);
+
+		m_CleanupQueue.PushFunction([&]() {
+			vkDestroyPipelineLayout(m_Device, m_TrianglePipelineLayout, nullptr);
+			vkDestroyPipeline(m_Device, m_TrianglePipeline, nullptr);
 		});
 	}
 
@@ -621,6 +672,41 @@ namespace QE
 		vkCmdBeginRendering(cmd, &renderInfo);
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+
+		vkCmdEndRendering(cmd);
+	}
+
+	void VkGraphicsDevice::DrawGeometry(VkCommandBuffer cmd)
+	{
+		//begin a render pass  connected to our draw image
+		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
+		vkCmdBeginRendering(cmd, &renderInfo);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_TrianglePipeline);
+
+		//set dynamic viewport and scissor
+		VkViewport viewport = {};
+		viewport.x = 0;
+		viewport.y = 0;
+		viewport.width = m_DrawExtent.width;
+		viewport.height = m_DrawExtent.height;
+		viewport.minDepth = 0.f;
+		viewport.maxDepth = 1.f;
+
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = {};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = m_DrawExtent.width;
+		scissor.extent.height = m_DrawExtent.height;
+
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		//launch a draw command to draw 3 vertices
+		vkCmdDraw(cmd, 3, 1, 0, 0);
 
 		vkCmdEndRendering(cmd);
 	}

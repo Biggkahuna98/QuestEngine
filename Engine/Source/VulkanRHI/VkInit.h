@@ -51,6 +51,8 @@ namespace VkInit
 	VkImageViewCreateInfo BuildImageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
 	VkRenderingAttachmentInfo BuildRenderingAttachmentInfo(VkImageView view, VkClearValue* clear, VkImageLayout layout);
 	VkRenderingInfo BuildRenderingInfo(VkExtent2D renderExtent, VkRenderingAttachmentInfo* colorAttachment, VkRenderingAttachmentInfo* depthAttachment);
+	VkPipelineLayoutCreateInfo BuildPipelineCreateInfo();
+	VkPipelineShaderStageCreateInfo BuildShaderStageCreateInfo(VkShaderStageFlagBits stage, VkShaderModule shaderModule, const char* entryPoint = "main");
 
 	// Vulkan initialization functions - use these in order
 	VkInstance CreateInstance();
