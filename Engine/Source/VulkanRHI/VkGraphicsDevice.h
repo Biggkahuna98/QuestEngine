@@ -124,6 +124,12 @@ namespace QE
 		VkPipelineLayout m_TrianglePipelineLayout;
 		VkPipeline m_TrianglePipeline;
 
+		// Mesh
+		VkPipelineLayout m_MeshPipelineLayout;
+		VkPipeline m_MeshPipeline;
+
+		GPUMeshBuffer m_Rectangle;
+
 		// Initialize Vulkan Resources
 		void InitSwapchain(VkExtent2D windowExtent);
 		void CreateSwapchain(VkExtent2D windowExtent);
@@ -134,12 +140,18 @@ namespace QE
 		void InitializePipelines();
 		void InitializeBackgroundPipelines();
 		void InitializeTrianglePipeline();
+		void InitializeMeshPipeline();
 		void InitializeImGui();
+		void InitializeDefaultData();
 
 		// REFACTOR LATER
 		void DrawBackground(VkCommandBuffer cmd);
 		void ImmediateCommandSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 		void DrawImGui(VkCommandBuffer cmd, VkImageView targetImageView);
 		void DrawGeometry(VkCommandBuffer cmd);
+		AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+		void DestroyBuffer(const AllocatedBuffer& buffer);
+
+		GPUMeshBuffer UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 	};
 }
