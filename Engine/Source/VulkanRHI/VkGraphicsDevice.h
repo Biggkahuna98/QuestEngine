@@ -8,6 +8,7 @@
 #include "VkInit.h"
 #include "VkTypes.h"
 #include "VkDescriptors.h"
+#include "VkLoader.h"
 
 #include "Core/DeletionQueue.h"
 
@@ -69,6 +70,8 @@ namespace QE
 
 		uint32_t GetCurrentFrameNumber() const { return m_CurrentFrameNumber; }
 		FrameData& GetCurrentFrameData();
+
+		GPUMeshBuffer UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 	private:
 		Window* m_Window;
 		VkInstance m_Instance;
@@ -130,6 +133,9 @@ namespace QE
 
 		GPUMeshBuffer m_Rectangle;
 
+		// Test meshes
+		std::vector<std::shared_ptr<MeshAsset>> m_TestMeshes;
+
 		// Initialize Vulkan Resources
 		void InitSwapchain(VkExtent2D windowExtent);
 		void CreateSwapchain(VkExtent2D windowExtent);
@@ -151,7 +157,5 @@ namespace QE
 		void DrawGeometry(VkCommandBuffer cmd);
 		AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 		void DestroyBuffer(const AllocatedBuffer& buffer);
-
-		GPUMeshBuffer UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
 	};
 }

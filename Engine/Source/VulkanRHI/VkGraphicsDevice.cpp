@@ -120,6 +120,14 @@ namespace QE
 			vkDestroySemaphore(m_Device, m_FrameData[i].SwapchainSemaphore, nullptr);
 		}
 
+		// Delete meshes
+		for (auto& mesh : m_TestMeshes)
+		{
+			DestroyBuffer(mesh->MeshBuffer.IndexBuffer);
+			DestroyBuffer(mesh->MeshBuffer.VertexBuffer);
+		}
+
+
 		// Flush global lifetime deletion queue
 		m_CleanupQueue.Flush();
 
@@ -705,6 +713,18 @@ namespace QE
 			DestroyBuffer(m_Rectangle.IndexBuffer);
 			DestroyBuffer(m_Rectangle.VertexBuffer);
 		});
+
+		// test mesh
+		auto meshes = LoadGltfMeshesAssimp(this, "TestMesh/basicmesh.glb");
+		if (meshes.has_value())
+		{
+			m_TestMeshes = meshes.value();
+		}
+		else
+		{
+			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to load test mesh");
+			abort();
+		}
 	}
 
 	void VkGraphicsDevice::DrawBackground(VkCommandBuffer commandBuffer)
@@ -798,7 +818,7 @@ namespace QE
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 		//launch a draw command to draw 3 vertices
-		vkCmdDraw(cmd, 3, 1, 0, 0);
+		//vkCmdDraw(cmd, 3, 1, 0, 0);
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipeline);
 
