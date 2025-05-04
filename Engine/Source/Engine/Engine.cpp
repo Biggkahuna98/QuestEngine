@@ -4,7 +4,8 @@
 
 namespace QE
 {
-	Engine& Engine::Get()
+	Engine g_Engine;
+	/*Engine& Engine::Get()
 	{
 		static Engine instance;
 		return instance;
@@ -14,7 +15,7 @@ namespace QE
 	{
 		static Engine instance;
 		return &instance;
-	}
+	}*/
 
 	void Engine::Initialize()
 	{

@@ -41,13 +41,13 @@ namespace QE
 
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{
-				Engine::Get().GetGraphicsDevice().UpdateWindowSize(width, height);
+				g_Engine.GetGraphicsDevice().UpdateWindowSize(width, height);
 			}
 		);
 
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
 			{
-				Engine::Get().SetWindowShouldClose(true);
+				g_Engine.SetWindowShouldClose(true);
 			}
 		);
 

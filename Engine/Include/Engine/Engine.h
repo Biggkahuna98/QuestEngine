@@ -11,12 +11,13 @@ namespace QE
 	class Engine final
 	{
 	public:
+		Engine() {};
 		~Engine() = default;
 		Engine(const Engine&) = delete;
 		void operator=(Engine const&) = delete;
 
-		static Engine& Get();
-		static Engine* GetPtr();
+		//static Engine& Get();
+		//static Engine* GetPtr();
 
 		void Initialize();
 		void Shutdown();
@@ -32,8 +33,6 @@ namespace QE
 		GraphicsDevice& GetGraphicsDevice();
 		GraphicsDevice* GetGraphicsDevicePtr();
 	private:
-		Engine() = default;
-
 		bool m_Running = false;
 
 		std::unique_ptr<Window> m_Window;
@@ -42,4 +41,6 @@ namespace QE
 		std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
 		std::unique_ptr<GraphicsContext> m_GraphicsContext;
 	};
+
+	extern Engine g_Engine;
 }
