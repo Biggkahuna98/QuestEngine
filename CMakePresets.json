@@ -53,7 +53,7 @@
         },
         {
             "name": "windows-msvc-debug-developer-mode",
-            "displayName": "msvc Debug (Developer Mode)",
+            "displayName": "MSVC Debug",
             "description": "Target Windows with the msvc compiler, debug build type",
             "inherits": "conf-windows-common",
             "cacheVariables": {
@@ -65,7 +65,7 @@
         },
         {
             "name": "windows-msvc-release-developer-mode",
-            "displayName": "msvc Release (Developer Mode)",
+            "displayName": "MSVC Dev",
             "description": "Target Windows with the msvc compiler, release build type",
             "inherits": "conf-windows-common",
           "cacheVariables": {
@@ -77,7 +77,7 @@
         },
         {
             "name": "windows-msvc-release-user-mode",
-            "displayName": "msvc Release (User Mode)",
+            "displayName": "MSVC Shipping",
             "description": "Target Windows with the msvc compiler, release build type",
             "inherits": "conf-windows-common",
             "cacheVariables": {
@@ -89,13 +89,14 @@
         },
         {
             "name": "windows-clang-debug",
-            "displayName": "clang Debug",
+            "displayName": "Clang Debug",
             "description": "Target Windows with the clang compiler, debug build type",
             "inherits": "conf-windows-common",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang-cl",
                 "CMAKE_CXX_COMPILER": "clang-cl",
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_DEVELOPER_MODE": "ON"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
@@ -105,13 +106,31 @@
         },
         {
             "name": "windows-clang-release",
-            "displayName": "clang Release",
+            "displayName": "Clang Dev",
             "description": "Target Windows with the clang compiler, release build type",
             "inherits": "conf-windows-common",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang-cl",
                 "CMAKE_CXX_COMPILER": "clang-cl",
-                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "ENABLE_DEVELOPER_MODE": "ON"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "intelliSenseMode": "windows-clang-x64"
+                }
+            }
+        },
+        {
+            "name": "windows-clang-release-user-mode",
+            "displayName": "Clang Shipping",
+            "description": "Target Windows with the clang compiler, release build type",
+            "inherits": "conf-windows-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "ENABLE_DEVELOPER_MODE": "OFF"
             },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
