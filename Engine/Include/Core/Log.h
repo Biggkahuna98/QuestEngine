@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core.h"
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -49,7 +50,7 @@ namespace QE
 
 namespace QE
 {
-	class Log
+	class QUEST_API Log
 	{
 	public:
 		enum class Level : uint8_t

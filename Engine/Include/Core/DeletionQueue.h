@@ -1,11 +1,12 @@
 #pragma once
 
+#include "Core.h"
 #include <deque>
 #include <functional>
 
 namespace QE
 {
-    struct DeletionQueue
+    struct QUEST_API DeletionQueue
     {
         std::deque<std::function<void()>> Deletors;
 

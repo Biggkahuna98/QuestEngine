@@ -4,11 +4,12 @@
 #include <string_view>
 #include <memory>
 
+#include "Core.h"
 #include "Core/InputManager.h"
 
 namespace QE
 {
-	class Window
+	class QUEST_API Window
 	{
 	public:
 		Window(std::string_view windowName, int width, int height);
@@ -37,5 +38,5 @@ namespace QE
 		bool m_IsQuit = false;
 	};
 
-	std::unique_ptr<Window> CreateWindowFactory(std::string_view windowName, int width, int height);
+	QUEST_API std::unique_ptr<Window> CreateWindowFactory(std::string_view windowName, int width, int height);
 }

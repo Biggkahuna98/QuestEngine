@@ -17,6 +17,11 @@ namespace QE
 		return &instance;
 	}*/
 
+	Engine::~Engine()
+	{
+
+	}
+
 	void Engine::Initialize()
 	{
 		// Create Window
@@ -32,7 +37,7 @@ namespace QE
 
 	void Engine::Shutdown()
 	{
-
+		m_GraphicsDevice.reset();
 	}
 
 	void Engine::Run()

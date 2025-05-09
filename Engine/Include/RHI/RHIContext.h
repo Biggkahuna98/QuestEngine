@@ -1,13 +1,14 @@
 #pragma once
 
 //#include "GraphicsDevice.h"
+#include "Core/Core.h"
 
 namespace QE
 {
 	class GraphicsDevice;
 
 
-	class RHIContext
+	class QUEST_API RHIContext
 	{
 	public:
 		RHIContext(GraphicsDevice* device);

@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 
+#include "Core.h"
+
 namespace QE
 {
 	using KeyCode = uint16_t;
@@ -168,7 +170,7 @@ namespace QE
 		Released
 	};
 
-	inline const char* GetKeyStateString(KeyState state)
+	QUEST_API inline const char* GetKeyStateString(KeyState state)
 	{
 		switch (state)
 		{
@@ -180,7 +182,7 @@ namespace QE
 		}
 	}
 
-	inline const char* GetMouseButtonStringFromCode(MouseCode code)
+	QUEST_API inline const char* GetMouseButtonStringFromCode(MouseCode code)
 	{
 		switch (code)
 		{

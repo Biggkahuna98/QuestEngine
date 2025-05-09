@@ -1,6 +1,7 @@
 #pragma once
 
 #include "InputCodes.h"
+#include "Core.h"
 #include "glm/glm.hpp"
 #include <map>
 #include <memory>
@@ -8,21 +9,21 @@
 
 namespace QE
 {
-	struct KeyData
+	struct QUEST_API KeyData
 	{
 		KeyCode Key;
 		KeyState State = KeyState::None;
 		KeyState OldState = KeyState::None;
 	};
 
-	struct MouseButtonData
+	struct QUEST_API MouseButtonData
 	{
 		MouseCode Button;
 		KeyState State = KeyState::None;
 		KeyState OldState = KeyState::None;
 	};
 
-	class InputManager
+	class QUEST_API InputManager
 	{
 	public:
 		InputManager(const std::string_view windowName);

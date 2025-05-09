@@ -1,10 +1,10 @@
 set (TARGET_NAME QuestEngine)
-set (QUEST_LIBRARY_TYPE STATIC)
+set (QUEST_LIBRARY_TYPE SHARED)
 set (CMAKE_CXX_STANDARD 23)
 
 set_property(TARGET PROPERTY USE_FOLDERS ON)
 
-message("Building Quest Engine static library...")
+message("Building Quest Engine ${QUEST_LIBRARY_TYPE} library...")
 
 file (GLOB_RECURSE SOURCES 
 	Include/*.hpp

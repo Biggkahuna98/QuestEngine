@@ -8,11 +8,11 @@
 
 namespace QE
 {
-	class Engine final
+	class QUEST_API Engine final
 	{
 	public:
 		Engine() {};
-		~Engine() = default;
+		~Engine();
 		Engine(const Engine&) = delete;
 		void operator=(Engine const&) = delete;
 

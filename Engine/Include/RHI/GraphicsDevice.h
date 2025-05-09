@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Core.h"
 #include "Core/Window.h"
 //#include "GraphicsContext.h"
 #include <memory>
@@ -7,7 +8,7 @@ namespace QE
 {
 	class GraphicsContext;
 
-	class GraphicsDevice
+	class QUEST_API GraphicsDevice
 	{
 	public:
 		GraphicsDevice(Window* window);
@@ -24,5 +25,5 @@ namespace QE
 		virtual void WaitForDeviceIdle() = 0;
 	};
 
-	std::unique_ptr<GraphicsDevice> CreateGraphicsDeviceFactory(Window* window);
+	QUEST_API std::unique_ptr<GraphicsDevice> CreateGraphicsDeviceFactory(Window* window);
 }

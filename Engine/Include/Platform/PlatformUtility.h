@@ -1,5 +1,7 @@
+#include "Core/Core.h"
+
 namespace QE
 {
 	// Time (in seconds) since program initialization
-	double GetTime();
+	QUEST_API double GetTime();
 }

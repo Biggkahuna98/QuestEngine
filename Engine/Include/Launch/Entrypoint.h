@@ -6,4 +6,4 @@
 #include "Core/Log.h"
 #include "Engine/Engine.h"
 
-void InitializeEngineEntrypoint();
+extern "C" QUEST_API void InitializeEngineEntrypoint();
