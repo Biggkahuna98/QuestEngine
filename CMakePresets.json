@@ -7,7 +7,10 @@
             "hidden": true,
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/Output/Build/${presetName}",
-            "installDir": "${sourceDir}/Output/Install/${presetName}"
+            "installDir": "${sourceDir}/Output/Install/${presetName}",
+            "cacheVariables": {
+                "CURRENT_CMAKE_PRESET_NAME": "${presetName}"
+            }
         },
         {
             "name": "conf-windows-common",

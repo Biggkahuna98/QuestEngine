@@ -21,10 +21,25 @@ target_compile_definitions(Sandbox PRIVATE
 target_include_directories(Sandbox PRIVATE ${QUEST_ROOT}/Engine/Include/)
 target_link_libraries(Sandbox QuestEngine)
 
-# copy dll to runtime .exe folder
-add_custom_command(TARGET Sandbox POST_BUILD
-	COMMAND "${CMAKE_COMMAND}" -E copy
-		"$<TARGET_FILE:Sandbox>"
-		"Output/Build/$<CONFIGURATION>/Runtime/$<TARGET_FILE_NAME:Sandbox>"
+if(DEFINED CURRENT_CMAKE_PRESET_NAME)
+	message(STATUS "Preset name: ${CURRENT_CMAKE_PRESET_NAME}")
+	# copy dll to runtime .exe folder
+	add_custom_command(TARGET Sandbox POST_BUILD
+		COMMAND "${CMAKE_COMMAND}" -E copy
+		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Sandbox/Sandbox.dll"
+		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
 		COMMENT "Copying Sandbox.dll to QuestRuntime.exe directory"
-)
+	)
+	add_custom_command(TARGET Sandbox POST_BUILD
+		COMMAND "${CMAKE_COMMAND}" -E copy
+		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Sandbox/Sandbox.ilk"
+		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
+		COMMENT "Copying Sandbox.dll to QuestRuntime.exe directory"
+	)
+	add_custom_command(TARGET Sandbox POST_BUILD
+		COMMAND "${CMAKE_COMMAND}" -E copy
+		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Sandbox/Sandbox.pdb"
+		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
+		COMMENT "Copying Sandbox.dll to QuestRuntime.exe directory"
+	)
+endif()
