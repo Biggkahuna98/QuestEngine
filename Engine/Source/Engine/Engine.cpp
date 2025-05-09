@@ -5,6 +5,11 @@
 namespace QE
 {
 	Engine g_Engine;
+
+	Engine* GetEngine()
+	{
+		return &g_Engine;
+	}
 	/*Engine& Engine::Get()
 	{
 		static Engine instance;
@@ -37,6 +42,8 @@ namespace QE
 
 	void Engine::Shutdown()
 	{
+		m_GameApplication->Shutdown();
+
 		m_GraphicsDevice.reset();
 	}
 
@@ -52,6 +59,8 @@ namespace QE
 				m_Running = false;
 			}
 
+			m_GameApplication->Update();
+
 			m_GraphicsDevice->BeginFrame();
 			m_GraphicsDevice->EndFrame();
 			m_GraphicsDevice->PresentFrame();
@@ -61,6 +70,14 @@ namespace QE
 	void Engine::SetWindowShouldClose(bool shouldClose)
 	{
 		m_Running = !shouldClose;
+	}
+
+	void Engine::SetGameApplication(GameApplication *gameApplication)
+	{
+		m_GameApplication = gameApplication;
+
+		// Init game app
+		m_GameApplication->Init();
 	}
 
 	Window& Engine::GetWindow()
@@ -91,6 +108,11 @@ namespace QE
 	GraphicsDevice* Engine::GetGraphicsDevicePtr()
 	{
 		return m_GraphicsDevice.get();
+	}
+
+	GameApplication* Engine::GetGameApplication()
+	{
+		return m_GameApplication;
 	}
 }
 

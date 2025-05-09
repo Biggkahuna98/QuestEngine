@@ -11,13 +11,20 @@ file (GLOB_RECURSE SOURCES
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 
 
-add_executable(Sandbox ${SOURCES})
+add_library(Sandbox SHARED ${SOURCES})
 
-target_compile_definitions(Sandbox PRIVATE _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS=1 _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING=1)
+target_compile_definitions(Sandbox PRIVATE
+		_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS=1
+		_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING=1
+		BUILD_DLL
+)
 target_include_directories(Sandbox PRIVATE ${QUEST_ROOT}/Engine/Include/)
 target_link_libraries(Sandbox QuestEngine)
 
+# copy dll to runtime .exe folder
 add_custom_command(TARGET Sandbox POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:Sandbox> $<TARGET_RUNTIME_DLLS:Sandbox>
-  COMMAND_EXPAND_LISTS
+	COMMAND "${CMAKE_COMMAND}" -E copy
+		"$<TARGET_FILE:Sandbox>"
+		"Output/Build/$<CONFIGURATION>/Runtime/$<TARGET_FILE_NAME:Sandbox>"
+		COMMENT "Copying Sandbox.dll to QuestRuntime.exe directory"
 )

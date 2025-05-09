@@ -6,7 +6,6 @@
 #include "spdlog/sinks/basic_file_sink.h"
 
 std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> QE::Log::s_Loggers;
-std::string QE::s_ClientLoggerName = "Application";
 
 namespace QE
 {
@@ -14,7 +13,7 @@ namespace QE
 	void Log::Init()
 	{
 		AddLogger("Engine");
-		AddLogger(s_ClientLoggerName);
+		AddLogger("Game");
 	}
 
 	void Log::AddLogger(const std::string_view loggerName)

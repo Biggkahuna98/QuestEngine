@@ -7,11 +7,6 @@
 
 #include "spdlog/spdlog.h"
 
-namespace QE
-{
-	extern std::string s_ClientLoggerName;
-}
-
 // Macros for logging
 // Prefer to use the tagged macros for better readability/usability to track down errors
 #ifdef QE_INTERNAL_USE_ONLY // These log macros assume that the logger is "Engine" for internal library use, otherwise the logger name must be specified in the client application
@@ -31,21 +26,21 @@ namespace QE
 	
 	#define LOG_ASSERT(failurePrefix, ...) QE::Log::PrintAssertMessage("Engine", failurePrefix, __VA_ARGS__)
 #else
-	#define LOG_TRACE(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Trace, __VA_ARGS__)
-	#define LOG_DEBUG(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Debug, __VA_ARGS__)
-	#define LOG_INFO(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Info, __VA_ARGS__)
-	#define LOG_WARN(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Warning, __VA_ARGS__)
-	#define LOG_ERROR(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Error, __VA_ARGS__)
-	#define LOG_FATAL(...) QE::Log::PrintMessage(QE::s_ClientLoggerName, QE::Log::Level::Fatal, __VA_ARGS__)
+	#define LOG_TRACE(...) QE::Log::PrintMessage("Game", QE::Log::Level::Trace, __VA_ARGS__)
+	#define LOG_DEBUG(...) QE::Log::PrintMessage("Game", QE::Log::Level::Debug, __VA_ARGS__)
+	#define LOG_INFO(...) QE::Log::PrintMessage("Game", QE::Log::Level::Info, __VA_ARGS__)
+	#define LOG_WARN(...) QE::Log::PrintMessage("Game", QE::Log::Level::Warning, __VA_ARGS__)
+	#define LOG_ERROR(...) QE::Log::PrintMessage("Game", QE::Log::Level::Error, __VA_ARGS__)
+	#define LOG_FATAL(...) QE::Log::PrintMessage("Game", QE::Log::Level::Fatal, __VA_ARGS__)
 
-	#define LOG_TRACE_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Trace, tag, __VA_ARGS__)
-	#define LOG_DEBUG_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Debug, tag, __VA_ARGS__)
-	#define LOG_INFO_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Info, tag, __VA_ARGS__)
-	#define LOG_WARN_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Warning, tag, __VA_ARGS__)
-	#define LOG_ERROR_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Error, tag, __VA_ARGS__)
-	#define LOG_FATAL_TAG(tag, ...) QE::Log::PrintMessageTag(QE::s_ClientLoggerName, QE::Log::Level::Fatal, tag, __VA_ARGS__)
+	#define LOG_TRACE_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Trace, tag, __VA_ARGS__)
+	#define LOG_DEBUG_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Debug, tag, __VA_ARGS__)
+	#define LOG_INFO_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Info, tag, __VA_ARGS__)
+	#define LOG_WARN_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Warning, tag, __VA_ARGS__)
+	#define LOG_ERROR_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Error, tag, __VA_ARGS__)
+	#define LOG_FATAL_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Fatal, tag, __VA_ARGS__)
 
-	#define LOG_ASSERT(failurePrefix, ...) QE::Log::PrintAssertMessage(QE::s_ClientLoggerName, failurePrefix, __VA_ARGS__)
+	#define LOG_ASSERT(failurePrefix, ...) QE::Log::PrintAssertMessage("Game", failurePrefix, __VA_ARGS__)
 #endif
 
 namespace QE

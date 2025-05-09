@@ -20,11 +20,11 @@ set(THIRD_PARTY_ENGINE_DIR ${THIRD_PARTY_DIR}/Engine)
 # Add the engine
 add_subdirectory(Engine)
 
-# Add the runtime loadder
+# Add the runtime loader
 add_subdirectory(Runtime)
 
 # Add the test project
-#add_subdirectory(Sandbox)
+add_subdirectory(Sandbox)
 
 # Set startup project to Sandbox (change later to only do it with visual studio)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Sandbox)

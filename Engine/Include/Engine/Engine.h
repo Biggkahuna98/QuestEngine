@@ -5,13 +5,14 @@
 #include "Core/Window.h"
 #include "RHI/GraphicsDevice.h"
 #include "RHI/GraphicsContext.h"
+#include "GameApplication.h"
 
 namespace QE
 {
 	class QUEST_API Engine final
 	{
 	public:
-		Engine() {};
+		Engine() = default;
 		~Engine();
 		Engine(const Engine&) = delete;
 		void operator=(Engine const&) = delete;
@@ -26,12 +27,15 @@ namespace QE
 
 		void SetWindowShouldClose(bool shouldClose);
 
+		void SetGameApplication(GameApplication* gameApplication);
+
 		Window& GetWindow();
 		Window* GetWindowPtr();
 		InputManager& GetInput();
 		InputManager* GetInputPtr();
 		GraphicsDevice& GetGraphicsDevice();
 		GraphicsDevice* GetGraphicsDevicePtr();
+		GameApplication* GetGameApplication();
 	private:
 		bool m_Running = false;
 
@@ -40,7 +44,11 @@ namespace QE
 
 		std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
 		std::unique_ptr<GraphicsContext> m_GraphicsContext;
+
+		GameApplication* m_GameApplication;
 	};
 
 	extern Engine g_Engine;
+
+	extern "C" QUEST_API Engine* GetEngine();
 }

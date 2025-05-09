@@ -1,8 +1,12 @@
-#include "Launch/Entrypoint.h"
+#include "SandboxCore.h"
+#include "SandboxGameApplication.h"
 
-int main(int argc, char** argv)
+QE::GameApplication* CreateGameApplication()
 {
-    InitializeEngineEntrypoint();
+    return new SandboxGameApplication();
+}
 
-    return 0;
+void DestroyGameApplication(QE::GameApplication* app)
+{
+    delete app;
 }

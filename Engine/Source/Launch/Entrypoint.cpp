@@ -24,8 +24,19 @@ void InitializeEngineEntrypoint()
     LOG_INFO("Hello from the Entrypoint for Quest Engine!");
 
     g_Engine.Initialize();
-    g_Engine.Run();
-    g_Engine.Shutdown();
+}
 
+void RunEngine()
+{
+    using namespace QE;
+
+    g_Engine.Run();
+}
+
+void ShutdownEngineEntrypoint()
+{
+    using namespace QE;
+
+    g_Engine.Shutdown();
     Log::FlushAllLoggers();
 }
