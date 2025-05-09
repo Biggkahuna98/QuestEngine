@@ -65,6 +65,7 @@ namespace QE
 		static spdlog::logger* _GetLoggerAsPointer(const std::string_view loggerName);
 
 		static void SetLoggerLevel(const std::string_view loggerName, const Level level);
+		static void FlushAllLoggers();
 
 		template<typename... Args>
 		static constexpr void PrintMessage(const std::string_view loggerName, const Log::Level level, fmt::format_string<Args...> format, Args&&... args);

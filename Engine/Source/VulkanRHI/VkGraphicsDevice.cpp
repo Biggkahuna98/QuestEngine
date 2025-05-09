@@ -880,7 +880,11 @@ namespace QE
 
 		AllocatedBuffer staging = CreateBuffer(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
-		void* data = staging.Allocation->GetMappedData();
+
+		// https://www.reddit.com/r/vulkan/comments/1f4alg0/i_keep_getting_this_c2027_error_about/
+		//void* data = staging.Allocation->GetMappedData();
+		void* data;
+		vmaMapMemory(m_Allocator, staging.Allocation, &data);
 
 		// copy vertex buffer
 		memcpy(data, vertices.data(), vertexBufferSize);

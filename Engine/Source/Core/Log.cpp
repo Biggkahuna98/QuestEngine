@@ -67,4 +67,12 @@ namespace QE
 		auto logger = _GetLoggerAsPointer(loggerName);
 		logger->set_level(static_cast<spdlog::level::level_enum>(level));
 	}
+
+	void Log::FlushAllLoggers()
+	{
+		for (auto& logger : s_Loggers)
+		{
+			logger.second->flush();
+		}
+	}
 }
