@@ -111,3 +111,26 @@ target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIR} ${VENDOR
 target_include_directories(${TARGET_NAME} PUBLIC ${THIRD_PARTY_ENGINE_DIR}/glm/glm ${THIRD_PARTY_ENGINE_DIR}/imgui)
 
 message("Done building Quest Engine")
+
+if(DEFINED CURRENT_CMAKE_PRESET_NAME)
+	message(STATUS "Preset name: ${CURRENT_CMAKE_PRESET_NAME}")
+	# copy dll to runtime .exe folder
+	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+			COMMAND "${CMAKE_COMMAND}" -E copy
+			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.dll"
+			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
+			COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
+	)
+	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+			COMMAND "${CMAKE_COMMAND}" -E copy
+			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.ilk"
+			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
+			COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
+	)
+	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+			COMMAND "${CMAKE_COMMAND}" -E copy
+			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.pdb"
+			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
+			COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
+	)
+endif()

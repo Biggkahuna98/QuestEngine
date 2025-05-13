@@ -21,8 +21,8 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    GetGameAppFn GetGameApp = (GetGameAppFn)GetProcAddress(gameLibDLL, "CreateGameApplication");
-    DeleteGameAppFn DeleteGameApp = (DeleteGameAppFn)GetProcAddress(gameLibDLL, "DestroyGameApplication");
+    GetGameAppFn GetGameApp = reinterpret_cast<GetGameAppFn>(GetProcAddress(gameLibDLL, "CreateGameApplication"));
+    DeleteGameAppFn DeleteGameApp = reinterpret_cast<DeleteGameAppFn>(GetProcAddress(gameLibDLL, "DestroyGameApplication"));
 
     if (!GetGameApp || !DeleteGameApp)
     {

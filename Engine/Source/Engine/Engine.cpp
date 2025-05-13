@@ -49,6 +49,7 @@ namespace QE
 
 	void Engine::Run()
 	{
+		constexpr bool RunGraphics = false;
 		while (m_Running)
 		{
 			m_Window->GetInputManager().ProcessTransitions();
@@ -61,9 +62,12 @@ namespace QE
 
 			m_GameApplication->Update();
 
-			m_GraphicsDevice->BeginFrame();
-			m_GraphicsDevice->EndFrame();
-			m_GraphicsDevice->PresentFrame();
+			if (RunGraphics)
+			{
+				m_GraphicsDevice->BeginFrame();
+				m_GraphicsDevice->EndFrame();
+				m_GraphicsDevice->PresentFrame();
+			}
 		}
 	}
 
