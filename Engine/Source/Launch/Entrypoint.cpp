@@ -10,6 +10,14 @@ void SignalHandler(int signal)
     exit(signal);
 }
 
+void TerminateHandler()
+{
+    // Same thing as Signal handler, flush loggers
+    QE::Log::FlushAllLoggers();
+
+    exit(1);
+}
+
 void InitializeEngineEntrypoint()
 {
     using namespace QE;
@@ -19,6 +27,9 @@ void InitializeEngineEntrypoint()
     std::signal(SIGABRT, SignalHandler);
     std::signal(SIGTERM, SignalHandler);
     std::signal(SIGINT, SignalHandler);
+
+    // Terminate handler
+    std::set_terminate(TerminateHandler);
 
     Log::Init();
     LOG_INFO("Hello from the Entrypoint for Quest Engine!");
