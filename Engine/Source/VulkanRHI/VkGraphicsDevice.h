@@ -10,7 +10,7 @@
 #include "VkDescriptors.h"
 #include "VkLoader.h"
 
-#include "Core/DeletionQueue.h"
+#include "../../Include/Core/Containers/DeletionQueue.h"
 
 namespace QE
 {
