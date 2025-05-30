@@ -50,17 +50,17 @@ namespace QE
 	{
 	public: 
 		VkGraphicsDevice(Window* window);
-		virtual ~VkGraphicsDevice() override;
+		~VkGraphicsDevice() override;
 
-		virtual void BeginFrame() override;
-		virtual void EndFrame() override;
-		virtual void PresentFrame() override;
+		void BeginFrame() override;
+		void EndFrame() override;
+		void PresentFrame() override;
 
-		virtual void UpdateWindowSize(uint32_t width, uint32_t height) override;
+		void UpdateWindowSize(uint32_t width, uint32_t height) override;
 
-		virtual std::unique_ptr<GraphicsContext> CreateGraphicsContext() override;
+		std::unique_ptr<GraphicsContext> CreateGraphicsContext() override;
 
-		virtual void WaitForDeviceIdle() override;
+		void WaitForDeviceIdle() override;
 		
 		VkInstance GetVkInstance() const { return m_Instance; }
 		VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }

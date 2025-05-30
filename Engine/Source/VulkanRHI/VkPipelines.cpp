@@ -1,4 +1,5 @@
 #include "VkPipelines.h"
+#include "VkCommon.h"
 #include <fstream>
 #include "VkInit.h"
 

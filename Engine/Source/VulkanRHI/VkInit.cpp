@@ -64,30 +64,15 @@ namespace VkInit
 		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-		for (const auto& extension : s_DeviceExtensions)
-		{
-			LOG_WARN_TAG("VkInit", "Required device extension: {}", extension);
-		}
-
-		// for (const auto& extension : availableExtensions)
-		// {
-		// 	LOG_DEBUG_TAG("VkInit", "Device Extension: {}", extension.extensionName);
-		// }
-
 		std::set<std::string> requiredExtensions(s_DeviceExtensions.begin(), s_DeviceExtensions.end());
-		for (const auto& extension : requiredExtensions)
-		{
-			LOG_DEBUG_TAG("VkInit", "Selected required device extension: {}", extension);
-		}
-
 		for (const auto& extension : availableExtensions)
 		{
 			requiredExtensions.erase(extension.extensionName);
 		}
-		LOG_WARN_TAG("VkInit", "Required extension side {}", requiredExtensions.size());
+
 		for (const auto& extension : requiredExtensions)
 		{
-			LOG_DEBUG_TAG("VkInit", "Missing device extension: {}", extension);
+			LOG_ERROR_TAG("VkInit", "Missing device extension: {}", extension);
 		}
 		return requiredExtensions.empty();
 	}
@@ -166,13 +151,11 @@ namespace VkInit
 		{
 			return capabilities.currentExtent;
 		}
-		else
-		{
-			actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-			actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
-			return actualExtent;
-		}
+		actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+		actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+		return actualExtent;
 	}
 
 	static std::vector<char> ReadShaderFile(const std::string& filename)
@@ -184,7 +167,7 @@ namespace VkInit
 		if (!std::filesystem::exists(filename_))
 		{
 			LOG_DEBUG_TAG("VkInit", "File does not exist: {}", filename_);
-			return std::vector<char>();
+			return {};
 		}
 
 		std::ifstream file(filename_, std::ios::ate | std::ios::binary);

@@ -4,27 +4,16 @@
 
 namespace QE
 {
+	// The global engine
 	Engine g_Engine;
 
 	Engine* GetEngine()
 	{
 		return &g_Engine;
 	}
-	/*Engine& Engine::Get()
-	{
-		static Engine instance;
-		return instance;
-	}
-
-	Engine* Engine::GetPtr()
-	{
-		static Engine instance;
-		return &instance;
-	}*/
 
 	Engine::~Engine()
 	{
-
 	}
 
 	void Engine::Initialize()
@@ -49,7 +38,7 @@ namespace QE
 
 	void Engine::Run()
 	{
-		constexpr bool RunGraphics = false;
+		constexpr bool RunGraphics = true;
 		while (m_Running)
 		{
 			m_Window->GetInputManager().ProcessTransitions();

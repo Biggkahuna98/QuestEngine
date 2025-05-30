@@ -107,8 +107,7 @@ namespace QE
 
 	VkGraphicsDevice::~VkGraphicsDevice()
 	{
-		WaitForDeviceIdle();
-		
+		VkGraphicsDevice::WaitForDeviceIdle();
 
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
@@ -141,12 +140,13 @@ namespace QE
 
 		if (VkInit::s_EnableValidationLayers)
 			VkInit::DestroyDebugMessenger(&m_Instance, &m_DebugMessenger);
+
 		vkDestroyInstance(m_Instance, nullptr);
 	}
 
 	void VkGraphicsDevice::BeginFrame()
 	{
-		LOG_DEBUG_TAG("VkGraphicsDevice", "Beginning frame: {0}", m_CurrentFrameNumber);
+		//LOG_DEBUG_TAG("VkGraphicsDevice", "Beginning frame: {0}", m_CurrentFrameNumber);
 		// Imgui
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -199,7 +199,7 @@ namespace QE
 	{
 		ImGui::End();
 		ImGui::Render();
-		LOG_DEBUG_TAG("VkGraphicsDevice", "Ending frame: {0}", m_CurrentFrameNumber);
+		//LOG_DEBUG_TAG("VkGraphicsDevice", "Ending frame: {0}", m_CurrentFrameNumber);
 
 		// Come back to this later
 		DrawBackground(GetCurrentFrameData().CommandBuffer);
@@ -239,12 +239,12 @@ namespace QE
 			throw std::runtime_error("Failed to submit command buffer to the graphics queue");
 		}
 
-		LOG_DEBUG_TAG("VkGraphicsDevice", "Command buffer submitted to the graphics queue");
+		//LOG_DEBUG_TAG("VkGraphicsDevice", "Command buffer submitted to the graphics queue");
 	}
 
 	void VkGraphicsDevice::PresentFrame()
 	{
-		LOG_DEBUG_TAG("VkGraphicsDevice", "Presenting frame: {0}", m_CurrentFrameNumber);
+		//LOG_DEBUG_TAG("VkGraphicsDevice", "Presenting frame: {0}", m_CurrentFrameNumber);
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
@@ -314,7 +314,7 @@ namespace QE
 
 		VmaAllocationCreateInfo ring_allocInfo = {};
 		ring_allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-		ring_allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		ring_allocInfo.requiredFlags = static_cast<VkMemoryPropertyFlags>(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		// Allocate and create the image
 		vmaCreateImage(m_Allocator, &ring_info, &ring_allocInfo, &m_DrawImage.Image, &m_DrawImage.Allocation, nullptr);
@@ -335,7 +335,6 @@ namespace QE
 
 	void VkGraphicsDevice::CreateSwapchain(VkExtent2D windowExtent)
 	{
-		LOG_DEBUG_TAG("VkGraphicsDevice", "Creating Vulkan swapchain");
 		m_Swapchain = VkInit::CreateSwapchain(m_PhysicalDevice, m_Device, m_Surface, windowExtent, &m_SwapchainImages, &m_SwapchainImageFormat, &m_SwapchainExtent);
 		VkInit::CreateSwapchainImageViews(m_Device, &m_SwapchainImages, m_SwapchainImageFormat, &m_SwapchainImageViews);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan Swapchain and views created");

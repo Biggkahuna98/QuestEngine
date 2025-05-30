@@ -1,11 +1,11 @@
 #pragma once
 
+#include "VkCommon.h"
 #include <string>
 #include <cstdint>
 #include <vector>
 #include <optional>
 #include <vulkan/vulkan.h>
-#include <vulkan/vk_enum_string_helper.h>
 
 // Initializer helper functions for Vulkan to abstract away the tedium
 namespace VkInit

@@ -1,5 +1,6 @@
 #include "VkDescriptors.h"
 #include "VkTypes.h"
+#include "VkCommon.h"
 
 namespace QE
 {
