@@ -3,6 +3,8 @@
 
 #include "Engine/Engine.h"
 
+#include "imgui.h"
+
 void SandboxGameApplication::Init()
 {
     LOG_INFO("Sandbox Game Application Initialized");
@@ -15,9 +17,13 @@ void SandboxGameApplication::Shutdown()
 
 void SandboxGameApplication::Update()
 {
+    using namespace QE;
     //LOG_INFO("Sandbox Game Application Update");
     if (QE::GetEngine()->GetInput().IsKeyPressed(QE::Key::A))
     {
         LOG_INFO("A Pressed from Sandbox");
     }
+
+    // Render ImGui
+    ImGui::ShowDemoWindow();
 }

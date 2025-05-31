@@ -10,10 +10,8 @@ namespace QE
 	{
 	public:
 		VkGraphicsContext(GraphicsDevice* device);
-		virtual ~VkGraphicsContext() override;
+		~VkGraphicsContext() override;
 	private:
-		VkCommandPool m_VkCommandPool;
-		VkCommandBuffer m_VkCommandBuffer;
 
 	};
 }

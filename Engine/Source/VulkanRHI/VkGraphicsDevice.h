@@ -56,6 +56,10 @@ namespace QE
 		void EndFrame() override;
 		void PresentFrame() override;
 
+		void BeginFrameOld();
+		void EndFrameOld();
+		void PresentFrameOld();
+
 		void UpdateWindowSize(uint32_t width, uint32_t height) override;
 
 		std::unique_ptr<GraphicsContext> CreateGraphicsContext() override;
@@ -93,7 +97,9 @@ namespace QE
 		std::vector<VkImageView> m_SwapchainImageViews;
 		uint32_t m_CurrentSwapchainImageIndex;
 
-		VkPipelineLayout m_PipelineLayout;
+		// Triangle
+		VkPipelineLayout m_TrianglePipelineLayout;
+		VkPipeline m_TrianglePipeline;
 
 		// Frame data
 		FrameData m_FrameData[MAX_FRAMES_IN_FLIGHT];
@@ -123,10 +129,6 @@ namespace QE
 		std::vector<ComputeEffect> m_BackgroundEffects;
 		int m_CurrentBackgroundEffect = 0;
 
-		// Triangle
-		VkPipelineLayout m_TrianglePipelineLayout;
-		VkPipeline m_TrianglePipeline;
-
 		// Mesh
 		VkPipelineLayout m_MeshPipelineLayout;
 		VkPipeline m_MeshPipeline;
@@ -141,11 +143,12 @@ namespace QE
 		void CreateSwapchain(VkExtent2D windowExtent);
 		void RecreateSwapchain();
 		void DestroySwapchain();
+		void InitializeTrianglePipeline();
 		void InitializeFrameData();
 		void InitializeDescriptors();
 		void InitializePipelines();
 		void InitializeBackgroundPipelines();
-		void InitializeTrianglePipeline();
+		void InitializeTrianglePipelineOld();
 		void InitializeMeshPipeline();
 		void InitializeImGui();
 		void InitializeDefaultData();

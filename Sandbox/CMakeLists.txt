@@ -18,7 +18,7 @@ target_compile_definitions(Sandbox PRIVATE
 		_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING=1
 		BUILD_DLL
 )
-target_include_directories(Sandbox PRIVATE ${QUEST_ROOT}/Engine/Include/)
+target_include_directories(Sandbox PRIVATE ${QUEST_ROOT}/Engine/Include/ ${THIRD_PARTY_ENGINE_DIR}/imgui)
 target_link_libraries(Sandbox QuestEngine)
 
 if(DEFINED CURRENT_CMAKE_PRESET_NAME)

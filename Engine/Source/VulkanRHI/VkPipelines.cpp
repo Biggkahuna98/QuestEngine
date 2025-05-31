@@ -69,6 +69,7 @@ namespace QE
 		VkGraphicsPipelineCreateInfo pipelineInfo = { .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
 		// connect the renderInfo to the pNext extension mechanism
 		pipelineInfo.pNext = &RenderingInfo;
+		pipelineInfo.renderPass = nullptr;
 
 		pipelineInfo.stageCount = (uint32_t)ShaderStages.size();
 		pipelineInfo.pStages = ShaderStages.data();

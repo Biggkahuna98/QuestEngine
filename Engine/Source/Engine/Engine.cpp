@@ -1,5 +1,6 @@
 #include "Engine/Engine.h"
 
+#include "imgui.h"
 #include "Platform/PlatformUtility.h"
 
 namespace QE
@@ -44,19 +45,20 @@ namespace QE
 			m_Window->GetInputManager().ProcessTransitions();
 			m_Window->ProcessEvents();
 
-			if (m_InputManager->IsKeyPressed(Key::Escape))
+			if (m_InputManager->IsKeyPressed(Escape))
 			{
 				m_Running = false;
 			}
 
-			m_GameApplication->Update();
+			// Great value headless mode, will definitely fix later on
+			if (RunGraphics) m_GraphicsDevice->BeginFrame();
 
-			if (RunGraphics)
-			{
-				m_GraphicsDevice->BeginFrame();
-				m_GraphicsDevice->EndFrame();
-				m_GraphicsDevice->PresentFrame();
-			}
+			m_GameApplication->Update();
+			//ImGui::ShowDemoWindow();
+
+			if (RunGraphics) m_GraphicsDevice->EndFrame();
+
+			if (RunGraphics) m_GraphicsDevice->PresentFrame();
 		}
 	}
 

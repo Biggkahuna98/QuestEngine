@@ -657,7 +657,7 @@ namespace VkInit
 		}
 	}
 
-	void CreateGraphicsPipeline(VkDevice device, VkPipelineLayout* pipelineLayout)
+	void CreateGraphicsPipeline(VkDevice device, VkFormat swapchainImageFormat, VkPipelineLayout* pipelineLayout)
 	{
 		auto vertShaderCode = ReadShaderFile("triangle-vert.spv");
 		auto fragShaderCode = ReadShaderFile("triangle-frag.spv");
@@ -723,6 +723,13 @@ namespace VkInit
 		colorBlending.blendConstants[1] = 0.0f;
 		colorBlending.blendConstants[2] = 0.0f;
 		colorBlending.blendConstants[3] = 0.0f;
+
+		// UPDATE THE COLOR ATTACHMENT FORMAT WITH SWAPCHAIN IMAGE FORMAT
+		// https://lesleylai.info/en/vk-khr-dynamic-rendering/
+		VkPipelineRenderingCreateInfo RenderingInfo{};
+		RenderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+		RenderingInfo.colorAttachmentCount = 1;
+		RenderingInfo.pColorAttachmentFormats = &swapchainImageFormat;
 
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,

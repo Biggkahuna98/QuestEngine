@@ -89,18 +89,20 @@ namespace QE
 		// Swapchain
 		InitSwapchain(m_WindowExtent);
 
-		// Command pools and buffers
+		// Frame semaphores and fences
 		InitializeFrameData();
+		// Command pools and buffers
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan command pools and buffers created");
 
 		// Descriptors
-		InitializeDescriptors();
+		//InitializeDescriptors();
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan descriptors created");
 
 		// Graphics pipeline
-		//VkInit::CreateGraphicsPipeline(m_Device, &m_PipelineLayout);
-		InitializeDefaultData();
-		InitializePipelines();
+		InitializeTrianglePipeline();
+		//VkInit::CreateGraphicsPipeline(m_Device, m_SwapchainImageFormat, &m_PipelineLayout);
+		//InitializeDefaultData();
+		//InitializePipelines();
 
 		InitializeImGui();
 	}
@@ -118,14 +120,6 @@ namespace QE
 			vkDestroySemaphore(m_Device, m_FrameData[i].RenderSemaphore, nullptr);
 			vkDestroySemaphore(m_Device, m_FrameData[i].SwapchainSemaphore, nullptr);
 		}
-
-		// Delete meshes
-		for (auto& mesh : m_TestMeshes)
-		{
-			DestroyBuffer(mesh->MeshBuffer.IndexBuffer);
-			DestroyBuffer(mesh->MeshBuffer.VertexBuffer);
-		}
-
 
 		// Flush global lifetime deletion queue
 		m_CleanupQueue.Flush();
@@ -145,6 +139,87 @@ namespace QE
 	}
 
 	void VkGraphicsDevice::BeginFrame()
+	{
+		// Wait for the previous frame to finish
+		vkWaitForFences(m_Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
+		vkResetFences(m_Device, 1, &GetCurrentFrameData().RenderFence);
+
+		// See if there is a better place later
+		GetCurrentFrameData().CleanupQueue.Flush();
+
+		// Request the image from the swapchain
+		vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
+
+		// Reset command buffer
+		vkResetCommandBuffer(GetCurrentFrameData().CommandBuffer, 0);
+
+		// Begin the buffer for recording
+		VkCommandBufferBeginInfo beginInfo = VkInit::BuildCommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		VK_CHECK(vkBeginCommandBuffer(GetCurrentFrameData().CommandBuffer, &beginInfo));
+
+		// transition our main draw image into general layout so we can write into it
+		// we will overwrite it all so we dont care about what was the older layout
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+		// Imgui
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+	}
+
+	void VkGraphicsDevice::EndFrame()
+	{
+		// End ImGui
+		//ImGui::End();
+		ImGui::Render();
+
+		// Transition the draw image and the swapchain image into their correct transfer layouts
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		// Execute a copy from the draw image into the swapchain
+		VkInit::CopyImageToImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, m_SwapchainImages[m_CurrentSwapchainImageIndex], m_DrawExtent, m_SwapchainExtent);
+
+		// Set swapchain image layout to Present so we can show it on the screen
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+		// Draw imgui
+		DrawImGui(GetCurrentFrameData().CommandBuffer, m_SwapchainImageViews[m_CurrentSwapchainImageIndex]);
+
+		// End command buffer recording
+		VK_CHECK(vkEndCommandBuffer(GetCurrentFrameData().CommandBuffer));
+
+		// Submit command buffer to the graphics queue
+		VkCommandBufferSubmitInfo cmdSubmitInfo = VkInit::BuildCommandBufferSubmitInfo(GetCurrentFrameData().CommandBuffer);
+
+		VkSemaphoreSubmitInfo waitInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,GetCurrentFrameData().SwapchainSemaphore);
+		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrameData().RenderSemaphore);
+
+		VkSubmitInfo2 submitInfo = VkInit::BuildSubmitInfo2(&cmdSubmitInfo, &signalInfo, &waitInfo);
+		VK_CHECK(vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, GetCurrentFrameData().RenderFence));
+	}
+
+	void VkGraphicsDevice::PresentFrame()
+	{
+		//LOG_DEBUG_TAG("VkGraphicsDevice", "Presenting frame: {0}", m_CurrentFrameNumber);
+		VkPresentInfoKHR presentInfo = {};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.pNext = nullptr;
+		presentInfo.pSwapchains = &m_Swapchain;
+		presentInfo.swapchainCount = 1;
+
+		presentInfo.pWaitSemaphores = &GetCurrentFrameData().RenderSemaphore;
+		presentInfo.waitSemaphoreCount = 1;
+
+		presentInfo.pImageIndices = &m_CurrentSwapchainImageIndex;
+
+		// Change to present queue later
+		VK_CHECK(vkQueuePresentKHR(m_GraphicsQueue, &presentInfo));
+
+		m_CurrentFrameNumber++;
+	}
+
+	void VkGraphicsDevice::BeginFrameOld()
 	{
 		//LOG_DEBUG_TAG("VkGraphicsDevice", "Beginning frame: {0}", m_CurrentFrameNumber);
 		// Imgui
@@ -195,9 +270,9 @@ namespace QE
 		}
 	}
 
-	void VkGraphicsDevice::EndFrame()
+	void VkGraphicsDevice::EndFrameOld()
 	{
-		ImGui::End();
+		/*ImGui::End();
 		ImGui::Render();
 		//LOG_DEBUG_TAG("VkGraphicsDevice", "Ending frame: {0}", m_CurrentFrameNumber);
 
@@ -237,12 +312,12 @@ namespace QE
 		{
 			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to submit command buffer to the graphics queue");
 			throw std::runtime_error("Failed to submit command buffer to the graphics queue");
-		}
+		}*/
 
 		//LOG_DEBUG_TAG("VkGraphicsDevice", "Command buffer submitted to the graphics queue");
 	}
 
-	void VkGraphicsDevice::PresentFrame()
+	void VkGraphicsDevice::PresentFrameOld()
 	{
 		//LOG_DEBUG_TAG("VkGraphicsDevice", "Presenting frame: {0}", m_CurrentFrameNumber);
 		VkPresentInfoKHR presentInfo = {};
@@ -360,6 +435,52 @@ namespace QE
 		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
 	}
 
+	void VkGraphicsDevice::InitializeTrianglePipeline()
+	{
+		VkShaderModule triangleVertexShader = VkInit::CreateShaderModule(m_Device, "triangle-vert.spv");
+		VkShaderModule triangleFragmentShader = VkInit::CreateShaderModule(m_Device, "triangle-frag.spv");
+
+		// build the pipeline layout that controls the inputs/outputs of the shader
+		// we are not using descriptor sets or other systems yet, so no need to use anything other than empty default
+		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo();
+		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_TrianglePipelineLayout));
+
+		PipelineBuilder pipelineBuilder;
+
+		//use the triangle layout we created
+		pipelineBuilder.PipelineLayout = m_TrianglePipelineLayout;
+		//connecting the vertex and pixel shaders to the pipeline
+		pipelineBuilder.SetShaders(triangleVertexShader, triangleFragmentShader);
+		//it will draw triangles
+		pipelineBuilder.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		//filled triangles
+		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
+		//no backface culling
+		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+		//no multisampling
+		pipelineBuilder.SetMultisamplingMode();
+		//no blending
+		pipelineBuilder.DisableBlending();
+		//no depth testing
+		pipelineBuilder.DisableDepthTest();
+
+		//connect the image format we will draw into, from draw image
+		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
+		pipelineBuilder.SetDepthFormat(VK_FORMAT_UNDEFINED);
+
+		//finally build the pipeline
+		m_TrianglePipeline = pipelineBuilder.BuildPipeline(m_Device);
+
+		//clean structures
+		vkDestroyShaderModule(m_Device, triangleFragmentShader, nullptr);
+		vkDestroyShaderModule(m_Device, triangleVertexShader, nullptr);
+
+		m_CleanupQueue.PushFunction([&]() {
+			vkDestroyPipelineLayout(m_Device, m_TrianglePipelineLayout, nullptr);
+			vkDestroyPipeline(m_Device, m_TrianglePipeline, nullptr);
+		});
+	}
+
 	void VkGraphicsDevice::InitializeFrameData()
 	{
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -375,25 +496,6 @@ namespace QE
 			// Fences
 			m_FrameData[i].RenderFence = VkInit::CreateFence(m_Device, VK_FENCE_CREATE_SIGNALED_BIT);
 		}
-
-		// REFACTOR LATER - IMGUI stuff
-		VkCommandPoolCreateInfo commandPoolInfo = VkInit::BuildCommandPoolCreateInfo(m_QueueFamilyIndices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-		VK_CHECK(vkCreateCommandPool(m_Device, &commandPoolInfo, nullptr, &m_ImGuiCommandPool));
-
-		// allocate the command buffer for immediate submits
-		VkCommandBufferAllocateInfo cmdAllocInfo = VkInit::BuildCommandBufferAllocateInfo(m_ImGuiCommandPool);
-
-		VK_CHECK(vkAllocateCommandBuffers(m_Device, &cmdAllocInfo, &m_ImGuiCommandBuffer));
-
-		m_CleanupQueue.PushFunction([=]() {
-			vkDestroyCommandPool(m_Device, m_ImGuiCommandPool, nullptr);
-		});
-
-		VkFenceCreateInfo fenceCreateInfo = VkInit::BuildFenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-		VK_CHECK(vkCreateFence(m_Device, &fenceCreateInfo, nullptr, &m_ImGuiFence));
-		m_CleanupQueue.PushFunction([=]() { 
-			vkDestroyFence(m_Device, m_ImGuiFence, nullptr); 
-		});
 	}
 
 	void VkGraphicsDevice::InitializeDescriptors()
@@ -446,7 +548,7 @@ namespace QE
 		InitializeBackgroundPipelines();
 
 		// Graphics
-		InitializeTrianglePipeline();
+		InitializeTrianglePipelineOld();
 		InitializeMeshPipeline();
 	}
 
@@ -514,7 +616,7 @@ namespace QE
 		});
 	}
 
-	void VkGraphicsDevice::InitializeTrianglePipeline()
+	void VkGraphicsDevice::InitializeTrianglePipelineOld()
 	{
 		VkShaderModule triangleVertexShader = VkInit::CreateShaderModule(m_Device, "colored_triangle-vert.spv");
 		VkShaderModule triangleFragmentShader = VkInit::CreateShaderModule(m_Device, "colored_triangle-frag.spv");
@@ -614,6 +716,25 @@ namespace QE
 
 	void VkGraphicsDevice::InitializeImGui()
 	{
+		// ImGui command pools
+		VkCommandPoolCreateInfo commandPoolInfo = VkInit::BuildCommandPoolCreateInfo(m_QueueFamilyIndices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+		VK_CHECK(vkCreateCommandPool(m_Device, &commandPoolInfo, nullptr, &m_ImGuiCommandPool));
+
+		// allocate the command buffer for immediate submits
+		VkCommandBufferAllocateInfo cmdAllocInfo = VkInit::BuildCommandBufferAllocateInfo(m_ImGuiCommandPool);
+
+		VK_CHECK(vkAllocateCommandBuffers(m_Device, &cmdAllocInfo, &m_ImGuiCommandBuffer));
+
+		m_CleanupQueue.PushFunction([=]() {
+			vkDestroyCommandPool(m_Device, m_ImGuiCommandPool, nullptr);
+		});
+
+		VkFenceCreateInfo fenceCreateInfo = VkInit::BuildFenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
+		VK_CHECK(vkCreateFence(m_Device, &fenceCreateInfo, nullptr, &m_ImGuiFence));
+		m_CleanupQueue.PushFunction([=]() {
+			vkDestroyFence(m_Device, m_ImGuiFence, nullptr);
+		});
+
 		// 1: create descriptor pool for IMGUI
 		//  the size of the pool is very oversize, but it's copied from imgui demo
 		//  itself.

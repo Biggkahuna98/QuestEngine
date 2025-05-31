@@ -91,6 +91,8 @@ set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/assimp ThirdParty/assimp)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glaze ThirdParty/glaze)
 
+#add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/imgui ThirdParty/imgui)
+
 # Set vendor includes
 set(VENDOR_INCLUDES
 	${THIRD_PARTY_ENGINE_DIR}/glm/glm

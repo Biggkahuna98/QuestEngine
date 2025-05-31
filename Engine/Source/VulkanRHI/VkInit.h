@@ -62,7 +62,7 @@ namespace VkInit
 	VkSwapchainKHR CreateSwapchain(VkPhysicalDevice physicalDevice, VkDevice device, VkSurfaceKHR surface, VkExtent2D windowSize, 
 		std::vector<VkImage>* swapchainImages, VkFormat* swapchainImageFormat, VkExtent2D* swapchainExtent);
 	void CreateSwapchainImageViews(VkDevice device, std::vector<VkImage>* swapchainImages, VkFormat swapchainImageFormat, std::vector<VkImageView>* swapchainImageViews);
-	void CreateGraphicsPipeline(VkDevice device, VkPipelineLayout* pipelineLayout);
+	void CreateGraphicsPipeline(VkDevice device, VkFormat swapchainImageFormat, VkPipelineLayout* pipelineLayout);
 
 	VkCommandPool CreateCommandPool(VkDevice device, uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags = 0);
 	VkCommandBuffer CreateCommandBuffer(VkDevice device, VkCommandPool commandPool);
