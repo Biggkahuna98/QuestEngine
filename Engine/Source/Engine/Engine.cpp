@@ -54,7 +54,6 @@ namespace QE
 			if (RunGraphics) m_GraphicsDevice->BeginFrame();
 
 			m_GameApplication->Update();
-			//ImGui::ShowDemoWindow();
 
 			if (RunGraphics) m_GraphicsDevice->EndFrame();
 

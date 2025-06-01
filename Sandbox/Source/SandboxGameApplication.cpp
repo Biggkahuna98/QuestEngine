@@ -25,5 +25,8 @@ void SandboxGameApplication::Update()
     }
 
     // Render ImGui
-    ImGui::ShowDemoWindow();
+    // ImGui fps window
+    ImGui::Begin("FPS");
+    ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
+    ImGui::End();
 }

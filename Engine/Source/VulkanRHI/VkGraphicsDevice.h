@@ -158,6 +158,7 @@ namespace QE
 		void ImmediateCommandSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 		void DrawImGui(VkCommandBuffer cmd, VkImageView targetImageView);
 		void DrawGeometry(VkCommandBuffer cmd);
+		void DrawTriangle(VkCommandBuffer cmd);
 		AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 		void DestroyBuffer(const AllocatedBuffer& buffer);
 	};

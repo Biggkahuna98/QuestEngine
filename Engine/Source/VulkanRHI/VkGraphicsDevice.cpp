@@ -165,6 +165,9 @@ namespace QE
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		// Draw triangle
+		DrawTriangle(GetCurrentFrameData().CommandBuffer);
 	}
 
 	void VkGraphicsDevice::EndFrame()
@@ -950,6 +953,40 @@ namespace QE
 		vkCmdBindIndexBuffer(cmd, m_Rectangle.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
 
 		vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
+
+		vkCmdEndRendering(cmd);
+	}
+
+	void VkGraphicsDevice::DrawTriangle(VkCommandBuffer cmd)
+	{
+		//begin a render pass  connected to our draw image
+		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
+		vkCmdBeginRendering(cmd, &renderInfo);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_TrianglePipeline);
+
+		//set dynamic viewport and scissor
+		VkViewport viewport = {};
+		viewport.x = 0;
+		viewport.y = 0;
+		viewport.width = m_DrawExtent.width;
+		viewport.height = m_DrawExtent.height;
+		viewport.minDepth = 0.f;
+		viewport.maxDepth = 1.f;
+
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = {};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = m_DrawExtent.width;
+		scissor.extent.height = m_DrawExtent.height;
+
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		vkCmdDraw(cmd, 3, 1, 0, 0);
 
 		vkCmdEndRendering(cmd);
 	}
