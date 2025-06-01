@@ -47,7 +47,7 @@ namespace QE
 		LOG_DEBUG("Mesh count: {}", scene->mNumMeshes);
 
 		std::vector<uint32_t> indices;
-		std::vector<Vertex> vertices;
+		std::vector<VertexOld> vertices;
 
 		meshes.reserve(scene->mNumMeshes);
 
@@ -86,7 +86,7 @@ namespace QE
 			vertices.reserve(mesh->mNumVertices);
 			for (int index = 0; index < mesh->mNumVertices; index++)
 			{
-				Vertex newVtx;
+				VertexOld newVtx;
 				newVtx.Position = { mesh->mVertices[index].x, mesh->mVertices[index].y, mesh->mVertices[index].z };
 				newVtx.Normal = { mesh->mNormals[index].x, mesh->mNormals[index].y, mesh->mNormals[index].z };
 				newVtx.Color = glm::vec4{ 1.0f };
@@ -103,7 +103,7 @@ namespace QE
 			LOG_DEBUG("Loaded Indices Size: {}", indices.size());
 
 			// Create the mesh asset
-			GPUMeshBuffer meshBuffer = engine->UploadMesh(indices, vertices);
+			GPUMeshBuffer meshBuffer = engine->UploadMeshOld(indices, vertices);
 			newMesh.MeshBuffer = meshBuffer;
 
 			meshes.push_back(std::make_shared<MeshAsset>(std::move(newMesh)));

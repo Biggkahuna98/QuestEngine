@@ -3,10 +3,12 @@
 #include <vulkan/vulkan.h>
 #include <vma/vk_mem_alloc.h>
 #include "glm/glm.hpp"
+#include <array>
+#include "RHI/ResourceTypes.h"
 
 namespace QE
 {
-	struct Vertex
+	struct VertexOld
 	{
 		glm::vec3 Position;
 		float uv_x;
@@ -20,6 +22,12 @@ namespace QE
 		VkBuffer Buffer;
 		VmaAllocation Allocation;
 		VmaAllocationInfo AllocationInfo;
+	};
+
+	struct VertexBuffer
+	{
+		AllocatedBuffer Buffer;
+		size_t Size;
 	};
 
 	struct GPUMeshBuffer

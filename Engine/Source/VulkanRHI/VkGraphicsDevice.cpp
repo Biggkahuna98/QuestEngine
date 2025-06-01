@@ -11,6 +11,7 @@
 #include "VKGraphicsContext.h"
 
 #include <array>
+#include <unordered_map>
 
 // ImGui
 #include "imgui.h"
@@ -19,6 +20,10 @@
 
 namespace QE
 {
+	// Resource mappings
+	std::uint32_t s_BufferCount = 0; // starting handle
+	std::unordered_map<std::uint32_t, AllocatedBuffer> s_BufferMap; // fix later to use the real handle object
+
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
 		: GraphicsDevice(window), m_Window(window) // refactor to stored in graphicsdevice
 	{
@@ -73,10 +78,7 @@ namespace QE
 		allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 		//allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3;
 
-		if (vmaCreateAllocator(&allocatorInfo, &m_Allocator) != VK_SUCCESS)
-		{
-			throw std::runtime_error("Failed to create VMA allocator");
-		}
+		VK_CHECK(vmaCreateAllocator(&allocatorInfo, &m_Allocator));
 		LOG_DEBUG_TAG("VkGraphicsDevice", "VMA Allocator created");
 
 		m_CleanupQueue.PushFunction([&]() {
@@ -96,15 +98,15 @@ namespace QE
 
 		// Descriptors
 		//InitializeDescriptors();
-		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan descriptors created");
 
 		// Graphics pipeline
-		InitializeTrianglePipeline();
+		//InitializeTrianglePipeline();
 		//VkInit::CreateGraphicsPipeline(m_Device, m_SwapchainImageFormat, &m_PipelineLayout);
-		//InitializeDefaultData();
-		//InitializePipelines();
 
 		InitializeImGui();
+
+		// Stuff for tutorial setup before refactoring
+		TutorialSetupStuff();
 	}
 
 	VkGraphicsDevice::~VkGraphicsDevice()
@@ -123,6 +125,10 @@ namespace QE
 
 		// Flush global lifetime deletion queue
 		m_CleanupQueue.Flush();
+
+		// Buffers
+		for (auto& [handle, buffer] : s_BufferMap)
+			DestroyBuffer(buffer);
 
 		// Cleanup all resources
 		//vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
@@ -167,15 +173,11 @@ namespace QE
 		ImGui::NewFrame();
 
 		// Draw triangle
-		DrawTriangle(GetCurrentFrameData().CommandBuffer);
+		//DrawTriangle(GetCurrentFrameData().CommandBuffer);
 	}
 
 	void VkGraphicsDevice::EndFrame()
 	{
-		// End ImGui
-		//ImGui::End();
-		ImGui::Render();
-
 		// Transition the draw image and the swapchain image into their correct transfer layouts
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -186,6 +188,8 @@ namespace QE
 		// Set swapchain image layout to Present so we can show it on the screen
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
+		// Render ImGui
+		ImGui::Render();
 		// Draw imgui
 		DrawImGui(GetCurrentFrameData().CommandBuffer, m_SwapchainImageViews[m_CurrentSwapchainImageIndex]);
 
@@ -216,129 +220,8 @@ namespace QE
 
 		presentInfo.pImageIndices = &m_CurrentSwapchainImageIndex;
 
-		// Change to present queue later
-		VK_CHECK(vkQueuePresentKHR(m_GraphicsQueue, &presentInfo));
-
-		m_CurrentFrameNumber++;
-	}
-
-	void VkGraphicsDevice::BeginFrameOld()
-	{
-		//LOG_DEBUG_TAG("VkGraphicsDevice", "Beginning frame: {0}", m_CurrentFrameNumber);
-		// Imgui
-		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
-		// Wait for the previous frame to finish
-		vkWaitForFences(m_Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
-
-		// See if there is a better place later
-		GetCurrentFrameData().CleanupQueue.Flush();
-
-		// Request the image from the swapchain
-		vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
-
-		vkResetFences(m_Device, 1, &GetCurrentFrameData().RenderFence);
-
-		// Reset command buffer
-		vkResetCommandBuffer(GetCurrentFrameData().CommandBuffer, 0);
-
-		// Begin the buffer for recording
-		VkCommandBufferBeginInfo beginInfo = VkInit::BuildCommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-		if (vkBeginCommandBuffer(GetCurrentFrameData().CommandBuffer, &beginInfo) != VK_SUCCESS)
-		{
-			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to begin command buffer recording");
-		}
-
-		// transition our main draw image into general layout so we can write into it
-		// we will overwrite it all so we dont care about what was the older layout
-		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
-		// IMGUI STUFF, MOVE LATER
-		//ImGui::ShowDemoWindow();
-		if (ImGui::Begin("background"))
-		{
-
-			ComputeEffect& selected = m_BackgroundEffects[m_CurrentBackgroundEffect];
-
-			ImGui::Text("Selected effect: ", selected.Name);
-
-			ImGui::SliderInt("Effect Index", &m_CurrentBackgroundEffect, 0, m_BackgroundEffects.size() - 1);
-
-			ImGui::InputFloat4("data1", (float*)&selected.Data.Data1);
-			ImGui::InputFloat4("data2", (float*)&selected.Data.Data2);
-			ImGui::InputFloat4("data3", (float*)&selected.Data.Data3);
-			ImGui::InputFloat4("data4", (float*)&selected.Data.Data4);
-		}
-	}
-
-	void VkGraphicsDevice::EndFrameOld()
-	{
-		/*ImGui::End();
-		ImGui::Render();
-		//LOG_DEBUG_TAG("VkGraphicsDevice", "Ending frame: {0}", m_CurrentFrameNumber);
-
-		// Come back to this later
-		DrawBackground(GetCurrentFrameData().CommandBuffer);
-
-		// Transition the draw image and the swapchain image into their correct transfer layouts
-		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		// Draw geometry
-		DrawGeometry(GetCurrentFrameData().CommandBuffer);
-
-		// Execute a copy from the draw image into the swapchain
-		VkInit::CopyImageToImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, m_SwapchainImages[m_CurrentSwapchainImageIndex], m_DrawExtent, m_SwapchainExtent);
-
-		// Set swapchain image layout to Present so we can show it on the screen
-		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
-		// Draw imgui
-		DrawImGui(GetCurrentFrameData().CommandBuffer, m_SwapchainImageViews[m_CurrentSwapchainImageIndex]);
-
-		// End command buffer recording
-		if (vkEndCommandBuffer(GetCurrentFrameData().CommandBuffer) != VK_SUCCESS)
-		{
-			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to end command buffer recording");
-		}
-
-		// Submit command buffer to the graphics queue
-		VkCommandBufferSubmitInfo cmdSubmitInfo = VkInit::BuildCommandBufferSubmitInfo(GetCurrentFrameData().CommandBuffer);
-
-		VkSemaphoreSubmitInfo waitInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,GetCurrentFrameData().SwapchainSemaphore);
-		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrameData().RenderSemaphore);	
-	
-		VkSubmitInfo2 submitInfo = VkInit::BuildSubmitInfo2(&cmdSubmitInfo, &signalInfo, &waitInfo);
-		if (vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, GetCurrentFrameData().RenderFence) != VK_SUCCESS)
-		{
-			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to submit command buffer to the graphics queue");
-			throw std::runtime_error("Failed to submit command buffer to the graphics queue");
-		}*/
-
-		//LOG_DEBUG_TAG("VkGraphicsDevice", "Command buffer submitted to the graphics queue");
-	}
-
-	void VkGraphicsDevice::PresentFrameOld()
-	{
-		//LOG_DEBUG_TAG("VkGraphicsDevice", "Presenting frame: {0}", m_CurrentFrameNumber);
-		VkPresentInfoKHR presentInfo = {};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		presentInfo.pNext = nullptr;
-		presentInfo.pSwapchains = &m_Swapchain;
-		presentInfo.swapchainCount = 1;
-
-		presentInfo.pWaitSemaphores = &GetCurrentFrameData().SwapchainSemaphore;
-		presentInfo.waitSemaphoreCount = 1;
-
-		presentInfo.pImageIndices = &m_CurrentSwapchainImageIndex;
-
-		// Change to present queue later
-		if (vkQueuePresentKHR(m_GraphicsQueue, &presentInfo) != VK_SUCCESS)
-		{
-			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to present swapchain image");
-		}
+		// Present the image
+		VK_CHECK(vkQueuePresentKHR(m_PresentQueue, &presentInfo));
 
 		m_CurrentFrameNumber++;
 	}
@@ -358,6 +241,65 @@ namespace QE
 	void VkGraphicsDevice::WaitForDeviceIdle()
 	{
 		vkDeviceWaitIdle(m_Device);
+	}
+
+	BufferHandle VkGraphicsDevice::CreateBuffer(BufferDescription desc)
+	{
+		BufferHandle handle = { s_BufferCount++ };
+
+		// Abstract these fields later
+		//VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
+		AllocatedBuffer allocatedBuffer = AllocateBuffer(desc.Data->Size, usageFlags, memoryUsage);
+		UploadDataToBuffer(allocatedBuffer, desc.Data->Data, desc.Data->Size);
+
+		s_BufferMap[handle.Value] = allocatedBuffer;
+
+		return handle;
+	}
+
+	void VkGraphicsDevice::DrawBuffer(BufferHandle buffer)
+	{
+		AllocatedBuffer allocatedBuffer = s_BufferMap[buffer.Value];
+
+		//begin a render pass  connected to our draw image
+		VkClearValue clearValue = {0.27f, 0.3f, 0.32f, 1.0f};
+		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
+		// Get the current command buffer
+		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
+		vkCmdBeginRendering(cmd, &renderInfo);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Mesh2DPipeline);
+
+		//set dynamic viewport and scissor
+		VkViewport viewport = {};
+		viewport.x = 0;
+		viewport.y = 0;
+		viewport.width = m_DrawExtent.width;
+		viewport.height = m_DrawExtent.height;
+		viewport.minDepth = 0.f;
+		viewport.maxDepth = 1.f;
+
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = {};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = m_DrawExtent.width;
+		scissor.extent.height = m_DrawExtent.height;
+
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		// Bind vertex buffer
+		VkDeviceSize offsets[] = {0};
+		vkCmdBindVertexBuffers(cmd, 0, 1, &allocatedBuffer.Buffer, offsets);
+
+		vkCmdDraw(cmd, 6, 1, 0, 0);
+
+		vkCmdEndRendering(cmd);
 	}
 
 	FrameData& VkGraphicsDevice::GetCurrentFrameData()
@@ -484,6 +426,54 @@ namespace QE
 		});
 	}
 
+	void VkGraphicsDevice::InitializeMesh2DPipeline()
+	{
+		VkShaderModule vertexShader = VkInit::CreateShaderModule(m_Device, "general_input-vert.spv");
+		VkShaderModule fragmentShader = VkInit::CreateShaderModule(m_Device, "general_input-frag.spv");
+
+		// build the pipeline layout that controls the inputs/outputs of the shader
+		// we are not using descriptor sets or other systems yet, so no need to use anything other than empty default
+		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo();
+		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_Mesh2DPipelineLayout));
+
+		PipelineBuilder pipelineBuilder;
+
+		//use the triangle layout we created
+		pipelineBuilder.PipelineLayout = m_Mesh2DPipelineLayout;
+		//connecting the vertex and pixel shaders to the pipeline
+		pipelineBuilder.SetShaders(vertexShader, fragmentShader);
+		//it will draw triangles
+		pipelineBuilder.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		//filled triangles
+		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
+		//no backface culling
+		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+		//no multisampling
+		pipelineBuilder.SetMultisamplingMode();
+		//no blending
+		pipelineBuilder.DisableBlending();
+		//no depth testing
+		pipelineBuilder.DisableDepthTest();
+		// Use vertex input description thing
+		pipelineBuilder.UseVertexInput();
+
+		//connect the image format we will draw into, from draw image
+		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
+		pipelineBuilder.SetDepthFormat(VK_FORMAT_UNDEFINED);
+
+		//finally build the pipeline
+		m_Mesh2DPipeline = pipelineBuilder.BuildPipeline(m_Device);
+
+		//clean structures
+		vkDestroyShaderModule(m_Device, vertexShader, nullptr);
+		vkDestroyShaderModule(m_Device, fragmentShader, nullptr);
+
+		m_CleanupQueue.PushFunction([&]() {
+			vkDestroyPipelineLayout(m_Device, m_Mesh2DPipelineLayout, nullptr);
+			vkDestroyPipeline(m_Device, m_Mesh2DPipeline, nullptr);
+		});
+	}
+
 	void VkGraphicsDevice::InitializeFrameData()
 	{
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -551,7 +541,6 @@ namespace QE
 		InitializeBackgroundPipelines();
 
 		// Graphics
-		InitializeTrianglePipelineOld();
 		InitializeMeshPipeline();
 	}
 
@@ -616,52 +605,6 @@ namespace QE
 			vkDestroyPipelineLayout(m_Device, m_GradientPipelineLayout, nullptr);
 			vkDestroyPipeline(m_Device, sky.Pipeline, nullptr);
 			vkDestroyPipeline(m_Device, gradient.Pipeline, nullptr);
-		});
-	}
-
-	void VkGraphicsDevice::InitializeTrianglePipelineOld()
-	{
-		VkShaderModule triangleVertexShader = VkInit::CreateShaderModule(m_Device, "colored_triangle-vert.spv");
-		VkShaderModule triangleFragmentShader = VkInit::CreateShaderModule(m_Device, "colored_triangle-frag.spv");
-
-		// build the pipeline layout that controls the inputs/outputs of the shader
-		// we are not using descriptor sets or other systems yet, so no need to use anything other than empty default
-		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo();
-		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_TrianglePipelineLayout));
-
-		PipelineBuilder pipelineBuilder;
-
-		//use the triangle layout we created
-		pipelineBuilder.PipelineLayout = m_TrianglePipelineLayout;
-		//connecting the vertex and pixel shaders to the pipeline
-		pipelineBuilder.SetShaders(triangleVertexShader, triangleFragmentShader);
-		//it will draw triangles
-		pipelineBuilder.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		//filled triangles
-		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
-		//no backface culling
-		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
-		//no multisampling
-		pipelineBuilder.SetMultisamplingMode();
-		//no blending
-		pipelineBuilder.DisableBlending();
-		//no depth testing
-		pipelineBuilder.DisableDepthTest();
-
-		//connect the image format we will draw into, from draw image
-		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
-		pipelineBuilder.SetDepthFormat(VK_FORMAT_UNDEFINED);
-
-		//finally build the pipeline
-		m_TrianglePipeline = pipelineBuilder.BuildPipeline(m_Device);
-
-		//clean structures
-		vkDestroyShaderModule(m_Device, triangleFragmentShader, nullptr);
-		vkDestroyShaderModule(m_Device, triangleVertexShader, nullptr);
-
-		m_CleanupQueue.PushFunction([&]() {
-			vkDestroyPipelineLayout(m_Device, m_TrianglePipelineLayout, nullptr);
-			vkDestroyPipeline(m_Device, m_TrianglePipeline, nullptr);
 		});
 	}
 
@@ -807,7 +750,7 @@ namespace QE
 
 	void VkGraphicsDevice::InitializeDefaultData()
 	{
-		std::array<Vertex, 4> rect_vertices;
+		/*std::array<Vertex, 4> rect_vertices;
 
 		rect_vertices[0].Position = { 0.5,-0.5, 0 };
 		rect_vertices[1].Position = { 0.5,0.5, 0 };
@@ -829,25 +772,18 @@ namespace QE
 		rect_indices[4] = 1;
 		rect_indices[5] = 3;
 
-		m_Rectangle = UploadMesh(rect_indices, rect_vertices);
+		//m_Rectangle = UploadMesh(rect_indices, rect_vertices);
 
 		//delete the rectangle data on engine shutdown
 		m_CleanupQueue.PushFunction([&]() {
-			DestroyBuffer(m_Rectangle.IndexBuffer);
-			DestroyBuffer(m_Rectangle.VertexBuffer);
-		});
+			//DestroyBuffer(m_Rectangle.IndexBuffer);
+			//DestroyBuffer(m_Rectangle.VertexBuffer);
+		});*/
+	}
 
-		// test mesh
-		auto meshes = LoadGltfMeshesAssimp(this, "TestMesh/basicmesh.glb");
-		if (meshes.has_value())
-		{
-			m_TestMeshes = meshes.value();
-		}
-		else
-		{
-			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to load test mesh");
-			abort();
-		}
+	void VkGraphicsDevice::TutorialSetupStuff()
+	{
+		InitializeMesh2DPipeline();
 	}
 
 	void VkGraphicsDevice::DrawBackground(VkCommandBuffer commandBuffer)
@@ -947,10 +883,10 @@ namespace QE
 
 		GPUDrawPushConstants push_constants;
 		push_constants.WorldMatrix = glm::mat4{ 1.0f };
-		push_constants.MeshBufferAddress = m_Rectangle.VertexBufferAddress;
+		//push_constants.MeshBufferAddress = m_Rectangle.VertexBufferAddress;
 
 		vkCmdPushConstants(cmd, m_MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
-		vkCmdBindIndexBuffer(cmd, m_Rectangle.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
+		//vkCmdBindIndexBuffer(cmd, m_Rectangle.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
 
 		vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
 
@@ -960,7 +896,8 @@ namespace QE
 	void VkGraphicsDevice::DrawTriangle(VkCommandBuffer cmd)
 	{
 		//begin a render pass  connected to our draw image
-		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		VkClearValue clearValue = {0.27f, 0.3f, 0.32f, 1.0f};
+		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
 		vkCmdBeginRendering(cmd, &renderInfo);
@@ -991,7 +928,7 @@ namespace QE
 		vkCmdEndRendering(cmd);
 	}
 
-	AllocatedBuffer VkGraphicsDevice::CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage)
+	AllocatedBuffer VkGraphicsDevice::AllocateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage)
 	{
 		// allocate buffer
 		VkBufferCreateInfo bufferInfo = { .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -1012,12 +949,33 @@ namespace QE
 		return newBuffer;
 	}
 
+	void VkGraphicsDevice::UploadDataToBuffer(AllocatedBuffer &buffer, void *data, size_t dataSize)
+	{
+		AllocatedBuffer staging = AllocateBuffer(dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		void* mappedData;
+		vmaMapMemory(m_Allocator, staging.Allocation, &mappedData);
+
+		// copy data into the staging buffer
+		memcpy(mappedData, data, dataSize);
+
+		ImmediateCommandSubmit([&](VkCommandBuffer cmd) {
+			VkBufferCopy buffCopy{ 0 };
+			buffCopy.dstOffset = 0;
+			buffCopy.srcOffset = 0;
+			buffCopy.size = dataSize;
+
+			vkCmdCopyBuffer(cmd, staging.Buffer, buffer.Buffer, 1, &buffCopy);
+		});
+
+		DestroyBuffer(staging);
+	}
+
 	void VkGraphicsDevice::DestroyBuffer(const AllocatedBuffer& buffer)
 	{
 		vmaDestroyBuffer(m_Allocator, buffer.Buffer, buffer.Allocation);
 	}
 
-	GPUMeshBuffer VkGraphicsDevice::UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices)
+	GPUMeshBuffer VkGraphicsDevice::UploadMeshOld(std::span<uint32_t> indices, std::span<VertexOld> vertices)
 	{
 		const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
 		const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
@@ -1025,7 +983,7 @@ namespace QE
 		GPUMeshBuffer newSurface;
 
 		//create vertex buffer
-		newSurface.VertexBuffer = CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		newSurface.VertexBuffer = AllocateBuffer(vertexBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 			VMA_MEMORY_USAGE_GPU_ONLY);
 
 		//find the adress of the vertex buffer
@@ -1033,9 +991,9 @@ namespace QE
 		newSurface.VertexBufferAddress = vkGetBufferDeviceAddress(m_Device, &deviceAdressInfo);
 
 		//create index buffer
-		newSurface.IndexBuffer = CreateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		newSurface.IndexBuffer = AllocateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-		AllocatedBuffer staging = CreateBuffer(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		AllocatedBuffer staging = AllocateBuffer(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
 
 		// https://www.reddit.com/r/vulkan/comments/1f4alg0/i_keep_getting_this_c2027_error_about/

@@ -1,5 +1,6 @@
 #include "VkPipelines.h"
 #include "VkCommon.h"
+#include "VkTypes.h"
 #include <fstream>
 #include "VkInit.h"
 
@@ -7,9 +8,37 @@
 
 namespace QE
 {
+	VkVertexInputBindingDescription GetVertexBindingDescription()
+	{
+		VkVertexInputBindingDescription bindingDescription = {};
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof(Vertex);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		return bindingDescription;
+	}
+
+	std::array<VkVertexInputAttributeDescription, 2> GetVertexAttributeDescriptions()
+	{
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+		attributeDescriptions[0].binding = 0;
+		attributeDescriptions[0].location = 0;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].offset = offsetof(Vertex, Position);
+
+		attributeDescriptions[1].binding = 0;
+		attributeDescriptions[1].location = 1;
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[1].offset = offsetof(Vertex, Color);
+
+		return attributeDescriptions;
+	}
+
 	PipelineBuilder::PipelineBuilder()
 	{
 		Clear();
+		m_VertexInputBindingDesc = GetVertexBindingDescription();
+		m_VertexInputAttributeDescs = GetVertexAttributeDescriptions();
 	}
 
 	void PipelineBuilder::Clear()
@@ -23,6 +52,9 @@ namespace QE
 		Rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 
 		ColorBlendAttachment = {};
+
+		VertexInput = {};
+		VertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
 		Multisampling = {};
 		Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -61,7 +93,7 @@ namespace QE
 		colorBlending.pAttachments = &ColorBlendAttachment;
 
 		// completely clear VertexInputStateCreateInfo, as we have no need for it
-		VkPipelineVertexInputStateCreateInfo _vertexInputInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+		//VkPipelineVertexInputStateCreateInfo _vertexInputInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
 
 		// build the actual pipeline
 		// we now use all of the info structs we have been writing into into this one
@@ -73,7 +105,7 @@ namespace QE
 
 		pipelineInfo.stageCount = (uint32_t)ShaderStages.size();
 		pipelineInfo.pStages = ShaderStages.data();
-		pipelineInfo.pVertexInputState = &_vertexInputInfo;
+		pipelineInfo.pVertexInputState = &VertexInput;
 		pipelineInfo.pInputAssemblyState = &InputAssembly;
 		pipelineInfo.pViewportState = &viewportState;
 		pipelineInfo.pRasterizationState = &Rasterizer;
@@ -151,6 +183,16 @@ namespace QE
 		ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 		// no blending
 		ColorBlendAttachment.blendEnable = VK_FALSE;
+	}
+
+	void PipelineBuilder::UseVertexInput()
+	{
+		VertexInput.pNext = nullptr;
+
+		VertexInput.vertexBindingDescriptionCount = 1;
+		VertexInput.vertexAttributeDescriptionCount = static_cast<uint32_t>(m_VertexInputAttributeDescs.size());
+		VertexInput.pVertexBindingDescriptions = &m_VertexInputBindingDesc;
+		VertexInput.pVertexAttributeDescriptions = m_VertexInputAttributeDescs.data();
 	}
 
 	void PipelineBuilder::SetColorAttachmentFormat(VkFormat format)

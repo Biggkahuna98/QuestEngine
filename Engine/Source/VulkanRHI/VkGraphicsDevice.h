@@ -56,16 +56,15 @@ namespace QE
 		void EndFrame() override;
 		void PresentFrame() override;
 
-		void BeginFrameOld();
-		void EndFrameOld();
-		void PresentFrameOld();
-
 		void UpdateWindowSize(uint32_t width, uint32_t height) override;
 
 		std::unique_ptr<GraphicsContext> CreateGraphicsContext() override;
-
 		void WaitForDeviceIdle() override;
-		
+
+		BufferHandle CreateBuffer(BufferDescription desc) override;
+
+		void DrawBuffer(BufferHandle buffer) override;
+
 		VkInstance GetVkInstance() const { return m_Instance; }
 		VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
 		VkDevice GetVkDevice() const { return m_Device; }
@@ -75,7 +74,7 @@ namespace QE
 		uint32_t GetCurrentFrameNumber() const { return m_CurrentFrameNumber; }
 		FrameData& GetCurrentFrameData();
 
-		GPUMeshBuffer UploadMesh(std::span<uint32_t> indices, std::span<Vertex> vertices);
+		GPUMeshBuffer UploadMeshOld(std::span<uint32_t> indices, std::span<VertexOld> vertices);
 	private:
 		Window* m_Window;
 		VkInstance m_Instance;
@@ -100,6 +99,11 @@ namespace QE
 		// Triangle
 		VkPipelineLayout m_TrianglePipelineLayout;
 		VkPipeline m_TrianglePipeline;
+
+		// General 2D mesh
+		VkPipelineLayout m_Mesh2DPipelineLayout;
+		VkPipeline m_Mesh2DPipeline;
+		AllocatedBuffer m_Mesh2DVertexBuffer;
 
 		// Frame data
 		FrameData m_FrameData[MAX_FRAMES_IN_FLIGHT];
@@ -133,25 +137,22 @@ namespace QE
 		VkPipelineLayout m_MeshPipelineLayout;
 		VkPipeline m_MeshPipeline;
 
-		GPUMeshBuffer m_Rectangle;
-
-		// Test meshes
-		std::vector<std::shared_ptr<MeshAsset>> m_TestMeshes;
-
 		// Initialize Vulkan Resources
 		void InitSwapchain(VkExtent2D windowExtent);
 		void CreateSwapchain(VkExtent2D windowExtent);
 		void RecreateSwapchain();
 		void DestroySwapchain();
 		void InitializeTrianglePipeline();
+		void InitializeMesh2DPipeline();
 		void InitializeFrameData();
 		void InitializeDescriptors();
 		void InitializePipelines();
 		void InitializeBackgroundPipelines();
-		void InitializeTrianglePipelineOld();
 		void InitializeMeshPipeline();
 		void InitializeImGui();
 		void InitializeDefaultData();
+
+		void TutorialSetupStuff();
 
 		// REFACTOR LATER
 		void DrawBackground(VkCommandBuffer cmd);
@@ -159,7 +160,8 @@ namespace QE
 		void DrawImGui(VkCommandBuffer cmd, VkImageView targetImageView);
 		void DrawGeometry(VkCommandBuffer cmd);
 		void DrawTriangle(VkCommandBuffer cmd);
-		AllocatedBuffer CreateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+		AllocatedBuffer AllocateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+		void UploadDataToBuffer(AllocatedBuffer& buffer, void* data, size_t dataSize);
 		void DestroyBuffer(const AllocatedBuffer& buffer);
 	};
 }
