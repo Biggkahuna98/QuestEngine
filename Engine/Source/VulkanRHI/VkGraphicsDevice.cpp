@@ -14,11 +14,14 @@
 
 #include <array>
 #include <unordered_map>
+#include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
 
 // ImGui
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
+#include "ext/matrix_transform.hpp"
 
 namespace QE
 {
@@ -271,49 +274,6 @@ namespace QE
 		return handle;
 	}
 
-	void VkGraphicsDevice::DrawVertexBuffer(BufferHandle vtx)
-	{
-		AllocatedBuffer allocatedBuffer = s_BufferMap[vtx];
-
-		//begin a render pass  connected to our draw image
-		VkClearValue clearValue = {0.27f, 0.3f, 0.32f, 1.0f};
-		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
-		// Get the current command buffer
-		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
-		vkCmdBeginRendering(cmd, &renderInfo);
-
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Mesh2DPipeline);
-
-		//set dynamic viewport and scissor
-		VkViewport viewport = {};
-		viewport.x = 0;
-		viewport.y = 0;
-		viewport.width = m_DrawExtent.width;
-		viewport.height = m_DrawExtent.height;
-		viewport.minDepth = 0.f;
-		viewport.maxDepth = 1.f;
-
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-		VkRect2D scissor = {};
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
-		scissor.extent.width = m_DrawExtent.width;
-		scissor.extent.height = m_DrawExtent.height;
-
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-		// Bind vertex buffer
-		VkDeviceSize offsets[] = {0};
-		vkCmdBindVertexBuffers(cmd, 0, 1, &allocatedBuffer.Buffer, offsets);
-
-		vkCmdDraw(cmd, allocatedBuffer.Size, 1, 0, 0);
-
-		vkCmdEndRendering(cmd);
-	}
-
 	void VkGraphicsDevice::DrawMesh(Mesh mesh)
 	{
 		AllocatedBuffer vertexBuffer = s_BufferMap[mesh.VertexBuffer];
@@ -348,6 +308,20 @@ namespace QE
 		scissor.extent.height = m_DrawExtent.height;
 
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		// Gross but leaving for now
+		static auto startTime = std::chrono::high_resolution_clock::now();
+
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+		// Push constants for MVP
+		ModelViewProjection mvp = {};
+		mvp.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		mvp.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		mvp.Projection = glm::perspective(glm::radians(45.0f), m_SwapchainExtent.width / (float) m_SwapchainExtent.height, 0.1f, 10.0f);
+		//mvp.Projection[1][1] *= -1;
+
+		vkCmdPushConstants(cmd, m_Mesh2DPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ModelViewProjection), &mvp);
 
 		// Bind vertex buffer
 		VkDeviceSize offsets[] = {0};
@@ -498,7 +472,15 @@ namespace QE
 
 		// build the pipeline layout that controls the inputs/outputs of the shader
 		// we are not using descriptor sets or other systems yet, so no need to use anything other than empty default
-		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo();
+		VkPushConstantRange bufferRange{};
+		bufferRange.offset = 0;
+		bufferRange.size = sizeof(ModelViewProjection);
+		bufferRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo(); // rename this function, i was confused
+		pipeline_layout_info.pPushConstantRanges = &bufferRange;
+		pipeline_layout_info.pushConstantRangeCount = 1;
+
 		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_Mesh2DPipelineLayout));
 
 		PipelineBuilder pipelineBuilder;

@@ -63,7 +63,6 @@ namespace QE
 
 		BufferHandle CreateBuffer(BufferDescription desc) override;
 
-		void DrawVertexBuffer(BufferHandle vtx) override;
 		void DrawMesh(Mesh mesh) override;
 
 		VkInstance GetVkInstance() const { return m_Instance; }

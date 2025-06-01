@@ -26,7 +26,6 @@ namespace QE
 		virtual BufferHandle CreateBuffer(BufferDescription desc) = 0;
 
 		// Temporary probably
-		virtual void DrawVertexBuffer(BufferHandle vtx) = 0;
 		virtual void DrawMesh(Mesh mesh) = 0;
 		virtual void WaitForDeviceIdle() = 0;
 
