@@ -5,7 +5,7 @@
 
 namespace QE
 {
-    struct RawBuffer
+    struct QUEST_API RawBuffer
     {
         RawBuffer() = default;
         ~RawBuffer()
@@ -20,8 +20,8 @@ namespace QE
             Allocate(size);
         }
 
-        RawBuffer(const void* data, uint64_t size)
-            : Data((uint8_t*)data), Size(size)
+        RawBuffer(const void* data, uint64_t dataCount, uint64_t size)
+            : Data((uint8_t*)data), DataCount(dataCount), Size(size)
         {
         }
 
@@ -42,6 +42,7 @@ namespace QE
 
             Data = nullptr;
             Size = 0;
+            DataCount = 0;
         }
 
         static RawBuffer Copy(RawBuffer buff)
@@ -65,5 +66,6 @@ namespace QE
         uint8_t* Data = nullptr;
         // Size (in bytes) of the buffer
         uint64_t Size = 0;
+        uint64_t DataCount = 0;
     };
 }

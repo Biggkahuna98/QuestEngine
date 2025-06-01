@@ -20,14 +20,9 @@ namespace QE
 	struct AllocatedBuffer
 	{
 		VkBuffer Buffer;
+		size_t Size;
 		VmaAllocation Allocation;
 		VmaAllocationInfo AllocationInfo;
-	};
-
-	struct VertexBuffer
-	{
-		AllocatedBuffer Buffer;
-		size_t Size;
 	};
 
 	struct GPUMeshBuffer

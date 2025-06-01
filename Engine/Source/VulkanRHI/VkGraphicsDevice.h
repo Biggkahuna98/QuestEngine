@@ -63,7 +63,8 @@ namespace QE
 
 		BufferHandle CreateBuffer(BufferDescription desc) override;
 
-		void DrawBuffer(BufferHandle buffer) override;
+		void DrawVertexBuffer(BufferHandle vtx) override;
+		void DrawMesh(Mesh mesh) override;
 
 		VkInstance GetVkInstance() const { return m_Instance; }
 		VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
@@ -73,6 +74,8 @@ namespace QE
 
 		uint32_t GetCurrentFrameNumber() const { return m_CurrentFrameNumber; }
 		FrameData& GetCurrentFrameData();
+
+		AllocatedBuffer GetBufferFromHandle(BufferHandle handle);
 
 		GPUMeshBuffer UploadMeshOld(std::span<uint32_t> indices, std::span<VertexOld> vertices);
 	private:

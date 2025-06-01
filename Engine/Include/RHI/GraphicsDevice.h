@@ -3,6 +3,7 @@
 #include "Core/Window.h"
 //#include "GraphicsContext.h"
 #include "RHI/ResourceTypes.h"
+#include "Renderer/RenderTypes.h"
 #include <memory>
 
 namespace QE
@@ -25,8 +26,11 @@ namespace QE
 		virtual BufferHandle CreateBuffer(BufferDescription desc) = 0;
 
 		// Temporary probably
-		virtual void DrawBuffer(BufferHandle buffer) = 0;
+		virtual void DrawVertexBuffer(BufferHandle vtx) = 0;
+		virtual void DrawMesh(Mesh mesh) = 0;
 		virtual void WaitForDeviceIdle() = 0;
+
+		friend class GraphicsContext;
 	};
 
 	QUEST_API std::unique_ptr<GraphicsDevice> CreateGraphicsDeviceFactory(Window* window);

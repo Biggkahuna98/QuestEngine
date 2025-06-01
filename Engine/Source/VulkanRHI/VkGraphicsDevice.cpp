@@ -10,6 +10,8 @@
 
 #include "VKGraphicsContext.h"
 
+#include "VkRHISettings.h"
+
 #include <array>
 #include <unordered_map>
 
@@ -22,11 +24,18 @@ namespace QE
 {
 	// Resource mappings
 	std::uint32_t s_BufferCount = 0; // starting handle
-	std::unordered_map<std::uint32_t, AllocatedBuffer> s_BufferMap; // fix later to use the real handle object
+	std::unordered_map<BufferHandle, AllocatedBuffer> s_BufferMap;
+
+	std::uint32_t s_TextureCount = 0; // starting handle
+	std::unordered_map<TextureHandle, AllocatedImage> s_TextureMap;
 
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
 		: GraphicsDevice(window), m_Window(window) // refactor to stored in graphicsdevice
 	{
+		// Handle maps
+		s_BufferMap.reserve(1000);
+		s_TextureMap.reserve(1000);
+
 		// Set real window size
 		int width, height;
 		glfwGetFramebufferSize(static_cast<GLFWwindow*>(window->GetNativeWindow()), &width, &height);
@@ -245,23 +254,26 @@ namespace QE
 
 	BufferHandle VkGraphicsDevice::CreateBuffer(BufferDescription desc)
 	{
+		LOG_DEBUG("Creating Buffer");
 		BufferHandle handle = { s_BufferCount++ };
 
 		// Abstract these fields later
 		//VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-		VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		VkBufferUsageFlags usageFlagsConverted = BufferTypeFlagsFromRHI(desc.Type) | BufferUsageFlagsFromRHI(desc.Usage);
+		//VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
-		AllocatedBuffer allocatedBuffer = AllocateBuffer(desc.Data->Size, usageFlags, memoryUsage);
+		AllocatedBuffer allocatedBuffer = AllocateBuffer(desc.Data->Size, usageFlagsConverted, memoryUsage);
+		allocatedBuffer.Size = desc.Data->DataCount;
 		UploadDataToBuffer(allocatedBuffer, desc.Data->Data, desc.Data->Size);
 
-		s_BufferMap[handle.Value] = allocatedBuffer;
+		s_BufferMap[handle] = allocatedBuffer;
 
 		return handle;
 	}
 
-	void VkGraphicsDevice::DrawBuffer(BufferHandle buffer)
+	void VkGraphicsDevice::DrawVertexBuffer(BufferHandle vtx)
 	{
-		AllocatedBuffer allocatedBuffer = s_BufferMap[buffer.Value];
+		AllocatedBuffer allocatedBuffer = s_BufferMap[vtx];
 
 		//begin a render pass  connected to our draw image
 		VkClearValue clearValue = {0.27f, 0.3f, 0.32f, 1.0f};
@@ -297,7 +309,55 @@ namespace QE
 		VkDeviceSize offsets[] = {0};
 		vkCmdBindVertexBuffers(cmd, 0, 1, &allocatedBuffer.Buffer, offsets);
 
-		vkCmdDraw(cmd, 6, 1, 0, 0);
+		vkCmdDraw(cmd, allocatedBuffer.Size, 1, 0, 0);
+
+		vkCmdEndRendering(cmd);
+	}
+
+	void VkGraphicsDevice::DrawMesh(Mesh mesh)
+	{
+		AllocatedBuffer vertexBuffer = s_BufferMap[mesh.VertexBuffer];
+		AllocatedBuffer indexBuffer = s_BufferMap[mesh.IndexBuffer];
+
+		//begin a render pass  connected to our draw image
+		VkClearValue clearValue = {0.27f, 0.3f, 0.32f, 1.0f};
+		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
+		// Get the current command buffer
+		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
+		vkCmdBeginRendering(cmd, &renderInfo);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Mesh2DPipeline);
+
+		//set dynamic viewport and scissor
+		VkViewport viewport = {};
+		viewport.x = 0;
+		viewport.y = 0;
+		viewport.width = m_DrawExtent.width;
+		viewport.height = m_DrawExtent.height;
+		viewport.minDepth = 0.f;
+		viewport.maxDepth = 1.f;
+
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = {};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = m_DrawExtent.width;
+		scissor.extent.height = m_DrawExtent.height;
+
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		// Bind vertex buffer
+		VkDeviceSize offsets[] = {0};
+		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.Buffer, offsets);
+
+		// Bind index buffer
+		vkCmdBindIndexBuffer(cmd, indexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
+
+		//vkCmdDraw(cmd, allocatedBuffer.Size, 1, 0, 0);
+		vkCmdDrawIndexed(cmd, indexBuffer.Size, 1, 0, 0, 0);
 
 		vkCmdEndRendering(cmd);
 	}
@@ -305,6 +365,11 @@ namespace QE
 	FrameData& VkGraphicsDevice::GetCurrentFrameData()
 	{
 		return m_FrameData[m_CurrentFrameNumber % MAX_FRAMES_IN_FLIGHT];
+	}
+
+	AllocatedBuffer VkGraphicsDevice::GetBufferFromHandle(BufferHandle handle)
+	{
+		return s_BufferMap[handle];
 	}
 
 	// PRIVATE FUNCTIONS
@@ -942,6 +1007,7 @@ namespace QE
 		vmaallocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
 		AllocatedBuffer newBuffer;
+		newBuffer.Size = allocSize;
 
 		// allocate the buffer
 		VK_CHECK(vmaCreateBuffer(m_Allocator, &bufferInfo, &vmaallocInfo, &newBuffer.Buffer, &newBuffer.Allocation, &newBuffer.AllocationInfo));
