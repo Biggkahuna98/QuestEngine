@@ -16,10 +16,10 @@ void SandboxGameApplication::Init()
     using namespace QE;
     LOG_INFO("Sandbox Game Application Initialized");
 
-    StringID test1 = StringID::InternString("Test1");
-    StringID test2 = StringID::InternString("Test2");
-    LOG_DEBUG("SID: {}, String: {}", test1.Value, StringID::GetStringFromID(test1).data());
-    LOG_DEBUG("SID: {}, String: {}", test2.Value, StringID::GetStringFromID(test2).data());
+    StringID test1 = InternString("Test1");
+    StringID test2 = InternString("Test2");
+    LOG_DEBUG("SID: {}, String: {}", test1, GetStringFromID(test1).data());
+    LOG_DEBUG("SID: {}, String: {}", test2, GetStringFromID(test2).data());
 
 
     TriangleVertices = {
@@ -131,8 +131,8 @@ void SandboxGameApplication::Update()
     //Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;
 
     // Draw the triangle
-    //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2]);
-    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_TriangleMesh);
+    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2]);
+    //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_TriangleMesh);
 
     // Render ImGui
     // ImGui fps window
