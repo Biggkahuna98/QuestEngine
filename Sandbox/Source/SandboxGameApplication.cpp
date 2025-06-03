@@ -7,21 +7,32 @@
 
 #include "imgui.h"
 
+#include "Assets/AssetLoader.h"
+
+#include "Core/StringID.h"
+
 void SandboxGameApplication::Init()
 {
+    using namespace QE;
     LOG_INFO("Sandbox Game Application Initialized");
 
+    StringID test1 = StringID::InternString("Test1");
+    StringID test2 = StringID::InternString("Test2");
+    LOG_DEBUG("SID: {}, String: {}", test1.Value, StringID::GetStringFromID(test1).data());
+    LOG_DEBUG("SID: {}, String: {}", test2.Value, StringID::GetStringFromID(test2).data());
+
+
     TriangleVertices = {
-        {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
+        {{0.0f, -0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {1.0f, 0.0f, 0.0f, 1.0f}},
+        {{0.5f, 0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {0.0f, 1.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {0.0f, 0.0f, 1.0f, 1.0f}}
     };
 
     TriangleIndices = {
         0, 1, 2
     };
 
-    RectangleVertices = {
+    /*RectangleVertices = {
         {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
         {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
         {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
@@ -31,28 +42,37 @@ void SandboxGameApplication::Init()
     RectangleIndices = {
         0, 1, 2, 2, 3, 0
     };
+    */
 
-    using namespace QE;
     Engine* engine = QE::GetEngine();
     GraphicsDevice* device = engine->GetGraphicsDevicePtr();
 
     // Triangle
-    RawBuffer triangleVertices = RawBuffer(TriangleVertices.data(),TriangleVertices.size(), TriangleVertices.size() * sizeof(Vertex));
-    BufferDescription triangleVertexDesc = {
+    std::vector<std::uint8_t> verticesbuff;
+    verticesbuff.resize(TriangleVertices.size() * sizeof(Vertex));
+    memcpy(verticesbuff.data(), TriangleVertices.data(), verticesbuff.size());
+    BufferDescription verticesDesc = {
         BufferType::Vertex,
         BufferUsage::Default,
-        &triangleVertices
+        verticesbuff,
+        verticesbuff.size() * sizeof(Vertex),
+        verticesbuff.size()
     };
-    m_TriangleVertexBuffer = device->CreateBuffer(triangleVertexDesc);
+    m_TriangleVertexBuffer = device->CreateBuffer(verticesDesc);
 
-    RawBuffer triangleIndices = RawBuffer(TriangleIndices.data(),TriangleIndices.size(), TriangleIndices.size() * sizeof(std::uint32_t));
-    BufferDescription triangleIndexDesc = {
+    std::vector<std::uint8_t> indicesbuff(TriangleIndices.size());
+    indicesbuff.resize(TriangleIndices.size() * sizeof(std::uint32_t));
+    memcpy(indicesbuff.data(), TriangleIndices.data(), indicesbuff.size());
+    BufferDescription indicesDesc = {
         BufferType::Index,
         BufferUsage::Default,
-        &triangleIndices
+        indicesbuff,
+        indicesbuff.size() * sizeof(std::uint32_t),
+        indicesbuff.size()
     };
-    m_TriangleIndexBuffer = device->CreateBuffer(triangleIndexDesc);
+    m_TriangleIndexBuffer = device->CreateBuffer(indicesDesc);
 
+    /*
     // Rectangle
     RawBuffer rectangleVertices = RawBuffer(RectangleVertices.data(),RectangleVertices.size(), RectangleVertices.size() * sizeof(Vertex));
     BufferDescription rectangleVertexDesc = {
@@ -70,15 +90,19 @@ void SandboxGameApplication::Init()
     };
     m_RectangleIndexBuffer = device->CreateBuffer(rectangleIndexDesc);
 
+    m_RectangleMesh = {
+        m_RectangleVertexBuffer,
+        m_RectangleIndexBuffer
+    }*/;
+
     m_TriangleMesh = {
         m_TriangleVertexBuffer,
         m_TriangleIndexBuffer
     };
 
-    m_RectangleMesh = {
-        m_RectangleVertexBuffer,
-        m_RectangleIndexBuffer
-    };
+    //auto m = QE::LoadModel("TestMesh/viking_room.obj");
+    auto m = QE::LoadModel("TestMesh/basicmesh.glb");
+    m_Model = m.value();
 }
 
 void SandboxGameApplication::Shutdown()
@@ -104,10 +128,11 @@ void SandboxGameApplication::Update()
         ImGui::End();
     }
 
-    Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;
+    //Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;
 
     // Draw the triangle
-    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(meshToDraw);
+    //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2]);
+    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_TriangleMesh);
 
     // Render ImGui
     // ImGui fps window

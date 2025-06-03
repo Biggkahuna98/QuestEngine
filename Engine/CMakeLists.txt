@@ -66,7 +66,8 @@ target_include_directories(${TARGET_NAME} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/Source/  # Private includes
 )
 
-target_compile_options(${TARGET_NAME} PRIVATE -W4)
+# disable the dll interface warning
+target_compile_options(${TARGET_NAME} PRIVATE -W3 /wd4251)
 
 # Find Vulkan
 find_package(Vulkan REQUIRED COMPONENTS glslc glslang SPIRV-Tools shaderc_combined)
