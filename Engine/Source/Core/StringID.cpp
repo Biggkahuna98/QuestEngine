@@ -10,10 +10,11 @@ namespace QE
     StringID InternString(std::string_view string)
     {
         StringID sid = Utils::djb2(string);
-        LOG_DEBUG("Interning string: {} with SID: {}", string.data(), sid);
-        //s_StringIDRegistry.try_emplace(sid, string);
         if (!s_StringIDRegistry.contains(sid))
+        {
+            LOG_DEBUG("Interning string: {} with SID: {}", string.data(), sid);
             s_StringIDRegistry.emplace(sid, string);
+        }
         return sid;
     }
 

@@ -10,6 +10,8 @@
 #include "Assets/AssetLoader.h"
 
 #include "Core/StringID.h"
+#include "Core/Events/EventManager.h"
+#include "Core/Events/EngineEvents.h"
 
 void SandboxGameApplication::Init()
 {
@@ -20,6 +22,13 @@ void SandboxGameApplication::Init()
     StringID test2 = InternString("Test2");
     LOG_DEBUG("SID: {}, String: {}", test1, GetStringFromID(test1).data());
     LOG_DEBUG("SID: {}, String: {}", test2, GetStringFromID(test2).data());
+
+    GetGlobalEventManager()->Subscribe<WindowCloseEvent>([](const WindowCloseEvent& event)
+    {
+        LOG_DEBUG("Window Closed");
+    });
+
+    GetGlobalEventManager()->DispatchImmediate(WindowCloseEvent());
 
 
     TriangleVertices = {
