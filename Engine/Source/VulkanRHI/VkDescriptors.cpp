@@ -1,4 +1,7 @@
 #include "VkDescriptors.h"
+
+#include <corecrt_io.h>
+
 #include "VkTypes.h"
 #include "VkCommon.h"
 
@@ -37,6 +40,59 @@ namespace QE
 		VK_CHECK(vkCreateDescriptorSetLayout(device, &info, nullptr, &set));
 
 		return set;
+	}
+
+	void DescriptorWriter::WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type)
+	{
+		VkDescriptorImageInfo& info = ImageInfos.emplace_back(VkDescriptorImageInfo{
+			.sampler = sampler,
+			.imageView = image,
+			.imageLayout = layout
+		});
+
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstBinding = binding;
+		write.dstSet = VK_NULL_HANDLE; // empty for now until we need to write it
+		write.descriptorCount = 1;
+		write.descriptorType = type;
+		write.pImageInfo = &info;
+
+		Writes.push_back(write);
+	}
+
+	void DescriptorWriter::WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type)
+	{
+		VkDescriptorBufferInfo& info = BufferInfos.emplace_back(VkDescriptorBufferInfo{
+			.buffer = buffer,
+			.offset = offset,
+			.range = size
+		});
+
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstBinding = binding;
+		write.dstSet = VK_NULL_HANDLE; // empty for now until we need to write from it
+		write.descriptorType = type;
+		write.descriptorCount = 1;
+		write.pBufferInfo = &info;
+
+		Writes.push_back(write);
+	}
+
+	void DescriptorWriter::Clear()
+	{
+		ImageInfos.clear();
+		BufferInfos.clear();
+		Writes.clear();
+	}
+
+	void DescriptorWriter::UpdateSet(VkDevice device, VkDescriptorSet set)
+	{
+		for (VkWriteDescriptorSet& write : Writes)
+			write.dstSet = set;
+
+		vkUpdateDescriptorSets(device, (uint32_t)Writes.size(), Writes.data(), 0, nullptr);
 	}
 
 	void DescriptorAllocator::InitPool(VkDevice device, std::uint32_t maxSets, std::span<PoolSizeRatio> poolRatios)
@@ -192,6 +248,4 @@ namespace QE
 
 		return newPool;
 	}
-
-
 }

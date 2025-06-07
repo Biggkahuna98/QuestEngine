@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <span>
+#include <deque>
 
 namespace QE
 {
@@ -14,6 +15,19 @@ namespace QE
         void AddBinding(uint32_t binding, VkDescriptorType type);
         void Clear();
         VkDescriptorSetLayout Build(VkDevice device, VkShaderStageFlags shaderStages, void* pNext = nullptr, VkDescriptorSetLayoutCreateFlags flags = 0);
+    };
+
+    struct DescriptorWriter
+    {
+        std::deque<VkDescriptorImageInfo> ImageInfos;
+        std::deque<VkDescriptorBufferInfo> BufferInfos;
+        std::vector<VkWriteDescriptorSet> Writes;
+
+        void WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type);
+        void WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type);
+
+        void Clear();
+        void UpdateSet(VkDevice device, VkDescriptorSet set);
     };
 
     struct DescriptorAllocator
@@ -56,6 +70,4 @@ namespace QE
         std::vector<VkDescriptorPool> ReadyPools;
         std::uint32_t SetsPerPool;
     };
-
-
 }
