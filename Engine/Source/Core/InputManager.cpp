@@ -67,6 +67,11 @@ namespace QE
 		return m_MouseYPosition;
 	}
 
+	glm::vec2 InputManager::GetMouseOffsets()
+	{
+		return { m_MouseXOffset, m_MouseYOffset };
+	}
+
 	void InputManager::ProcessTransitions()
 	{
 		UpdatePressedKeysToHeld();
@@ -78,7 +83,7 @@ namespace QE
 		auto& keyData = m_KeyData[key];
 		keyData.OldState = keyData.State;
 		keyData.State = newState;
-		LOG_DEBUG_TAG("Input", "[{}]: {} is {}", m_WindowName, static_cast<char>(key), GetKeyStateString(newState));
+		//LOG_DEBUG_TAG("Input", "[{}]: {} is {}", m_WindowName, static_cast<char>(key), GetKeyStateString(newState));
 	}
 
 	void InputManager::UpdateMouseButtonState(MouseCode mouse, KeyState newState)
@@ -86,11 +91,21 @@ namespace QE
 		auto& mouseData = m_MouseData[mouse];
 		mouseData.OldState = mouseData.State;
 		mouseData.State = newState;
-		LOG_DEBUG_TAG("Input", "[{}]: {} is {}", m_WindowName, GetMouseButtonStringFromCode(mouse), GetKeyStateString(newState));
+		//LOG_DEBUG_TAG("Input", "[{}]: {} is {}", m_WindowName, GetMouseButtonStringFromCode(mouse), GetKeyStateString(newState));
 	}
 
 	void InputManager::UpdateMousePosition(double x, double y)
 	{
+		if (FirstMouse)
+		{
+			m_MouseXPosition = x;
+			m_MouseYPosition = y;
+			FirstMouse = false;
+		}
+
+		m_MouseXOffset = x - m_MouseXPosition;
+		m_MouseYOffset = m_MouseYPosition - y;
+
 		m_MouseXPosition = x;
 		m_MouseYPosition = y;
 	}

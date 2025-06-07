@@ -41,6 +41,7 @@ namespace QE
 		glm::vec2 GetMousePosition();
 		double GetMouseX();
 		double GetMouseY();
+		glm::vec2 GetMouseOffsets();
 
 		void ProcessTransitions();
 		void UpdateKeyState(KeyCode key, KeyState newState);
@@ -57,6 +58,10 @@ namespace QE
 		std::map<MouseCode, MouseButtonData> m_MouseData;
 		double m_MouseXPosition = 0.0f;
 		double m_MouseYPosition = 0.0f;
+
+		bool FirstMouse = true;
+		double m_MouseXOffset = 0.0f;
+		double m_MouseYOffset = 0.0f;
 	};
 
 }

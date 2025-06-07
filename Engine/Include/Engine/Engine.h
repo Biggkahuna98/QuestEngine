@@ -6,13 +6,16 @@
 #include "RHI/GraphicsDevice.h"
 #include "RHI/GraphicsContext.h"
 #include "GameApplication.h"
+#include "Renderer/OrthographicCameraController.h"
+#include "Renderer/TestCamera.h"
+#include "Renderer/VkGuideCamera.h"
 
 namespace QE
 {
 	class QUEST_API Engine final
 	{
 	public:
-		Engine() = default;
+		Engine();
 		~Engine();
 		Engine(const Engine&) = delete;
 		void operator=(Engine const&) = delete;
@@ -36,6 +39,7 @@ namespace QE
 		GraphicsDevice& GetGraphicsDevice();
 		GraphicsDevice* GetGraphicsDevicePtr();
 		GameApplication* GetGameApplication();
+		TestCamera* GetCamera();
 	private:
 		bool m_Running = false;
 
@@ -46,6 +50,8 @@ namespace QE
 		std::unique_ptr<GraphicsContext> m_GraphicsContext;
 
 		GameApplication* m_GameApplication;
+
+		std::unique_ptr<TestCamera> m_TestCamera;
 	};
 
 	extern Engine g_Engine;

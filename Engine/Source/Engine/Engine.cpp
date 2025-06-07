@@ -79,7 +79,7 @@ namespace QE
 
 			// Great value headless mode, will definitely fix later on
 			if (RunGraphics) m_GraphicsDevice->BeginFrame();
-			ImGui::ShowDemoWindow();
+
 			m_TestCamera->DrawDebugInfo();
 
 			m_GameApplication->Update();
