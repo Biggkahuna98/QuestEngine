@@ -718,7 +718,8 @@ namespace QE
 		//no multisampling
 		pipelineBuilder.SetMultisamplingMode();
 		// additive blending
-		pipelineBuilder.EnableBlendingAdditive();
+		//pipelineBuilder.EnableBlendingAlphaBlend();
+		pipelineBuilder.DisableBlending();
 
 		pipelineBuilder.DisableDepthTest();
 
