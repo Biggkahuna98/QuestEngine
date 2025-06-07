@@ -42,7 +42,7 @@ namespace QE
 		LOG_INFO_TAG("GLFW_Window", "Created GLFW window: [{0}] ({1}x{2})", windowName, width, height);
 
 		// Abstract later
-		//glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{
@@ -105,7 +105,7 @@ namespace QE
 
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
 			{
-				LOG_DEBUG_TAG("GLFW_Window", "Scroll: {0}, {1}", xOffset, yOffset);
+				//LOG_DEBUG_TAG("GLFW_Window", "Scroll: {0}, {1}", xOffset, yOffset);
 				MouseScrollEvent event;
 				event.MouseXOffset = xOffset;
 				event.MouseYOffset = yOffset;

@@ -10,6 +10,8 @@
 #include "VkDescriptors.h"
 #include "VkLoader.h"
 
+#include "Renderer/TestCamera.h"
+
 #include "../../Include/Core/Containers/DeletionQueue.h"
 
 namespace QE
@@ -62,8 +64,10 @@ namespace QE
 		void WaitForDeviceIdle() override;
 
 		BufferHandle CreateBuffer(BufferDescription desc) override;
+		TextureHandle CreateTexture(TextureDescription desc) override;
 
 		void DrawMesh(Mesh mesh) override;
+		void SetCamera(TestCamera* camera) override;
 
 		VkInstance GetVkInstance() const { return m_Instance; }
 		VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
@@ -79,6 +83,8 @@ namespace QE
 		GPUMeshBuffer UploadMeshOld(std::span<uint32_t> indices, std::span<VertexOld> vertices);
 	private:
 		Window* m_Window;
+		TestCamera* m_Camera;
+
 		VkInstance m_Instance;
 		VkDebugUtilsMessengerEXT m_DebugMessenger;
 		VkPhysicalDevice m_PhysicalDevice;

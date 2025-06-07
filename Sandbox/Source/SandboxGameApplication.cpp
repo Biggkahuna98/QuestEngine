@@ -23,14 +23,6 @@ void SandboxGameApplication::Init()
     LOG_DEBUG("SID: {}, String: {}", test1, GetStringFromID(test1).data());
     LOG_DEBUG("SID: {}, String: {}", test2, GetStringFromID(test2).data());
 
-    GetGlobalEventManager()->Subscribe<WindowCloseEvent>([](const WindowCloseEvent& event)
-    {
-        LOG_DEBUG("Window Closed");
-    });
-
-    GetGlobalEventManager()->DispatchImmediate(WindowCloseEvent());
-
-
     TriangleVertices = {
         {{0.0f, -0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {1.0f, 0.0f, 0.0f, 1.0f}},
         {{0.5f, 0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {0.0f, 1.0f, 0.0f, 1.0f}},
@@ -109,9 +101,10 @@ void SandboxGameApplication::Init()
         m_TriangleIndexBuffer
     };
 
-    //auto m = QE::LoadModel("TestMesh/viking_room.obj");
-    auto m = QE::LoadModel("TestMesh/basicmesh.glb");
+    auto m = QE::LoadModel("TestMesh/viking_room.obj");
+    //auto m = QE::LoadModel("TestMesh/basicmesh.glb");
     m_Model = m.value();
+    LOG_DEBUG("Model mesh count: {}", m_Model.Meshes.size());
 }
 
 void SandboxGameApplication::Shutdown()
@@ -140,7 +133,7 @@ void SandboxGameApplication::Update()
     //Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;
 
     // Draw the triangle
-    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2]);
+    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[0]);
     //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_TriangleMesh);
 
     // Render ImGui

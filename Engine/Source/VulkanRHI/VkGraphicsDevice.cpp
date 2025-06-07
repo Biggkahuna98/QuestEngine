@@ -4,8 +4,16 @@
 #include "VkInit.h"
 #include "VkPipelines.h"
 
+#pragma warning(push, 0)
+//#pragma warning(disable: 4100)
+//#pragma warning(disable: 4189)
+//#pragma warning(disable: 4127)
+//#pragma warning(disable: 4244)
+//#pragma warning(disable: 4324)
 #define VMA_IMPLEMENTATION
 #include <vma/vk_mem_alloc.h>
+#pragma warning(pop)
+
 #include "GLFW/glfw3.h"
 
 #include "VKGraphicsContext.h"
@@ -22,6 +30,10 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "ext/matrix_transform.hpp"
+
+// temporary
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 namespace QE
 {
@@ -265,13 +277,43 @@ namespace QE
 		VkBufferUsageFlags usageFlagsConverted = BufferTypeFlagsFromRHI(desc.Type) | BufferUsageFlagsFromRHI(desc.Usage);
 		//VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 		VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
-		AllocatedBuffer allocatedBuffer = AllocateBuffer(desc.Data->Size, usageFlagsConverted, memoryUsage);
-		allocatedBuffer.Size = desc.Data->DataCount;
-		UploadDataToBuffer(allocatedBuffer, desc.Data->Data, desc.Data->Size);
+		AllocatedBuffer allocatedBuffer = AllocateBuffer(desc.DataSize, usageFlagsConverted, memoryUsage);
+		allocatedBuffer.Size = desc.Count;
+		LOG_DEBUG("Buffer size (count): {}", desc.Count);
+		UploadDataToBuffer(allocatedBuffer, desc.Data.data(), desc.DataSize);
 
 		s_BufferMap[handle] = allocatedBuffer;
 
 		return handle;
+	}
+
+	TextureHandle VkGraphicsDevice::CreateTexture(TextureDescription desc)
+	{
+		LOG_DEBUG("Creating Texture");
+		TextureHandle handle = { s_TextureCount++ };
+		std::string _fp = QE_RESOURCES_FOLDER;
+		_fp += desc.FilePath;
+		LOG_ERROR("File path appended: {}", _fp);
+
+		int texWidth, texHeight, texChannels;
+		stbi_uc* pixels = stbi_load(_fp.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		if (!pixels)
+		{
+			LOG_ERROR("Failed to load texture: {0}", desc.FilePath);
+			return handle;
+		}
+
+		BufferHandle texBuff;
+		BufferDescription texBuffDesc = {};
+		//texBuffDesc.Type = BufferType::StorageBuffer;
+		//texBuffDesc.Usage = BufferUsage::TransferDst;
+		//texBuffDesc.Count = texWidth * texHeight * 4;
+		//texBuffDesc.DataSize = sizeof(uint8_t) * texBuffDesc.Count;
+		//memcpy(texBuffDesc.Data.data(), pixels, texBuffDesc.DataSize);
+		//texBuff = CreateBuffer(texBuffDesc);
+
+		stbi_image_free(pixels);
+
 	}
 
 	void VkGraphicsDevice::DrawMesh(Mesh mesh)
@@ -280,7 +322,7 @@ namespace QE
 		AllocatedBuffer indexBuffer = s_BufferMap[mesh.IndexBuffer];
 
 		//begin a render pass  connected to our draw image
-		VkClearValue clearValue = {0.27f, 0.3f, 0.32f, 1.0f};
+		VkClearValue clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
 		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
@@ -316,9 +358,15 @@ namespace QE
 		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 		// Push constants for MVP
 		ModelViewProjection mvp = {};
-		mvp.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		mvp.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		mvp.Projection = glm::perspective(glm::radians(45.0f), m_SwapchainExtent.width / (float) m_SwapchainExtent.height, 0.1f, 10.0f);
+		mvp.Model = glm::mat4(1.0f);
+		mvp.View = m_Camera->GetViewMatrix();
+		//mvp.Projection = glm::perspective(glm::radians(70.0f), (float)m_DrawExtent.width / (float)m_DrawExtent.height, 10000.0f, 0.1f);
+		mvp.Projection = glm::perspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 0.1f, 100.0f);
+		//mvp.Projection = glm::perspective(glm::radians(45.0f), m_SwapchainExtent.width / (float) m_SwapchainExtent.height, 0.1f, 10.0f);
+		//mvp.View = glm::lookAt(glm::vec3(4.0f, 4.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//mvp.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//mvp.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		//mvp.Projection = glm::perspective(glm::radians(45.0f), m_SwapchainExtent.width / (float) m_SwapchainExtent.height, 0.1f, 10.0f);
 		//mvp.Projection[1][1] *= -1;
 
 		vkCmdPushConstants(cmd, m_Mesh2DPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ModelViewProjection), &mvp);
@@ -334,6 +382,11 @@ namespace QE
 		vkCmdDrawIndexed(cmd, indexBuffer.Size, 1, 0, 0, 0);
 
 		vkCmdEndRendering(cmd);
+	}
+
+	void VkGraphicsDevice::SetCamera(TestCamera *camera)
+	{
+		m_Camera = camera;
 	}
 
 	FrameData& VkGraphicsDevice::GetCurrentFrameData()

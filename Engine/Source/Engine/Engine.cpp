@@ -2,11 +2,18 @@
 
 #include "imgui.h"
 #include "Platform/PlatformUtility.h"
+#include "Core/Events/EventManager.h"
 
 namespace QE
 {
 	// The global engine
-	Engine g_Engine;
+	Engine g_Engine{};
+
+	Engine::Engine()
+		: m_GameApplication(nullptr)
+	{
+
+	}
 
 	Engine* GetEngine()
 	{
@@ -26,6 +33,14 @@ namespace QE
 		// Initialize graphics device and context
 		m_GraphicsDevice = CreateGraphicsDeviceFactory(m_Window.get());
 		m_GraphicsContext = m_GraphicsDevice->CreateGraphicsContext();
+		m_TestCamera = std::make_unique<TestCamera>();
+		m_GraphicsDevice->SetCamera(m_TestCamera.get());
+
+		//m_Camera.Velocity = glm::vec3(0.f);
+		//m_Camera.Position = glm::vec3(30.f, -00.f, -085.f);
+
+		//m_Camera.Pitch = 0;
+		//m_Camera.Yaw = 0;
 
 		m_Running = true;
 	}
@@ -39,9 +54,19 @@ namespace QE
 
 	void Engine::Run()
 	{
+		EventManager* g_EventManager = GetGlobalEventManager();
 		constexpr bool RunGraphics = true;
+		float deltaTime = 0.0f; // time between current frame and last frame
+		float lastFrame = 0.0f; // time of last frame
 		while (m_Running)
 		{
+			float currentFrameTime = static_cast<float>(GetTime());
+			deltaTime = currentFrameTime - lastFrame;
+			lastFrame = currentFrameTime;
+
+			// Flush (dispatch) all pending events
+			g_EventManager->Flush();
+
 			m_Window->GetInputManager().ProcessTransitions();
 			m_Window->ProcessEvents();
 
@@ -50,8 +75,12 @@ namespace QE
 				m_Running = false;
 			}
 
+			m_TestCamera->Update(deltaTime);
+
 			// Great value headless mode, will definitely fix later on
 			if (RunGraphics) m_GraphicsDevice->BeginFrame();
+			ImGui::ShowDemoWindow();
+			m_TestCamera->DrawDebugInfo();
 
 			m_GameApplication->Update();
 
@@ -108,5 +137,11 @@ namespace QE
 	{
 		return m_GameApplication;
 	}
+
+	TestCamera *Engine::GetCamera()
+	{
+		return m_TestCamera.get();
+	}
+
 }
 

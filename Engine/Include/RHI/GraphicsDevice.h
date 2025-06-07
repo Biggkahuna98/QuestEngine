@@ -9,6 +9,7 @@
 namespace QE
 {
 	class GraphicsContext;
+	class TestCamera;
 
 	class QUEST_API GraphicsDevice
 	{
@@ -24,10 +25,12 @@ namespace QE
 		virtual std::unique_ptr<GraphicsContext> CreateGraphicsContext() = 0;
 
 		virtual BufferHandle CreateBuffer(BufferDescription desc) = 0;
+		virtual TextureHandle CreateTexture(TextureDescription desc) = 0;
 
 		// Temporary probably
 		virtual void DrawMesh(Mesh mesh) = 0;
 		virtual void WaitForDeviceIdle() = 0;
+		virtual void SetCamera(TestCamera* camera) = 0;
 
 		friend class GraphicsContext;
 	};
