@@ -27,8 +27,10 @@ namespace QE
 
 	struct GPUMeshBuffer
 	{
-		AllocatedBuffer VertexBuffer;
-		AllocatedBuffer IndexBuffer;
+		//AllocatedBuffer VertexBuffer;
+		//AllocatedBuffer IndexBuffer;
+		BufferHandle VertexBuffer;
+		BufferHandle IndexBuffer;
 		VkDeviceAddress VertexBufferAddress;
 	};
 

@@ -18,16 +18,12 @@ public:
     virtual void Update() override;
 
 private:
-    std::vector<QE::Vertex> TriangleVertices;
-    //std::vector<QE::Vertex> RectangleVertices;
-	std::vector<std::uint32_t> TriangleIndices;
-	//std::vector<std::uint32_t> RectangleIndices;
-    QE::BufferHandle m_TriangleVertexBuffer;
-    QE::BufferHandle m_TriangleIndexBuffer;
-    //QE::BufferHandle m_RectangleVertexBuffer;
-    //QE::BufferHandle m_RectangleIndexBuffer;
-    QE::Mesh m_TriangleMesh;
-    //QE::Mesh m_RectangleMesh;
+    std::vector<QE::Vertex> RectangleVertices;
+	std::vector<std::uint32_t> RectangleIndices;
+    QE::BufferHandle m_RectangleVertexBuffer;
+    QE::BufferHandle m_RectangleIndexBuffer;
+    QE::MeshHandle m_RectangleMesh;
     int selectedMesh = 0;
     QE::Model m_Model;
+    QE::TextureHandle m_Texture;
 };

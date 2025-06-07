@@ -12,7 +12,7 @@
 namespace QE
 {
 	void ProcessNode(aiNode* node, const aiScene* scene, Model* model);
-	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
+	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene);
 
     std::optional<Model> LoadModel(const std::string &path)
     {
@@ -66,7 +66,7 @@ namespace QE
     	}
     }
 
-	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene)
+	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene)
     {
     	std::vector<uint32_t> indices;
     	std::vector<Vertex> vertices;
@@ -91,7 +91,8 @@ namespace QE
     		// Texture coords
     		if (mesh->mTextureCoords[0])
     		{
-
+				newVtx.uv_x = mesh->mTextureCoords[0][i].x;
+    			newVtx.uv_y = mesh->mTextureCoords[0][i].y;
     		}
 
     		// Placeholder
@@ -112,9 +113,9 @@ namespace QE
 
 
     	// Move the mesh uploading stuff elsewhere later
-		Mesh newMesh;
+		MeshHandle newMesh = g_Engine.GetGraphicsDevice().CreateMesh(vertices, indices);
 
-    	std::vector<std::uint8_t> verticesbuff;
+    	/*std::vector<std::uint8_t> verticesbuff;
     	verticesbuff.resize(vertices.size() * sizeof(Vertex));
     	memcpy(verticesbuff.data(), vertices.data(), verticesbuff.size());
     	BufferDescription verticesDesc = {
@@ -137,7 +138,7 @@ namespace QE
 			indices.size() * sizeof(std::uint32_t),
 			indices.size()
 		};
-    	newMesh.IndexBuffer = g_Engine.GetGraphicsDevice().CreateBuffer(indicesDesc);
+    	newMesh.IndexBuffer = g_Engine.GetGraphicsDevice().CreateBuffer(indicesDesc);*/
 
     	return newMesh;
     }

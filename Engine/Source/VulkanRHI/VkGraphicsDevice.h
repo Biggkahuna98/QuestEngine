@@ -8,11 +8,10 @@
 #include "VkInit.h"
 #include "VkTypes.h"
 #include "VkDescriptors.h"
-#include "VkLoader.h"
 
 #include "Renderer/TestCamera.h"
 
-#include "../../Include/Core/Containers/DeletionQueue.h"
+#include "Core/Containers/DeletionQueue.h"
 
 namespace QE
 {
@@ -26,6 +25,7 @@ namespace QE
 		VkFence RenderFence;
 
 		DeletionQueue CleanupQueue;
+		DescriptorAllocatorGrowable FrameDescriptors{};
 	};
 
 	struct ComputePushConstants
@@ -65,8 +65,9 @@ namespace QE
 
 		BufferHandle CreateBuffer(BufferDescription desc) override;
 		TextureHandle CreateTexture(TextureDescription desc) override;
+		MeshHandle CreateMesh(std::span<Vertex> vertices,  std::span<uint32_t> indices);
 
-		void DrawMesh(Mesh mesh) override;
+		void DrawMesh(MeshHandle mesh) override;
 		void SetCamera(TestCamera* camera) override;
 
 		VkInstance GetVkInstance() const { return m_Instance; }
@@ -79,8 +80,8 @@ namespace QE
 		FrameData& GetCurrentFrameData();
 
 		AllocatedBuffer GetBufferFromHandle(BufferHandle handle);
+		GPUMeshBuffer GetMeshFromHandle(MeshHandle handle);
 
-		GPUMeshBuffer UploadMeshOld(std::span<uint32_t> indices, std::span<VertexOld> vertices);
 	private:
 		Window* m_Window;
 		TestCamera* m_Camera;
@@ -111,7 +112,6 @@ namespace QE
 		// General 2D mesh
 		VkPipelineLayout m_Mesh2DPipelineLayout;
 		VkPipeline m_Mesh2DPipeline;
-		AllocatedBuffer m_Mesh2DVertexBuffer;
 
 		// Frame data
 		FrameData m_FrameData[MAX_FRAMES_IN_FLIGHT];

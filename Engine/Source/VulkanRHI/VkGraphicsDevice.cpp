@@ -44,6 +44,9 @@ namespace QE
 	std::uint32_t s_TextureCount = 0; // starting handle
 	std::unordered_map<TextureHandle, AllocatedImage> s_TextureMap;
 
+	std::uint32_t s_MeshBufferCount = 0; // starting handle
+	std::unordered_map<MeshHandle, GPUMeshBuffer> s_MeshMap;
+
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
 		: GraphicsDevice(window), m_Window(window) // refactor to stored in graphicsdevice
 	{
@@ -176,6 +179,8 @@ namespace QE
 
 		// See if there is a better place later
 		GetCurrentFrameData().CleanupQueue.Flush();
+		GetCurrentFrameData().FrameDescriptors.ClearPools(m_Device);
+
 
 		// Request the image from the swapchain
 		vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
@@ -291,17 +296,6 @@ namespace QE
 	{
 		LOG_DEBUG("Creating Texture");
 		TextureHandle handle = { s_TextureCount++ };
-		std::string _fp = QE_RESOURCES_FOLDER;
-		_fp += desc.FilePath;
-		LOG_ERROR("File path appended: {}", _fp);
-
-		int texWidth, texHeight, texChannels;
-		stbi_uc* pixels = stbi_load(_fp.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		if (!pixels)
-		{
-			LOG_ERROR("Failed to load texture: {0}", desc.FilePath);
-			return handle;
-		}
 
 		BufferHandle texBuff;
 		BufferDescription texBuffDesc = {};
@@ -312,14 +306,59 @@ namespace QE
 		//memcpy(texBuffDesc.Data.data(), pixels, texBuffDesc.DataSize);
 		//texBuff = CreateBuffer(texBuffDesc);
 
-		stbi_image_free(pixels);
 
 	}
 
-	void VkGraphicsDevice::DrawMesh(Mesh mesh)
+	MeshHandle VkGraphicsDevice::CreateMesh(std::span<Vertex> vertices, std::span<uint32_t> indices)
 	{
-		AllocatedBuffer vertexBuffer = s_BufferMap[mesh.VertexBuffer];
-		AllocatedBuffer indexBuffer = s_BufferMap[mesh.IndexBuffer];
+		GPUMeshBuffer newMeshBuffer{};
+
+		//create vertex buffer
+		std::vector<std::uint8_t> verticesbuff;
+		verticesbuff.resize(vertices.size() * sizeof(Vertex));
+		memcpy(verticesbuff.data(), vertices.data(), verticesbuff.size());
+		BufferDescription verticesDesc = {
+			BufferType::Vertex,
+			BufferUsage::Default,
+			verticesbuff,
+			vertices.size() * sizeof(Vertex),
+			vertices.size()
+		};
+		BufferHandle vertexBuff = CreateBuffer(verticesDesc);
+
+		//find the address of the vertex buffer
+		VkBufferDeviceAddressInfo deviceAdressInfo{
+			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+			.buffer = GetBufferFromHandle(vertexBuff).Buffer,
+		};
+		newMeshBuffer.VertexBufferAddress = vkGetBufferDeviceAddress(m_Device, &deviceAdressInfo);
+
+		//create index buffer
+		std::vector<std::uint8_t> indicesbuff(indices.size());
+		indicesbuff.resize(indices.size() * sizeof(std::uint32_t));
+		memcpy(indicesbuff.data(), indices.data(), indicesbuff.size());
+		BufferDescription indicesDesc = {
+			BufferType::Index,
+			BufferUsage::Default,
+			indicesbuff,
+			indices.size() * sizeof(std::uint32_t),
+			indices.size()
+		};
+		BufferHandle indexBuff = CreateBuffer(indicesDesc);
+
+		newMeshBuffer.VertexBuffer = vertexBuff;
+		newMeshBuffer.IndexBuffer = indexBuff;
+
+		MeshHandle newMeshHandle {s_MeshBufferCount++ };
+		s_MeshMap[newMeshHandle] = newMeshBuffer;
+		return newMeshHandle;
+	}
+
+	void VkGraphicsDevice::DrawMesh(MeshHandle mesh)
+	{
+		GPUMeshBuffer meshBuffer = s_MeshMap[mesh];
+		AllocatedBuffer vertexBuffer = GetBufferFromHandle(meshBuffer.VertexBuffer);
+		AllocatedBuffer indexBuffer = GetBufferFromHandle(meshBuffer.IndexBuffer);
 
 		//begin a render pass  connected to our draw image
 		VkClearValue clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -397,6 +436,11 @@ namespace QE
 	AllocatedBuffer VkGraphicsDevice::GetBufferFromHandle(BufferHandle handle)
 	{
 		return s_BufferMap[handle];
+	}
+
+	GPUMeshBuffer VkGraphicsDevice::GetMeshFromHandle(MeshHandle handle)
+	{
+		return s_MeshMap[handle];
 	}
 
 	// PRIVATE FUNCTIONS
@@ -552,8 +596,8 @@ namespace QE
 		pipelineBuilder.SetMultisamplingMode();
 		//no blending
 		pipelineBuilder.DisableBlending();
-		//no depth testing
-		pipelineBuilder.DisableDepthTest();
+		//  depth testing
+		pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
 		// Use vertex input description thing
 		pipelineBuilder.UseVertexInput();
 
@@ -596,7 +640,9 @@ namespace QE
 		// Create a descriptor pool that will hold 10 sets with 1 image each
 		std::vector<DescriptorAllocator::PoolSizeRatio> sizes =
 		{
-			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}
 		};
 
 		m_DescriptorAllocator.InitPool(m_Device, 10, sizes);
@@ -611,21 +657,10 @@ namespace QE
 		//allocate a descriptor set for our draw image
 		m_DrawImageDescriptors = m_DescriptorAllocator.Allocate(m_Device, m_DrawImageDescriptorSetLayout);
 
-		VkDescriptorImageInfo imgInfo{};
-		imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		imgInfo.imageView = m_DrawImage.ImageView;
+		DescriptorWriter writer;
+		writer.WriteImage(0, m_DrawImage.ImageView, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
-		VkWriteDescriptorSet drawImageWrite = {};
-		drawImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		drawImageWrite.pNext = nullptr;
-
-		drawImageWrite.dstBinding = 0;
-		drawImageWrite.dstSet = m_DrawImageDescriptors;
-		drawImageWrite.descriptorCount = 1;
-		drawImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-		drawImageWrite.pImageInfo = &imgInfo;
-
-		vkUpdateDescriptorSets(m_Device, 1, &drawImageWrite, 0, nullptr);
+		writer.UpdateSet(m_Device, m_DrawImageDescriptors);
 
 		//make sure both the descriptor allocator and the new layout get cleaned up properly
 		m_CleanupQueue.PushFunction([&]() {
@@ -633,6 +668,26 @@ namespace QE
 
 			vkDestroyDescriptorSetLayout(m_Device, m_DrawImageDescriptorSetLayout, nullptr);
 		});
+
+		// Growable descriptor allocator
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			// Create a descriptor pool
+			std::vector<DescriptorAllocatorGrowable::PoolSizeRatio> sizes = {
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3 },
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3 },
+				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 },
+			};
+
+			m_FrameData[i].FrameDescriptors = DescriptorAllocatorGrowable{};
+			m_FrameData[i].FrameDescriptors.Init(m_Device, 1000, sizes);
+
+			m_CleanupQueue.PushFunction([&, i]()
+			{
+				m_FrameData[i].FrameDescriptors.DestroyPools(m_Device);
+			});
+		}
 	}
 
 	void VkGraphicsDevice::InitializePipelines()
@@ -1074,57 +1129,5 @@ namespace QE
 	void VkGraphicsDevice::DestroyBuffer(const AllocatedBuffer& buffer)
 	{
 		vmaDestroyBuffer(m_Allocator, buffer.Buffer, buffer.Allocation);
-	}
-
-	GPUMeshBuffer VkGraphicsDevice::UploadMeshOld(std::span<uint32_t> indices, std::span<VertexOld> vertices)
-	{
-		const size_t vertexBufferSize = vertices.size() * sizeof(Vertex);
-		const size_t indexBufferSize = indices.size() * sizeof(uint32_t);
-
-		GPUMeshBuffer newSurface;
-
-		//create vertex buffer
-		newSurface.VertexBuffer = AllocateBuffer(vertexBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-			VMA_MEMORY_USAGE_GPU_ONLY);
-
-		//find the adress of the vertex buffer
-		VkBufferDeviceAddressInfo deviceAdressInfo{ .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,.buffer = newSurface.VertexBuffer.Buffer };
-		newSurface.VertexBufferAddress = vkGetBufferDeviceAddress(m_Device, &deviceAdressInfo);
-
-		//create index buffer
-		newSurface.IndexBuffer = AllocateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-		AllocatedBuffer staging = AllocateBuffer(vertexBufferSize + indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-
-
-		// https://www.reddit.com/r/vulkan/comments/1f4alg0/i_keep_getting_this_c2027_error_about/
-		//void* data = staging.Allocation->GetMappedData();
-		void* data;
-		vmaMapMemory(m_Allocator, staging.Allocation, &data);
-
-		// copy vertex buffer
-		memcpy(data, vertices.data(), vertexBufferSize);
-		// copy index buffer
-		memcpy((char*)data + vertexBufferSize, indices.data(), indexBufferSize);
-
-		ImmediateCommandSubmit([&](VkCommandBuffer cmd) {
-			VkBufferCopy vertexCopy{ 0 };
-			vertexCopy.dstOffset = 0;
-			vertexCopy.srcOffset = 0;
-			vertexCopy.size = vertexBufferSize;
-
-			vkCmdCopyBuffer(cmd, staging.Buffer, newSurface.VertexBuffer.Buffer, 1, &vertexCopy);
-
-			VkBufferCopy indexCopy{ 0 };
-			indexCopy.dstOffset = 0;
-			indexCopy.srcOffset = vertexBufferSize;
-			indexCopy.size = indexBufferSize;
-
-			vkCmdCopyBuffer(cmd, staging.Buffer, newSurface.IndexBuffer.Buffer, 1, &indexCopy);
-		});
-
-		DestroyBuffer(staging);
-
-		return newSurface;
 	}
 }
