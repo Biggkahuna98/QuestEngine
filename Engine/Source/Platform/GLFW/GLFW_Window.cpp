@@ -3,7 +3,9 @@
 #include "Core/Log.h"
 
 // FIX LATER WITH EVENTS
+#include "Core/Events/EngineEvents.h"
 #include "Engine/Engine.h"
+#include "Core/Events/EventManager.h"
 
 namespace QE
 {
@@ -39,9 +41,16 @@ namespace QE
 
 		LOG_INFO_TAG("GLFW_Window", "Created GLFW window: [{0}] ({1}x{2})", windowName, width, height);
 
+		// Abstract later
+		//glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{
 				g_Engine.GetGraphicsDevice().UpdateWindowSize(width, height);
+				WindowResizeEvent event;
+				event.Width = width;
+				event.Height = height;
+				GetGlobalEventManager()->FireEvent(event);
 			}
 		);
 
@@ -97,6 +106,11 @@ namespace QE
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
 			{
 				LOG_DEBUG_TAG("GLFW_Window", "Scroll: {0}, {1}", xOffset, yOffset);
+				MouseScrollEvent event;
+				event.MouseXOffset = xOffset;
+				event.MouseYOffset = yOffset;
+				//GetGlobalEventManager()->FireEvent(event);
+				GetGlobalEventManager()->QueueEvent<MouseScrollEvent>(event);
 			}
 		);
 
@@ -104,6 +118,12 @@ namespace QE
 			{
 				auto inputManager = static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window))->GetInputManagerPtr();
 				inputManager->UpdateMousePosition(xPos, yPos);
+				MouseMoveEvent event;
+				event.MouseX = (float)xPos;
+				event.MouseY = (float)yPos;
+				//LOG_DEBUG("Move event from window: XPos={}, YPos={}", event.MouseX, event.MouseY);
+				//GetGlobalEventManager()->FireEvent(event);
+				GetGlobalEventManager()->QueueEvent<MouseMoveEvent>(event);
 			}
 		);
 	}

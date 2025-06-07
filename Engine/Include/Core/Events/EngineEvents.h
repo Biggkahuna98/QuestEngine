@@ -1,34 +1,34 @@
 #pragma once
 
 #include "Core/Core.h"
-#include "Events.h"
+#include "EventBase.h"
 
 namespace QE
 {
     // Window Events
-    struct QUEST_API WindowCloseEvent : public Event
+    struct QUEST_API WindowCloseEvent : public EventBase
     {
-        WindowCloseEvent();
+        EventType GetEventType() const override { return EventType::WindowClose; }
     };
 
-    struct QUEST_API WindowResizeEvent : public Event
+    struct QUEST_API WindowResizeEvent : public EventBase
     {
-        WindowResizeEvent();
+        EventType GetEventType() const override { return EventType::WindowResize; }
         int Width;
         int Height;
     };
 
     // Mouse Events
-    struct QUEST_API MouseMoveEvent : public Event
+    struct QUEST_API MouseMoveEvent : public EventBase
     {
-        MouseMoveEvent();
+        EventType GetEventType() const override { return EventType::MouseMoved; }
         float MouseX;
         float MouseY;
     };
 
-    struct QUEST_API MouseScrollEvent : public Event
+    struct QUEST_API MouseScrollEvent : public EventBase
     {
-        MouseScrollEvent();
+        EventType GetEventType() const override { return EventType::MouseScrolled; }
         float MouseXOffset;
         float MouseYOffset;
     };

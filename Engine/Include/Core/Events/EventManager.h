@@ -1,11 +1,14 @@
 #pragma once
-#include "Events.h"
+#include "Core/Core.h"
 #include "Core/QuestExport.h"
 
 #include <functional>
 #include <unordered_map>
 #include <vector>
 #include <queue>
+#include <memory>
+
+#include "EventBase.h"
 
 namespace QE
 {
@@ -14,26 +17,23 @@ namespace QE
     public:
         EventManager();
         ~EventManager() = default;
+        EventManager(const EventManager&) = delete;
+        EventManager& operator=(const EventManager&) = delete;
 
-        template<typename eventT>
-        void Subscribe(std::function<void(const eventT& e)> callback)
+        void Subscribe(EventType type, EventCallbackFn callback);
+
+        void FireEvent(EventBase& e);
+
+        template<typename EventType>
+        void QueueEvent(EventType e)
         {
-            EventType id = eventT{}.GetEventType();
-            auto wrapper = [func = std::move(callback)](const Event& e) {
-                func(static_cast<const eventT&>(e));
-            };
-            m_Subscribers[id].push_back(std::move(wrapper));
+            m_EventQueue.emplace_back(std::make_unique<EventType>(e));
         }
 
-        void Dispatch(const Event& e);
-        void DispatchImmediate(const Event& event);
-
-        // Flush the queue of events
         void Flush();
     private:
-        using CallbackFn = std::function<void(const Event&)>;
-        std::unordered_map<EventType, std::vector<CallbackFn>> m_Subscribers;
-        std::queue<Event> m_PendingEvents;
+        std::unordered_map<EventType, std::vector<EventCallbackFn>> m_Subscribers;
+        std::vector<std::unique_ptr<EventBase>> m_EventQueue;
     };
 
     QUEST_API EventManager* GetGlobalEventManager();

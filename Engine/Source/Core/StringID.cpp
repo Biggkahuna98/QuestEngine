@@ -13,7 +13,7 @@ namespace QE
         if (!s_StringIDRegistry.contains(sid))
         {
             LOG_DEBUG("Interning string: {} with SID: {}", string.data(), sid);
-            s_StringIDRegistry.emplace(sid, string);
+            s_StringIDRegistry.emplace(sid, string.data());
         }
         return sid;
     }

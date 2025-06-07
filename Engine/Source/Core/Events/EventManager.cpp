@@ -6,38 +6,32 @@ namespace QE
 
     EventManager::EventManager()
     {
+        m_EventQueue.reserve(1000);
     }
 
-    void EventManager::Dispatch(const Event& e)
+
+    void EventManager::Subscribe(EventType type, EventCallbackFn callback)
     {
-        m_PendingEvents.push(e);
+        m_Subscribers[type].push_back(std::move(callback));
     }
 
-    void EventManager::DispatchImmediate(const Event &event)
+    void EventManager::FireEvent(EventBase &e)
     {
-        auto it = m_Subscribers.find(event.GetEventType());
-        if (it != m_Subscribers.end())
-        {
-            for (auto& callback : it->second)
-                callback(event);
-        }
+        auto iter = m_Subscribers.find(e.GetEventType());
+        if (iter != m_Subscribers.end())
+            for (auto& callback : iter->second)
+                callback(e);
     }
 
     void EventManager::Flush()
     {
-        while (!m_PendingEvents.empty())
+        //LOG_DEBUG("Flushing events with size: {}", m_EventQueue.size());
+        for (auto& event : m_EventQueue)
         {
-            auto event  = m_PendingEvents.front();
-            auto it = m_Subscribers.find(event.GetEventType());
-            if (it != m_Subscribers.end())
-            {
-                for (auto& callback : it->second)
-                    callback(event);
-            }
-            m_PendingEvents.pop();
+            FireEvent(*event);
         }
+        m_EventQueue.clear();
     }
-
 
     EventManager* GetGlobalEventManager()
     {
