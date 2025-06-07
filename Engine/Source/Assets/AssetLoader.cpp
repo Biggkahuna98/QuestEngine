@@ -4,6 +4,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include <stb_image.h>
+
 // Need access to the graphics device
 #include "Engine/Engine.h"
 
@@ -18,7 +20,7 @@ namespace QE
 
 		std::string _fp = QE_RESOURCES_FOLDER;
 		_fp += path;
-		LOG_ERROR("File path appended: {}", _fp);
+		LOG_DEBUG("File path appended: {}", _fp);
 
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(_fp,
@@ -139,4 +141,37 @@ namespace QE
 
     	return newMesh;
     }
+
+	std::optional<TextureHandle> LoadTexture(const std::string &path)
+	{
+    	LOG_DEBUG("Loading Texture: {}", path);
+
+    	std::string _fp = QE_RESOURCES_FOLDER;
+    	_fp += path;
+    	LOG_DEBUG("File path appended: {}", _fp);
+
+		int texWidth, texHeight, texChannels;
+    	stbi_uc* pixels = stbi_load(_fp.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    	size_t imageSize = texWidth * texHeight * STBI_rgb_alpha;
+
+    	if (!pixels)
+    	{
+    		LOG_ERROR("Failed to load texture: {}", path);
+    		return std::nullopt;
+    	}
+
+    	TextureDescription desc{};
+    	std::vector<std::uint8_t> pixelsbuff;
+    	pixelsbuff.resize(imageSize);
+    	memcpy(pixelsbuff.data(), pixels, imageSize);
+    	desc.Data = pixelsbuff;
+    	desc.ImageSize = imageSize;
+
+    	stbi_image_free(pixels);
+
+    	TextureHandle texture =  g_Engine.GetGraphicsDevice().CreateTexture(desc);
+
+    	return texture;
+	}
+
 }
