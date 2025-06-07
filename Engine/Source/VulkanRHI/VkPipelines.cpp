@@ -177,6 +177,30 @@ namespace QE
 		Multisampling.alphaToOneEnable = VK_FALSE;
 	}
 
+	void PipelineBuilder::EnableBlendingAdditive()
+	{
+		ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		ColorBlendAttachment.blendEnable = VK_TRUE;
+		ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+		ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+		ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	}
+
+	void PipelineBuilder::EnableBlendingAlphaBlend()
+	{
+		ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		ColorBlendAttachment.blendEnable = VK_TRUE;
+		ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+		ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	}
+
 	void PipelineBuilder::DisableBlending()
 	{
 		// default write mask
@@ -206,6 +230,19 @@ namespace QE
 	void PipelineBuilder::SetDepthFormat(VkFormat format)
 	{
 		RenderingInfo.depthAttachmentFormat = format;
+	}
+
+	void PipelineBuilder::EnableDepthTest(bool depthWriteEnable, VkCompareOp op)
+	{
+		DepthStencil.depthTestEnable = VK_TRUE;
+		DepthStencil.depthWriteEnable = depthWriteEnable;
+		DepthStencil.depthCompareOp = op;
+		DepthStencil.depthBoundsTestEnable = VK_FALSE;
+		DepthStencil.stencilTestEnable = VK_FALSE;
+		DepthStencil.front = {},
+		DepthStencil.back = {};
+		DepthStencil.minDepthBounds = 0.0f;
+		DepthStencil.maxDepthBounds = 1.0f;
 	}
 
 	void PipelineBuilder::DisableDepthTest()

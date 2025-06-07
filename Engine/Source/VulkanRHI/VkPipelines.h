@@ -30,10 +30,13 @@ namespace QE
 		void SetPolygonMode(VkPolygonMode mode);
 		void SetCullMode(VkCullModeFlags cullMode, VkFrontFace frontFace);
 		void SetMultisamplingMode(); // is disabled for now
+		void EnableBlendingAdditive();
+		void EnableBlendingAlphaBlend();
 		void DisableBlending();
 		void UseVertexInput();
 		void SetColorAttachmentFormat(VkFormat format);
 		void SetDepthFormat(VkFormat format);
+		void EnableDepthTest(bool depthWriteEnable, VkCompareOp op);
 		void DisableDepthTest();
 
 	private:
