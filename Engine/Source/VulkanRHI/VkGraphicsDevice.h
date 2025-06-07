@@ -105,14 +105,6 @@ namespace QE
 		std::vector<VkImageView> m_SwapchainImageViews;
 		uint32_t m_CurrentSwapchainImageIndex;
 
-		// Triangle
-		VkPipelineLayout m_TrianglePipelineLayout;
-		VkPipeline m_TrianglePipeline;
-
-		// General 2D mesh
-		VkPipelineLayout m_Mesh2DPipelineLayout;
-		VkPipeline m_Mesh2DPipeline;
-
 		// Frame data
 		FrameData m_FrameData[MAX_FRAMES_IN_FLIGHT];
 		uint32_t m_CurrentFrameNumber = 0;
@@ -150,8 +142,6 @@ namespace QE
 		void CreateSwapchain(VkExtent2D windowExtent);
 		void RecreateSwapchain();
 		void DestroySwapchain();
-		void InitializeTrianglePipeline();
-		void InitializeMesh2DPipeline();
 		void InitializeFrameData();
 		void InitializeDescriptors();
 		void InitializePipelines();
@@ -166,8 +156,6 @@ namespace QE
 		void DrawBackground(VkCommandBuffer cmd);
 		void ImmediateCommandSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 		void DrawImGui(VkCommandBuffer cmd, VkImageView targetImageView);
-		void DrawGeometry(VkCommandBuffer cmd);
-		void DrawTriangle(VkCommandBuffer cmd);
 		AllocatedBuffer AllocateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 		void UploadDataToBuffer(AllocatedBuffer& buffer, void* data, size_t dataSize);
 		void DestroyBuffer(const AllocatedBuffer& buffer);

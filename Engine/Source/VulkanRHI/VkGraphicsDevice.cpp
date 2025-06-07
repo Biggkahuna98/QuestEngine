@@ -277,10 +277,10 @@ namespace QE
 		LOG_DEBUG("Creating Buffer");
 		BufferHandle handle = { s_BufferCount++ };
 
-		// Abstract these fields later
-		//VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 		VkBufferUsageFlags usageFlagsConverted = BufferTypeFlagsFromRHI(desc.Type) | BufferUsageFlagsFromRHI(desc.Usage);
-		//VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		// We use buffer device addressing in the Vulkan backend, so force this if it is a vertex buffer
+		if (desc.Type == BufferType::Vertex)
+			usageFlagsConverted |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 		VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY;
 		AllocatedBuffer allocatedBuffer = AllocateBuffer(desc.DataSize, usageFlagsConverted, memoryUsage);
 		allocatedBuffer.Size = desc.Count;
@@ -369,7 +369,7 @@ namespace QE
 		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
 		vkCmdBeginRendering(cmd, &renderInfo);
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Mesh2DPipeline);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipeline);
 
 		//set dynamic viewport and scissor
 		VkViewport viewport = {};
@@ -401,14 +401,13 @@ namespace QE
 		mvp.View = m_Camera->GetViewMatrix();
 		//mvp.Projection = glm::perspective(glm::radians(70.0f), (float)m_DrawExtent.width / (float)m_DrawExtent.height, 10000.0f, 0.1f);
 		mvp.Projection = glm::perspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 0.1f, 100.0f);
-		//mvp.Projection = glm::perspective(glm::radians(45.0f), m_SwapchainExtent.width / (float) m_SwapchainExtent.height, 0.1f, 10.0f);
-		//mvp.View = glm::lookAt(glm::vec3(4.0f, 4.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		//mvp.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		//mvp.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		//mvp.Projection = glm::perspective(glm::radians(45.0f), m_SwapchainExtent.width / (float) m_SwapchainExtent.height, 0.1f, 10.0f);
 		//mvp.Projection[1][1] *= -1;
 
-		vkCmdPushConstants(cmd, m_Mesh2DPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ModelViewProjection), &mvp);
+		GPUDrawPushConstants pushConstants;
+		pushConstants.MVP = mvp;
+		pushConstants.MeshBufferAddress = meshBuffer.VertexBufferAddress;
+
+		vkCmdPushConstants(cmd, m_MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
 
 		// Bind vertex buffer
 		VkDeviceSize offsets[] = {0};
@@ -514,108 +513,6 @@ namespace QE
 		}
 
 		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
-	}
-
-	void VkGraphicsDevice::InitializeTrianglePipeline()
-	{
-		VkShaderModule triangleVertexShader = VkInit::CreateShaderModule(m_Device, "triangle-vert.spv");
-		VkShaderModule triangleFragmentShader = VkInit::CreateShaderModule(m_Device, "triangle-frag.spv");
-
-		// build the pipeline layout that controls the inputs/outputs of the shader
-		// we are not using descriptor sets or other systems yet, so no need to use anything other than empty default
-		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo();
-		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_TrianglePipelineLayout));
-
-		PipelineBuilder pipelineBuilder;
-
-		//use the triangle layout we created
-		pipelineBuilder.PipelineLayout = m_TrianglePipelineLayout;
-		//connecting the vertex and pixel shaders to the pipeline
-		pipelineBuilder.SetShaders(triangleVertexShader, triangleFragmentShader);
-		//it will draw triangles
-		pipelineBuilder.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		//filled triangles
-		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
-		//no backface culling
-		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
-		//no multisampling
-		pipelineBuilder.SetMultisamplingMode();
-		//no blending
-		pipelineBuilder.DisableBlending();
-		//no depth testing
-		pipelineBuilder.DisableDepthTest();
-
-		//connect the image format we will draw into, from draw image
-		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
-		pipelineBuilder.SetDepthFormat(VK_FORMAT_UNDEFINED);
-
-		//finally build the pipeline
-		m_TrianglePipeline = pipelineBuilder.BuildPipeline(m_Device);
-
-		//clean structures
-		vkDestroyShaderModule(m_Device, triangleFragmentShader, nullptr);
-		vkDestroyShaderModule(m_Device, triangleVertexShader, nullptr);
-
-		m_CleanupQueue.PushFunction([&]() {
-			vkDestroyPipelineLayout(m_Device, m_TrianglePipelineLayout, nullptr);
-			vkDestroyPipeline(m_Device, m_TrianglePipeline, nullptr);
-		});
-	}
-
-	void VkGraphicsDevice::InitializeMesh2DPipeline()
-	{
-		VkShaderModule vertexShader = VkInit::CreateShaderModule(m_Device, "general_input-vert.spv");
-		VkShaderModule fragmentShader = VkInit::CreateShaderModule(m_Device, "general_input-frag.spv");
-
-		// build the pipeline layout that controls the inputs/outputs of the shader
-		// we are not using descriptor sets or other systems yet, so no need to use anything other than empty default
-		VkPushConstantRange bufferRange{};
-		bufferRange.offset = 0;
-		bufferRange.size = sizeof(ModelViewProjection);
-		bufferRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo(); // rename this function, i was confused
-		pipeline_layout_info.pPushConstantRanges = &bufferRange;
-		pipeline_layout_info.pushConstantRangeCount = 1;
-
-		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_Mesh2DPipelineLayout));
-
-		PipelineBuilder pipelineBuilder;
-
-		//use the triangle layout we created
-		pipelineBuilder.PipelineLayout = m_Mesh2DPipelineLayout;
-		//connecting the vertex and pixel shaders to the pipeline
-		pipelineBuilder.SetShaders(vertexShader, fragmentShader);
-		//it will draw triangles
-		pipelineBuilder.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		//filled triangles
-		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
-		//no backface culling
-		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
-		//no multisampling
-		pipelineBuilder.SetMultisamplingMode();
-		//no blending
-		pipelineBuilder.DisableBlending();
-		//  depth testing
-		pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
-		// Use vertex input description thing
-		pipelineBuilder.UseVertexInput();
-
-		//connect the image format we will draw into, from draw image
-		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
-		pipelineBuilder.SetDepthFormat(VK_FORMAT_UNDEFINED);
-
-		//finally build the pipeline
-		m_Mesh2DPipeline = pipelineBuilder.BuildPipeline(m_Device);
-
-		//clean structures
-		vkDestroyShaderModule(m_Device, vertexShader, nullptr);
-		vkDestroyShaderModule(m_Device, fragmentShader, nullptr);
-
-		m_CleanupQueue.PushFunction([&]() {
-			vkDestroyPipelineLayout(m_Device, m_Mesh2DPipelineLayout, nullptr);
-			vkDestroyPipeline(m_Device, m_Mesh2DPipeline, nullptr);
-		});
 	}
 
 	void VkGraphicsDevice::InitializeFrameData()
@@ -793,8 +690,8 @@ namespace QE
 		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
 		//no multisampling
 		pipelineBuilder.SetMultisamplingMode();
-		//no blending
-		pipelineBuilder.DisableBlending();
+		// additive blending
+		pipelineBuilder.EnableBlendingAdditive();
 
 		pipelineBuilder.DisableDepthTest();
 
@@ -938,7 +835,8 @@ namespace QE
 
 	void VkGraphicsDevice::TutorialSetupStuff()
 	{
-		InitializeMesh2DPipeline();
+		//InitializeMesh2DPipeline();
+		InitializeMeshPipeline();
 	}
 
 	void VkGraphicsDevice::DrawBackground(VkCommandBuffer commandBuffer)
@@ -998,87 +896,6 @@ namespace QE
 		vkCmdBeginRendering(cmd, &renderInfo);
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
-
-		vkCmdEndRendering(cmd);
-	}
-
-	void VkGraphicsDevice::DrawGeometry(VkCommandBuffer cmd)
-	{
-		//begin a render pass  connected to our draw image
-		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
-		vkCmdBeginRendering(cmd, &renderInfo);
-
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_TrianglePipeline);
-
-		//set dynamic viewport and scissor
-		VkViewport viewport = {};
-		viewport.x = 0;
-		viewport.y = 0;
-		viewport.width = m_DrawExtent.width;
-		viewport.height = m_DrawExtent.height;
-		viewport.minDepth = 0.f;
-		viewport.maxDepth = 1.f;
-
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-		VkRect2D scissor = {};
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
-		scissor.extent.width = m_DrawExtent.width;
-		scissor.extent.height = m_DrawExtent.height;
-
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-		//launch a draw command to draw 3 vertices
-		//vkCmdDraw(cmd, 3, 1, 0, 0);
-
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipeline);
-
-		GPUDrawPushConstants push_constants;
-		push_constants.WorldMatrix = glm::mat4{ 1.0f };
-		//push_constants.MeshBufferAddress = m_Rectangle.VertexBufferAddress;
-
-		vkCmdPushConstants(cmd, m_MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
-		//vkCmdBindIndexBuffer(cmd, m_Rectangle.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
-
-		vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
-
-		vkCmdEndRendering(cmd);
-	}
-
-	void VkGraphicsDevice::DrawTriangle(VkCommandBuffer cmd)
-	{
-		//begin a render pass  connected to our draw image
-		VkClearValue clearValue = {0.27f, 0.3f, 0.32f, 1.0f};
-		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
-		vkCmdBeginRendering(cmd, &renderInfo);
-
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_TrianglePipeline);
-
-		//set dynamic viewport and scissor
-		VkViewport viewport = {};
-		viewport.x = 0;
-		viewport.y = 0;
-		viewport.width = m_DrawExtent.width;
-		viewport.height = m_DrawExtent.height;
-		viewport.minDepth = 0.f;
-		viewport.maxDepth = 1.f;
-
-		vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-		VkRect2D scissor = {};
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
-		scissor.extent.width = m_DrawExtent.width;
-		scissor.extent.height = m_DrawExtent.height;
-
-		vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-		vkCmdDraw(cmd, 3, 1, 0, 0);
 
 		vkCmdEndRendering(cmd);
 	}

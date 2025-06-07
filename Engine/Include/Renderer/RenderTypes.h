@@ -11,11 +11,4 @@ namespace QE
         std::vector<MeshHandle> Meshes;
         std::string Name = "Unnamed Model";
     };
-
-    struct QUEST_API ModelViewProjection
-    {
-        glm::mat4 Model;
-        glm::mat4 View;
-        glm::mat4 Projection;
-    };
 }

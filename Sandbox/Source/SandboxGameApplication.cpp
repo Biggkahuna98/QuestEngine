@@ -70,8 +70,8 @@ void SandboxGameApplication::Update()
     //Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;
 
     // Draw the triangle
-    //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2]);
-    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_RectangleMesh);
+    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2]);
+    //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_RectangleMesh);
 
     // Render ImGui
     // ImGui fps window

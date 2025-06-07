@@ -36,7 +36,7 @@ namespace QE
 
 	struct GPUDrawPushConstants
 	{
-		glm::mat4 WorldMatrix;
+		ModelViewProjection MVP;
 		VkDeviceAddress MeshBufferAddress;
 	};
 
