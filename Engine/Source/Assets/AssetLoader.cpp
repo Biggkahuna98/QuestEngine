@@ -16,7 +16,7 @@ namespace QE
 	void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90);
 	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene, bool rotate90);
 
-    std::optional<Model> LoadModel(const std::string &path, bool rotate90)
+    std::optional<Model> LoadModel(const std::string &path, bool rotate90, bool flipVerticals)
     {
         LOG_DEBUG("Loading Model: {}", path);
 
@@ -25,14 +25,15 @@ namespace QE
 		LOG_DEBUG("File path appended: {}", _fp);
 
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(_fp,
-			aiProcess_CalcTangentSpace |
+    	unsigned int pFlags = aiProcess_CalcTangentSpace |
 			aiProcess_Triangulate |
 			aiProcess_JoinIdenticalVertices |
 			aiProcess_SortByPType |
-			aiProcess_FlipUVs |
-			aiProcess_GenSmoothNormals
-		);
+			aiProcess_GenSmoothNormals;
+
+    	if (flipVerticals)
+    		pFlags |= aiProcess_FlipUVs;
+		const aiScene* scene = importer.ReadFile(_fp, pFlags);
 
 		if (scene == nullptr)
 		{

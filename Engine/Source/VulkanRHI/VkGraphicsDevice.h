@@ -115,6 +115,7 @@ namespace QE
 
 		// Drawing resources
 		AllocatedImage m_DrawImage;
+		AllocatedImage m_DepthImage;
 		VkExtent2D m_DrawExtent;
 
 		DescriptorAllocator m_DescriptorAllocator;

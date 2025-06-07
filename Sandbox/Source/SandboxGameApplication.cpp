@@ -40,7 +40,7 @@ void SandboxGameApplication::Init()
 
     m_RectangleMesh = device->CreateMesh(RectangleVertices, RectangleIndices);
 
-    auto m = QE::LoadModel("Models/viking_room.obj", true);
+    auto m = QE::LoadModel("Models/viking_room.obj", true, true);
     //auto m = QE::LoadModel("Models/basicmesh.glb");
     m_Model = m.value();
     LOG_DEBUG("Model mesh count: {}", m_Model.Meshes.size());

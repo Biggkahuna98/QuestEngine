@@ -235,7 +235,10 @@ namespace QE
 	void PipelineBuilder::EnableDepthTest(bool depthWriteEnable, VkCompareOp op)
 	{
 		DepthStencil.depthTestEnable = VK_TRUE;
-		DepthStencil.depthWriteEnable = depthWriteEnable;
+		if (depthWriteEnable)
+			DepthStencil.depthWriteEnable = VK_TRUE;
+		else
+			DepthStencil.depthWriteEnable = VK_FALSE;
 		DepthStencil.depthCompareOp = op;
 		DepthStencil.depthBoundsTestEnable = VK_FALSE;
 		DepthStencil.stencilTestEnable = VK_FALSE;

@@ -357,6 +357,21 @@ namespace VkInit
 		return colorAttachment;
 	}
 
+	VkRenderingAttachmentInfo BuildDepthAttachment(VkImageView view, VkImageLayout layout)
+	{
+		VkRenderingAttachmentInfo depthAttachment {};
+		depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		depthAttachment.pNext = nullptr;
+
+		depthAttachment.imageView = view;
+		depthAttachment.imageLayout = layout;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depthAttachment.clearValue.depthStencil.depth = 1.0f; // 0.0f for GREATER mode, 1.0 for LESS mode
+
+		return depthAttachment;
+	}
+
 	VkRenderingInfo BuildRenderingInfo(VkExtent2D renderExtent, VkRenderingAttachmentInfo* colorAttachment, VkRenderingAttachmentInfo* depthAttachment)
 	{
 		VkRenderingInfo renderInfo{};

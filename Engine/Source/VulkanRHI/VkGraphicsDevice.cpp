@@ -195,7 +195,8 @@ namespace QE
 		// transition our main draw image into general layout so we can write into it
 		// we will overwrite it all so we dont care about what was the older layout
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DepthImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 		// Imgui
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -208,7 +209,7 @@ namespace QE
 	void VkGraphicsDevice::EndFrame()
 	{
 		// Transition the draw image and the swapchain image into their correct transfer layouts
-		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		// Execute a copy from the draw image into the swapchain
@@ -357,8 +358,9 @@ namespace QE
 		//begin a render pass  connected to our draw image
 		VkClearValue clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
 		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		VkRenderingAttachmentInfo depthAttachment = VkInit::BuildDepthAttachment(m_DepthImage.ImageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
-		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, nullptr);
+		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, &depthAttachment);
 		// Get the current command buffer
 		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
 		vkCmdBeginRendering(cmd, &renderInfo);
@@ -389,8 +391,8 @@ namespace QE
 		viewport.y = 0;
 		viewport.width = m_DrawExtent.width;
 		viewport.height = m_DrawExtent.height;
-		viewport.minDepth = 0.f;
-		viewport.maxDepth = 1.f;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
 
 		vkCmdSetViewport(cmd, 0, 1, &viewport);
 
@@ -413,7 +415,7 @@ namespace QE
 		mvp.View = m_Camera->GetViewMatrix();
 		//mvp.Projection = glm::perspective(glm::radians(70.0f), (float)m_DrawExtent.width / (float)m_DrawExtent.height, 10000.0f, 0.1f);
 		mvp.Projection = glm::perspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 0.1f, 100.0f);
-		//mvp.Projection[1][1] *= -1;
+		//mvp.Projection[1][1] *= -1.0f;
 
 		GPUDrawPushConstants pushConstants;
 		pushConstants.MVP = mvp;
@@ -493,15 +495,26 @@ namespace QE
 
 		// Build the image view
 		VkImageViewCreateInfo imageViewInfo = VkInit::BuildImageViewCreateInfo(m_DrawImage.ImageFormat, m_DrawImage.Image, VK_IMAGE_ASPECT_COLOR_BIT);
-		if (vkCreateImageView(m_Device, &imageViewInfo, nullptr, &m_DrawImage.ImageView) != VK_SUCCESS)
-		{
-			LOG_ERROR_TAG("VkGraphicsDevice", "Failed to create image view for draw image");
-		}
+		VK_CHECK(vkCreateImageView(m_Device, &imageViewInfo, nullptr, &m_DrawImage.ImageView));
+
+		// Setup the depth image
+		m_DepthImage.ImageFormat = VK_FORMAT_D32_SFLOAT;
+		m_DepthImage.ImageExtent = drawImageExtent;
+
+		VkImageUsageFlags depthImageUsages{};
+		depthImageUsages |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+		VkImageCreateInfo dimg_info = VkInit::BuildImageCreateInfo(m_DepthImage.ImageFormat, depthImageUsages, m_DepthImage.ImageExtent);
+		vmaCreateImage(m_Allocator, &dimg_info, &ring_allocInfo, &m_DepthImage.Image, &m_DepthImage.Allocation, nullptr);
+
+		VkImageViewCreateInfo dview_info = VkInit::BuildImageViewCreateInfo(m_DepthImage.ImageFormat, m_DepthImage.Image, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+		VK_CHECK(vkCreateImageView(m_Device, &dview_info, nullptr, &m_DepthImage.ImageView));
 
 		//add to deletion queues
 		m_CleanupQueue.PushFunction([=]() {
-			vkDestroyImageView(m_Device, m_DrawImage.ImageView, nullptr);
-			vmaDestroyImage(m_Allocator, m_DrawImage.Image, m_DrawImage.Allocation);
+			DestroyImage(m_DepthImage);
+			DestroyImage(m_DrawImage);
 		});
 	}
 
@@ -714,18 +727,20 @@ namespace QE
 		//filled triangles
 		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
 		//no backface culling
-		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 		//no multisampling
 		pipelineBuilder.SetMultisamplingMode();
 		// additive blending
+		//pipelineBuilder.EnableBlendingAdditive();
 		pipelineBuilder.EnableBlendingAlphaBlend();
 		//pipelineBuilder.DisableBlending();
 
-		pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
+		// VK_COMPARE_OP_GREATER_OR_EQUAL
+		pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_LESS_OR_EQUAL);
 
 		//connect the image format we will draw into, from draw image
 		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
-		pipelineBuilder.SetDepthFormat(VK_FORMAT_UNDEFINED);
+		pipelineBuilder.SetDepthFormat(m_DepthImage.ImageFormat);
 
 		//finally build the pipeline
 		m_MeshPipeline = pipelineBuilder.BuildPipeline(m_Device);

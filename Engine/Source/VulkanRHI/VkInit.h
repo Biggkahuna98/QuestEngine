@@ -50,6 +50,8 @@ namespace VkInit
 	VkImageCreateInfo BuildImageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent);
 	VkImageViewCreateInfo BuildImageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
 	VkRenderingAttachmentInfo BuildRenderingAttachmentInfo(VkImageView view, VkClearValue* clear, VkImageLayout layout);
+	VkRenderingAttachmentInfo BuildDepthAttachment(VkImageView view, VkImageLayout layout);
+
 	VkRenderingInfo BuildRenderingInfo(VkExtent2D renderExtent, VkRenderingAttachmentInfo* colorAttachment, VkRenderingAttachmentInfo* depthAttachment);
 	VkPipelineLayoutCreateInfo BuildPipelineCreateInfo();
 	VkPipelineShaderStageCreateInfo BuildShaderStageCreateInfo(VkShaderStageFlagBits stage, VkShaderModule shaderModule, const char* entryPoint = "main");
