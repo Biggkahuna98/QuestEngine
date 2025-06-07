@@ -74,6 +74,8 @@ namespace QE
 			{
 				m_Running = false;
 			}
+			if (m_InputManager->IsKeyPressed(P))
+				m_Window->ToggleMouseInputProcessing();
 
 			m_TestCamera->Update(deltaTime);
 

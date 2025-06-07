@@ -115,31 +115,6 @@ namespace QE
     	// Move the mesh uploading stuff elsewhere later
 		MeshHandle newMesh = g_Engine.GetGraphicsDevice().CreateMesh(vertices, indices);
 
-    	/*std::vector<std::uint8_t> verticesbuff;
-    	verticesbuff.resize(vertices.size() * sizeof(Vertex));
-    	memcpy(verticesbuff.data(), vertices.data(), verticesbuff.size());
-    	BufferDescription verticesDesc = {
-    		BufferType::Vertex,
-			BufferUsage::Default,
-			verticesbuff,
-			vertices.size() * sizeof(Vertex),
-			vertices.size()
-		};
-    	newMesh.VertexBuffer = g_Engine.GetGraphicsDevice().CreateBuffer(verticesDesc);
-
-    	//RawBuffer indicesbuff = RawBuffer(indices.data(),indices.size(), indices.size() * sizeof(std::uint32_t));
-    	std::vector<std::uint8_t> indicesbuff(indices.size());
-    	indicesbuff.resize(indices.size() * sizeof(std::uint32_t));
-    	memcpy(indicesbuff.data(), indices.data(), indicesbuff.size());
-    	BufferDescription indicesDesc = {
-    		BufferType::Index,
-			BufferUsage::Default,
-			indicesbuff,
-			indices.size() * sizeof(std::uint32_t),
-			indices.size()
-		};
-    	newMesh.IndexBuffer = g_Engine.GetGraphicsDevice().CreateBuffer(indicesDesc);*/
-
     	return newMesh;
     }
 

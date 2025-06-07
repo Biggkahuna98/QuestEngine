@@ -3,8 +3,8 @@
 #include "Core/Window.h"
 //#include "GraphicsContext.h"
 #include "RHI/ResourceTypes.h"
-#include "Renderer/RenderTypes.h"
 #include <memory>
+#include <span>
 
 namespace QE
 {

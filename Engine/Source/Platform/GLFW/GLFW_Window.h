@@ -16,6 +16,8 @@ namespace QE
 		virtual void* GetNativeWindow() override;
 		virtual void ProcessEvents() override;
 		virtual void PauseWindow() override;
+
+		virtual void ToggleMouseInputProcessing() override;
 	private:
 		GLFWwindow* m_Window;
 	};

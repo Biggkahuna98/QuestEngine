@@ -1,5 +1,4 @@
 #pragma once
-#include <span>
 
 #include "Core/Core.h"
 #include "Core/Containers/RawBuffer.h"
@@ -17,6 +16,14 @@ namespace QE
         glm::vec3 Normal;
         float uv_y = 0;
         glm::vec4 Color;
+    };
+
+    // Matters to RHIs
+    struct QUEST_API ModelViewProjection
+    {
+        glm::mat4 Model;
+        glm::mat4 View;
+        glm::mat4 Projection;
     };
 
     // Handles

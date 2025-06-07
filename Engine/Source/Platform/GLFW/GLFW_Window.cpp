@@ -41,8 +41,8 @@ namespace QE
 
 		LOG_INFO_TAG("GLFW_Window", "Created GLFW window: [{0}] ({1}x{2})", windowName, width, height);
 
-		// Abstract later
-		glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		if (m_IsProcessingMouseInput)
+			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{
@@ -106,11 +106,14 @@ namespace QE
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
 			{
 				//LOG_DEBUG_TAG("GLFW_Window", "Scroll: {0}, {1}", xOffset, yOffset);
-				MouseScrollEvent event;
-				event.MouseXOffset = xOffset;
-				event.MouseYOffset = yOffset;
-				//GetGlobalEventManager()->FireEvent(event);
-				GetGlobalEventManager()->QueueEvent<MouseScrollEvent>(event);
+				if (static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window))->m_IsProcessingMouseInput)
+				{
+					MouseScrollEvent event;
+					event.MouseXOffset = xOffset;
+					event.MouseYOffset = yOffset;
+					//GetGlobalEventManager()->FireEvent(event);
+					GetGlobalEventManager()->QueueEvent<MouseScrollEvent>(event);
+				}
 			}
 		);
 
@@ -118,12 +121,15 @@ namespace QE
 			{
 				auto inputManager = static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window))->GetInputManagerPtr();
 				inputManager->UpdateMousePosition(xPos, yPos);
-				MouseMoveEvent event;
-				event.MouseX = (float)xPos;
-				event.MouseY = (float)yPos;
-				//LOG_DEBUG("Move event from window: XPos={}, YPos={}", event.MouseX, event.MouseY);
-				//GetGlobalEventManager()->FireEvent(event);
-				GetGlobalEventManager()->QueueEvent<MouseMoveEvent>(event);
+				if (static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window))->m_IsProcessingMouseInput)
+				{
+					MouseMoveEvent event;
+					event.MouseX = (float)xPos;
+					event.MouseY = (float)yPos;
+					//LOG_DEBUG("Move event from window: XPos={}, YPos={}", event.MouseX, event.MouseY);
+					//GetGlobalEventManager()->FireEvent(event);
+					GetGlobalEventManager()->QueueEvent<MouseMoveEvent>(event);
+				}
 			}
 		);
 	}
@@ -168,5 +174,20 @@ namespace QE
 		}
 
 		LOG_DEBUG_TAG("GLFW_Window", "GLFW window: {0} is no longer paused", m_WindowName);
+	}
+
+	void GLFW_Window::ToggleMouseInputProcessing()
+	{
+		if (m_IsProcessingMouseInput)
+		{
+			// Mouse showing
+			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			m_IsProcessingMouseInput = false;
+		} else
+		{
+			// No mouse showing
+			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			m_IsProcessingMouseInput = true;
+		}
 	}
 }
