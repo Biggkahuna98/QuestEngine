@@ -1,5 +1,6 @@
 #include "Assets/AssetLoader.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -8,13 +9,14 @@
 
 // Need access to the graphics device
 #include "Engine/Engine.h"
+#include "gtx/quaternion.hpp"
 
 namespace QE
 {
-	void ProcessNode(aiNode* node, const aiScene* scene, Model* model);
-	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene);
+	void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90);
+	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene, bool rotate90);
 
-    std::optional<Model> LoadModel(const std::string &path)
+    std::optional<Model> LoadModel(const std::string &path, bool rotate90)
     {
         LOG_DEBUG("Loading Model: {}", path);
 
@@ -40,12 +42,12 @@ namespace QE
 
 		Model model;
 
-    	ProcessNode(scene->mRootNode, scene, &model);
+    	ProcessNode(scene->mRootNode, scene, &model, rotate90);
 
 		return model;
     }
 
-	void ProcessNode(aiNode* node, const aiScene* scene, Model* model)
+	void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90)
     {
     	// Process each mesh located at the current node
 		for (unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -57,28 +59,33 @@ namespace QE
 			LOG_DEBUG("\tFace count: {}", mesh->mNumFaces);
 			LOG_DEBUG("\tIndice count: {}", mesh->mFaces->mNumIndices * mesh->mNumFaces);
 
-			model->Meshes.push_back(ProcessMesh(mesh, scene));
+			model->Meshes.push_back(ProcessMesh(mesh, scene, rotate90));
 		}
     	// After mesh processing, recursively process children nodes
     	for (unsigned int i = 0; i < node->mNumChildren; i++)
     	{
-    		ProcessNode(node->mChildren[i], scene, model);
+    		ProcessNode(node->mChildren[i], scene, model, rotate90);
     	}
     }
 
-	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene)
+	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene, bool rotate90)
     {
     	std::vector<uint32_t> indices;
     	std::vector<Vertex> vertices;
     	// Textures here once it exists
 
+    	aiMatrix4x4 rotationMatrix;
+    	aiMatrix4x4::RotationX(ai_real(AI_MATH_PI / 2.0f), rotationMatrix);
     	// Go through each mesh's vertices
     	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     	{
     		Vertex newVtx;
-    		newVtx.Position.x = mesh->mVertices[i].x;
-    		newVtx.Position.y = mesh->mVertices[i].y;
-    		newVtx.Position.z = mesh->mVertices[i].z;
+    		aiVector3D pos = mesh->mVertices[i];
+    		if (rotate90)
+    			pos = rotationMatrix * pos;
+    		newVtx.Position.x = pos.x;
+    		newVtx.Position.y = pos.y;
+    		newVtx.Position.z = pos.z;
 
     		// Process normals
     		if (mesh->HasNormals())

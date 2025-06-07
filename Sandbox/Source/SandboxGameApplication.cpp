@@ -40,13 +40,13 @@ void SandboxGameApplication::Init()
 
     m_RectangleMesh = device->CreateMesh(RectangleVertices, RectangleIndices);
 
-    //auto m = QE::LoadModel("Models/viking_room.obj");
-    auto m = QE::LoadModel("Models/basicmesh.glb");
+    auto m = QE::LoadModel("Models/viking_room.obj", true);
+    //auto m = QE::LoadModel("Models/basicmesh.glb");
     m_Model = m.value();
     LOG_DEBUG("Model mesh count: {}", m_Model.Meshes.size());
 
-    //auto tex = QE::LoadTexture("Textures/viking_room.png");
-    auto tex = QE::LoadTexture("Textures/texture.jpg");
+    auto tex = QE::LoadTexture("Textures/viking_room.png");
+    //auto tex = QE::LoadTexture("Textures/texture.jpg");
     m_Texture = tex.value();
 }
 
@@ -72,9 +72,9 @@ void SandboxGameApplication::Update()
     //Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;
 
     // Draw the triangle
-    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2], &m_Texture);
+    //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2], &m_Texture);
     //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_RectangleMesh, &m_Texture);
-    //GetEngine()->GetGraphicsDevice().DrawMesh(m_Model.Meshes[0], &m_Texture);
+    GetEngine()->GetGraphicsDevice().DrawMesh(m_Model.Meshes[0], &m_Texture);
 
     // Render ImGui
     // ImGui fps window

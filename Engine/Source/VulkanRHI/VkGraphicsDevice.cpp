@@ -718,10 +718,10 @@ namespace QE
 		//no multisampling
 		pipelineBuilder.SetMultisamplingMode();
 		// additive blending
-		//pipelineBuilder.EnableBlendingAlphaBlend();
-		pipelineBuilder.DisableBlending();
+		pipelineBuilder.EnableBlendingAlphaBlend();
+		//pipelineBuilder.DisableBlending();
 
-		pipelineBuilder.DisableDepthTest();
+		pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
 
 		//connect the image format we will draw into, from draw image
 		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
