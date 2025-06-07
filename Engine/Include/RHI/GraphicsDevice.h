@@ -29,7 +29,7 @@ namespace QE
 		virtual MeshHandle CreateMesh(std::span<Vertex> vertices, std::span<uint32_t> indices) = 0;
 
 		// Temporary probably
-		virtual void DrawMesh(MeshHandle mesh) = 0;
+		virtual void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) = 0;
 		virtual void WaitForDeviceIdle() = 0;
 		virtual void SetCamera(TestCamera* camera) = 0;
 

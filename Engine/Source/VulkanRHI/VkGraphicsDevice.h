@@ -65,9 +65,9 @@ namespace QE
 
 		BufferHandle CreateBuffer(BufferDescription desc) override;
 		TextureHandle CreateTexture(TextureDescription desc) override;
-		MeshHandle CreateMesh(std::span<Vertex> vertices,  std::span<uint32_t> indices);
+		MeshHandle CreateMesh(std::span<Vertex> vertices,  std::span<uint32_t> indices) override;
 
-		void DrawMesh(MeshHandle mesh) override;
+		void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) override;
 		void SetCamera(TestCamera* camera) override;
 
 		VkInstance GetVkInstance() const { return m_Instance; }
@@ -80,6 +80,7 @@ namespace QE
 		FrameData& GetCurrentFrameData();
 
 		AllocatedBuffer GetBufferFromHandle(BufferHandle handle);
+		AllocatedImage GetTextureFromHandle(TextureHandle handle);
 		GPUMeshBuffer GetMeshFromHandle(MeshHandle handle);
 
 	private:
@@ -137,6 +138,16 @@ namespace QE
 		VkPipelineLayout m_MeshPipelineLayout;
 		VkPipeline m_MeshPipeline;
 
+		VkDescriptorSetLayout m_SingleImageDescriptorLayout;
+
+		AllocatedImage m_WhiteImage;
+		AllocatedImage m_BlackImage;
+		AllocatedImage m_GreyImage;
+		AllocatedImage m_ErrorCheckerboardImage;
+
+		VkSampler m_DefaultSamplerLinear;
+		VkSampler m_DefaultSamplerNearest;
+
 		// Initialize Vulkan Resources
 		void InitSwapchain(VkExtent2D windowExtent);
 		void CreateSwapchain(VkExtent2D windowExtent);
@@ -159,5 +170,8 @@ namespace QE
 		AllocatedBuffer AllocateBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 		void UploadDataToBuffer(AllocatedBuffer& buffer, void* data, size_t dataSize);
 		void DestroyBuffer(const AllocatedBuffer& buffer);
+		AllocatedImage CreateImage(VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped = false);
+		AllocatedImage CreateImage(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped = false);
+		void DestroyImage(const AllocatedImage& image);
 	};
 }

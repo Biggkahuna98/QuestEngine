@@ -141,7 +141,8 @@ namespace QE
     	pixelsbuff.resize(imageSize);
     	memcpy(pixelsbuff.data(), pixels, imageSize);
     	desc.Data = pixelsbuff;
-    	desc.ImageSize = imageSize;
+    	desc.ImageWidth = texWidth;
+    	desc.ImageHeight = texHeight;
 
     	stbi_image_free(pixels);
 

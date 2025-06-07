@@ -124,7 +124,7 @@ namespace QE
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan command pools and buffers created");
 
 		// Descriptors
-		//InitializeDescriptors();
+		InitializeDescriptors();
 
 		// Graphics pipeline
 		//InitializeTrianglePipeline();
@@ -297,16 +297,10 @@ namespace QE
 		LOG_DEBUG("Creating Texture");
 		TextureHandle handle = { s_TextureCount++ };
 
-		BufferHandle texBuff;
-		BufferDescription texBuffDesc = {};
-		//texBuffDesc.Type = BufferType::StorageBuffer;
-		//texBuffDesc.Usage = BufferUsage::TransferDst;
-		//texBuffDesc.Count = texWidth * texHeight * 4;
-		//texBuffDesc.DataSize = sizeof(uint8_t) * texBuffDesc.Count;
-		//memcpy(texBuffDesc.Data.data(), pixels, texBuffDesc.DataSize);
-		//texBuff = CreateBuffer(texBuffDesc);
+		AllocatedImage texture = CreateImage(desc.Data.data(), {desc.ImageWidth, desc.ImageHeight, desc.ImageDepth}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+		s_TextureMap[handle] = texture;
 
-
+		return handle;
 	}
 
 	MeshHandle VkGraphicsDevice::CreateMesh(std::span<Vertex> vertices, std::span<uint32_t> indices)
@@ -354,7 +348,7 @@ namespace QE
 		return newMeshHandle;
 	}
 
-	void VkGraphicsDevice::DrawMesh(MeshHandle mesh)
+	void VkGraphicsDevice::DrawMesh(MeshHandle mesh, TextureHandle* texture)
 	{
 		GPUMeshBuffer meshBuffer = s_MeshMap[mesh];
 		AllocatedBuffer vertexBuffer = GetBufferFromHandle(meshBuffer.VertexBuffer);
@@ -370,6 +364,24 @@ namespace QE
 		vkCmdBeginRendering(cmd, &renderInfo);
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipeline);
+
+		// Bind a texture
+		VkDescriptorSet imageSet = GetCurrentFrameData().FrameDescriptors.Allocate(m_Device, m_SingleImageDescriptorLayout);
+		{
+			DescriptorWriter writer;
+			if (texture)
+			{
+				AllocatedImage tex = GetTextureFromHandle(*texture);
+				writer.WriteImage(0, tex.ImageView, m_DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+			} else
+			{
+				writer.WriteImage(0, m_ErrorCheckerboardImage.ImageView, m_DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+			}
+
+			writer.UpdateSet(m_Device, imageSet);
+		}
+
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipelineLayout, 0, 1, &imageSet, 0, nullptr);
 
 		//set dynamic viewport and scissor
 		VkViewport viewport = {};
@@ -435,6 +447,11 @@ namespace QE
 	AllocatedBuffer VkGraphicsDevice::GetBufferFromHandle(BufferHandle handle)
 	{
 		return s_BufferMap[handle];
+	}
+
+	AllocatedImage VkGraphicsDevice::GetTextureFromHandle(TextureHandle handle)
+	{
+		return s_TextureMap[handle];
 	}
 
 	GPUMeshBuffer VkGraphicsDevice::GetMeshFromHandle(MeshHandle handle)
@@ -551,6 +568,13 @@ namespace QE
 			m_DrawImageDescriptorSetLayout = builder.Build(m_Device, VK_SHADER_STAGE_COMPUTE_BIT);
 		}
 
+		// Single image descriptor set
+		{
+			DescriptorLayoutBuilder builder;
+			builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+			m_SingleImageDescriptorLayout = builder.Build(m_Device, VK_SHADER_STAGE_FRAGMENT_BIT);
+		}
+
 		//allocate a descriptor set for our draw image
 		m_DrawImageDescriptors = m_DescriptorAllocator.Allocate(m_Device, m_DrawImageDescriptorSetLayout);
 
@@ -564,6 +588,7 @@ namespace QE
 			m_DescriptorAllocator.DestroyPool(m_Device);
 
 			vkDestroyDescriptorSetLayout(m_Device, m_DrawImageDescriptorSetLayout, nullptr);
+			vkDestroyDescriptorSetLayout(m_Device, m_SingleImageDescriptorLayout, nullptr);
 		});
 
 		// Growable descriptor allocator
@@ -673,6 +698,8 @@ namespace QE
 		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo(); // rename this function, i was confused
 		pipeline_layout_info.pPushConstantRanges = &bufferRange;
 		pipeline_layout_info.pushConstantRangeCount = 1;
+		pipeline_layout_info.pSetLayouts = &m_SingleImageDescriptorLayout;
+		pipeline_layout_info.setLayoutCount = 1;
 
 		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_MeshPipelineLayout));
 
@@ -802,41 +829,52 @@ namespace QE
 
 	void VkGraphicsDevice::InitializeDefaultData()
 	{
-		/*std::array<Vertex, 4> rect_vertices;
+		// Default textures
+		constexpr uint32_t white = std::byteswap(0xFFFFFFFF);
+		constexpr uint32_t grey = std::byteswap(0xAAAAAAFF);
+		constexpr uint32_t black = std::byteswap(0x000000FF);
+		constexpr uint32_t magenta = std::byteswap(0xFF00FFFF);
+		std::array<uint32_t, 16 *16 > pixels; //for 16x16 checkerboard texture
+		for (int x = 0; x < 16; x++) {
+			for (int y = 0; y < 16; y++) {
+				pixels[y*16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
+			}
+		}
 
-		rect_vertices[0].Position = { 0.5,-0.5, 0 };
-		rect_vertices[1].Position = { 0.5,0.5, 0 };
-		rect_vertices[2].Position = { -0.5,-0.5, 0 };
-		rect_vertices[3].Position = { -0.5,0.5, 0 };
+		m_WhiteImage = CreateImage((void*)&white, VkExtent3D{1, 1, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+		m_GreyImage = CreateImage((void*)&grey, VkExtent3D{1, 1, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+		m_BlackImage = CreateImage((void*)&black, VkExtent3D{1, 1, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
+		m_ErrorCheckerboardImage = CreateImage(pixels.data(), VkExtent3D{16, 16, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT);
 
-		rect_vertices[0].Color = { 0,0, 0,1 };
-		rect_vertices[1].Color = { 0.5,0.5,0.5 ,1 };
-		rect_vertices[2].Color = { 1,0, 0,1 };
-		rect_vertices[3].Color = { 0,1, 0,1 };
+		VkSamplerCreateInfo sampl = {};
+		sampl.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		sampl.magFilter = VK_FILTER_NEAREST;
+		sampl.minFilter = VK_FILTER_NEAREST;
 
-		std::array<uint32_t, 6> rect_indices;
+		vkCreateSampler(m_Device, &sampl, nullptr, &m_DefaultSamplerNearest);
 
-		rect_indices[0] = 0;
-		rect_indices[1] = 1;
-		rect_indices[2] = 2;
+		sampl.magFilter = VK_FILTER_LINEAR;
+		sampl.minFilter = VK_FILTER_LINEAR;
 
-		rect_indices[3] = 2;
-		rect_indices[4] = 1;
-		rect_indices[5] = 3;
+		vkCreateSampler(m_Device, &sampl, nullptr, &m_DefaultSamplerLinear);
 
-		//m_Rectangle = UploadMesh(rect_indices, rect_vertices);
+		m_CleanupQueue.PushFunction([=]()
+		{
+			vkDestroySampler(m_Device, m_DefaultSamplerNearest, nullptr);
+			vkDestroySampler(m_Device, m_DefaultSamplerLinear, nullptr);
 
-		//delete the rectangle data on engine shutdown
-		m_CleanupQueue.PushFunction([&]() {
-			//DestroyBuffer(m_Rectangle.IndexBuffer);
-			//DestroyBuffer(m_Rectangle.VertexBuffer);
-		});*/
+			DestroyImage(m_WhiteImage);
+			DestroyImage(m_GreyImage);
+			DestroyImage(m_BlackImage);
+			DestroyImage(m_ErrorCheckerboardImage);
+		});
 	}
 
 	void VkGraphicsDevice::TutorialSetupStuff()
 	{
 		//InitializeMesh2DPipeline();
 		InitializeMeshPipeline();
+		InitializeDefaultData();
 	}
 
 	void VkGraphicsDevice::DrawBackground(VkCommandBuffer commandBuffer)
@@ -946,5 +984,80 @@ namespace QE
 	void VkGraphicsDevice::DestroyBuffer(const AllocatedBuffer& buffer)
 	{
 		vmaDestroyBuffer(m_Allocator, buffer.Buffer, buffer.Allocation);
+	}
+
+	AllocatedImage VkGraphicsDevice::CreateImage(VkExtent3D size, VkFormat format, VkImageUsageFlags usage,
+		bool mipmapped)
+	{
+		AllocatedImage newImage;
+		newImage.ImageFormat = format;
+		newImage.ImageExtent = size;
+
+		VkImageCreateInfo imgInfo = VkInit::BuildImageCreateInfo(format, usage, size);
+		if (mipmapped)
+			imgInfo.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(size.width, size.height)))) + 1;
+
+		VmaAllocationCreateInfo allocInfo = {};
+		allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+		allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		// Allocate and create image
+		VK_CHECK(vmaCreateImage(m_Allocator, &imgInfo, &allocInfo, &newImage.Image, &newImage.Allocation, nullptr));
+
+		// if the format is a depth format we need to have it use the correct aspect flag
+		VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		if (format == VK_FORMAT_D32_SFLOAT)
+			aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+
+		// Build image view for the image
+		VkImageViewCreateInfo viewInfo = VkInit::BuildImageViewCreateInfo(format, newImage.Image, aspectMask);
+		viewInfo.subresourceRange.levelCount = imgInfo.mipLevels;
+
+		VK_CHECK(vkCreateImageView(m_Device, &viewInfo, nullptr, &newImage.ImageView));
+
+		return newImage;
+	}
+
+	AllocatedImage VkGraphicsDevice::CreateImage(void *data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage,
+		bool mipmapped)
+	{
+		size_t data_size = size.depth * size.width * size.height * 4; // 4 is the channel components i believe
+		AllocatedBuffer uploadbuffer = AllocateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+		memcpy(uploadbuffer.AllocationInfo.pMappedData, data, data_size);
+
+		AllocatedImage new_image = CreateImage(size, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, mipmapped);
+
+		ImmediateCommandSubmit([&](VkCommandBuffer cmd) {
+			VkInit::TransitionImage(cmd, new_image.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+			VkBufferImageCopy copyRegion = {};
+			copyRegion.bufferOffset = 0;
+			copyRegion.bufferRowLength = 0;
+			copyRegion.bufferImageHeight = 0;
+
+			copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			copyRegion.imageSubresource.mipLevel = 0;
+			copyRegion.imageSubresource.baseArrayLayer = 0;
+			copyRegion.imageSubresource.layerCount = 1;
+			copyRegion.imageExtent = size;
+
+			// copy the buffer into the image
+			vkCmdCopyBufferToImage(cmd, uploadbuffer.Buffer, new_image.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+				&copyRegion);
+
+			VkInit::TransitionImage(cmd, new_image.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			});
+
+		DestroyBuffer(uploadbuffer);
+
+		return new_image;
+	}
+
+	void VkGraphicsDevice::DestroyImage(const AllocatedImage &image)
+	{
+		vkDestroyImageView(m_Device, image.ImageView, nullptr);
+		vmaDestroyImage(m_Allocator, image.Image, image.Allocation);
 	}
 }

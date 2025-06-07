@@ -69,7 +69,9 @@ namespace QE
     struct QUEST_API TextureDescription
     {
         std::vector<std::uint8_t> Data;
-        std::size_t ImageSize;
+        std::uint32_t ImageWidth;
+        std::uint32_t ImageHeight;
+        std::uint32_t ImageDepth = 1;
     };
 }
 

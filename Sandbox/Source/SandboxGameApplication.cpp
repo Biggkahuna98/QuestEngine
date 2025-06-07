@@ -23,11 +23,12 @@ void SandboxGameApplication::Init()
     LOG_DEBUG("SID: {}, String: {}", test1, GetStringFromID(test1).data());
     LOG_DEBUG("SID: {}, String: {}", test2, GetStringFromID(test2).data());
 
+    glm::vec3 recNormals = {0.0f, 0.0f, 1.0f};
     RectangleVertices = {
-        {{-0.5f, -0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {1.0f, 0.0f, 0.0f, 1.0f}},
-        {{0.5f, -0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {0.0f, 1.0f, 0.0f, 1.0f}},
-        {{0.5f, 0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {0.0f, 0.0f, 1.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.0f}, 0, {1.0f, 1.0f, 1.0f}, 0, {1.0f, 1.0f, 1.0f, 1.0f}}
+        {{-0.5f, -0.5f, 0.0f}, 0, recNormals, 0, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{0.5f, -0.5f, 0.0f}, 1.0f, recNormals, 0, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{0.5f, 0.5f, 0.0f}, 1.0f, recNormals, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.0f}, 0, recNormals, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}}
     };
 
     RectangleIndices = {
@@ -70,8 +71,8 @@ void SandboxGameApplication::Update()
     //Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;
 
     // Draw the triangle
-    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2]);
-    //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_RectangleMesh);
+    //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[2], &m_Texture);
+    GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_RectangleMesh, &m_Texture);
 
     // Render ImGui
     // ImGui fps window
