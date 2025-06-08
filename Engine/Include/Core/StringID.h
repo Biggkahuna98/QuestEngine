@@ -6,7 +6,7 @@
 
 namespace QE
 {
-    using StringID = std::uint32_t;
+    using StringID = std::uint64_t;
     QUEST_API StringID InternString(std::string_view string);
     QUEST_API std::string_view GetStringFromID(StringID id);
 }
