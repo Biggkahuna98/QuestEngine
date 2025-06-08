@@ -99,6 +99,7 @@ namespace QE
 		VkSurfaceKHR m_Surface;
 		VkExtent2D m_WindowExtent; // window size
 
+		bool m_ResizeRequested = false;
 		VkSwapchainKHR m_Swapchain;
 		VkExtent2D m_SwapchainExtent;
 		VkFormat m_SwapchainImageFormat;

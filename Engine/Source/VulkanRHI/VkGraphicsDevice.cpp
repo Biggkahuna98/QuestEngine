@@ -138,7 +138,7 @@ namespace QE
 
 	VkGraphicsDevice::~VkGraphicsDevice()
 	{
-		VkGraphicsDevice::WaitForDeviceIdle();
+		vkDeviceWaitIdle(m_Device);
 
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
@@ -413,8 +413,9 @@ namespace QE
 		ModelViewProjection mvp = {};
 		mvp.Model = glm::mat4(1.0f);
 		mvp.View = m_Camera->GetViewMatrix();
-		//mvp.Projection = glm::perspective(glm::radians(70.0f), (float)m_DrawExtent.width / (float)m_DrawExtent.height, 10000.0f, 0.1f);
-		mvp.Projection = glm::perspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 0.1f, 100.0f);
+		// reverse near and far plane because using reverse-Z depth
+		// https://developer.nvidia.com/blog/visualizing-depth-precision/
+		mvp.Projection = glm::perspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 10000.0f, 0.1f);
 		//mvp.Projection[1][1] *= -1.0f;
 
 		GPUDrawPushConstants pushConstants;
@@ -424,8 +425,8 @@ namespace QE
 		vkCmdPushConstants(cmd, m_MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
 
 		// Bind vertex buffer
-		VkDeviceSize offsets[] = {0};
-		vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.Buffer, offsets);
+		//VkDeviceSize offsets[] = {0};
+		//vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.Buffer, offsets);
 
 		// Bind index buffer
 		vkCmdBindIndexBuffer(cmd, indexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
@@ -498,7 +499,9 @@ namespace QE
 		VK_CHECK(vkCreateImageView(m_Device, &imageViewInfo, nullptr, &m_DrawImage.ImageView));
 
 		// Setup the depth image
-		m_DepthImage.ImageFormat = VK_FORMAT_D32_SFLOAT;
+		// https://www.reddit.com/r/vulkan/comments/1l6n502/gtx_1080_vulkan_tutorial_and_poor_depth_stencil/
+		// D16_UNORM for shadow mapping (depth but not needing too much precision)
+		m_DepthImage.ImageFormat = VK_FORMAT_D32_SFLOAT; // good format for reverse Z
 		m_DepthImage.ImageExtent = drawImageExtent;
 
 		VkImageUsageFlags depthImageUsages{};
@@ -736,7 +739,7 @@ namespace QE
 		//pipelineBuilder.DisableBlending();
 
 		// VK_COMPARE_OP_GREATER_OR_EQUAL
-		pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_LESS_OR_EQUAL);
+		pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
 
 		//connect the image format we will draw into, from draw image
 		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);

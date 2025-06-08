@@ -367,7 +367,7 @@ namespace VkInit
 		depthAttachment.imageLayout = layout;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		depthAttachment.clearValue.depthStencil.depth = 1.0f; // 0.0f for GREATER mode, 1.0 for LESS mode
+		depthAttachment.clearValue.depthStencil.depth = 0.0f; // 0.0f for GREATER mode, 1.0 for LESS mode
 
 		return depthAttachment;
 	}
