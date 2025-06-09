@@ -37,6 +37,20 @@
 
 namespace QE
 {
+	// Reverse-Z perspective matrix
+	glm::mat4 ReversedZPerspective(float fovYRadians, float aspect, float zNear)
+	{
+		float f = 1.0f / tan(fovYRadians / 2.0f);
+
+		glm::mat4 result(0.0f);
+		result[0][0] = f / aspect;
+		result[1][1] = f;
+		result[2][2] = 0.0f;
+		result[2][3] = -1.0f;
+		result[3][2] = zNear;
+		return result;
+	}
+
 	// Resource mappings
 	std::uint32_t s_BufferCount = 0; // starting handle
 	std::unordered_map<BufferHandle, AllocatedBuffer> s_BufferMap;
@@ -415,8 +429,7 @@ namespace QE
 		mvp.View = m_Camera->GetViewMatrix();
 		// reverse near and far plane because using reverse-Z depth
 		// https://developer.nvidia.com/blog/visualizing-depth-precision/
-		mvp.Projection = glm::perspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 10000.0f, 0.1f);
-		//mvp.Projection[1][1] *= -1.0f;
+		mvp.Projection = ReversedZPerspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 0.1f);
 
 		GPUDrawPushConstants pushConstants;
 		pushConstants.MVP = mvp;
