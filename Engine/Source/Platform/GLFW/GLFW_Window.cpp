@@ -50,12 +50,14 @@ namespace QE
 				WindowResizeEvent event;
 				event.Width = width;
 				event.Height = height;
-				GetGlobalEventManager()->FireEvent(event);
+				GetGlobalEventManager()->QueueEvent<WindowResizeEvent>(event);
 			}
 		);
 
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
 			{
+				WindowCloseEvent event{};
+				GetGlobalEventManager()->QueueEvent<WindowCloseEvent>(event);
 				g_Engine.SetWindowShouldClose(true);
 			}
 		);

@@ -59,16 +59,6 @@ void SandboxGameApplication::Update()
 {
     using namespace QE;
 
-    //ImGui::ShowDemoWindow();
-    // ImGui to decide which buffer to draw
-    {
-        if (ImGui::Begin("Draw Mesh"))
-        {
-            ImGui::SliderInt("Buffer Index", &selectedMesh, 0, 1);
-        }
-        ImGui::End();
-    }
-
     //Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;
 
     // Draw the triangle
