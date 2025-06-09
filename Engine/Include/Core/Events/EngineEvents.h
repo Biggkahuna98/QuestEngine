@@ -18,6 +18,11 @@ namespace QE
         int Height;
     };
 
+    struct QUEST_API WindowMouseToggleEvent : public EventBase
+    {
+        EventType GetEventType() const override { return EventType::WindowMouseToggle; }
+    };
+
     // Mouse Events
     struct QUEST_API MouseMoveEvent : public EventBase
     {

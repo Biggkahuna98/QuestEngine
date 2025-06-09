@@ -27,6 +27,11 @@ namespace QE
             MouseScrollEvent event = static_cast<const MouseScrollEvent&>(e);
             ProcessMouseScroll(event);
         });
+
+        eventManager->Subscribe(EventType::WindowMouseToggle, [this](const EventBase&e)
+        {
+           ToggleUpdating();
+        });
         LOG_WARN("Subscribed to events in TestCamera");
 
         UpdateCameraVectors();
@@ -39,6 +44,9 @@ namespace QE
 
     void TestCamera::Update(float deltaTime)
     {
+        if (PauseUpdates)
+            return;
+
         auto inputPtr = GetEngine()->GetInputPtr();
 
         float velocity = MovementSpeed * deltaTime;
@@ -57,6 +65,9 @@ namespace QE
 
     void TestCamera::ProcessMouseMovement(MouseMoveEvent event, bool constrainPitch)
     {
+        if (PauseUpdates)
+            return;
+
         float xpos = event.MouseX;
         float ypos = event.MouseY;
 
@@ -68,7 +79,7 @@ namespace QE
         }
 
         float xoffset = xpos - lastX;
-        float yoffset = -1 * (lastY - ypos);
+        float yoffset = ypos - lastY;
 
         // The real processing part
         xoffset *= MouseSensitivity;
@@ -95,11 +106,26 @@ namespace QE
 
     void TestCamera::ProcessMouseScroll(MouseScrollEvent event)
     {
+        if (PauseUpdates)
+            return;
+
         Zoom -= (float)event.MouseYOffset;
         if (Zoom < 1.0f)
             Zoom = 1.0f;
         if (Zoom > 45.0f)
             Zoom = 45.0f;
+    }
+
+    void TestCamera::ToggleUpdating()
+    {
+        if (PauseUpdates)
+        {
+            PauseUpdates = false;
+            firstMouse = true;
+        } else
+        {
+            PauseUpdates = true;
+        }
     }
 
     void TestCamera::DrawDebugInfo()

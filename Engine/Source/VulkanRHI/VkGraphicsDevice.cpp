@@ -67,6 +67,7 @@ namespace QE
 		// Handle maps
 		s_BufferMap.reserve(1000);
 		s_TextureMap.reserve(1000);
+		s_MeshMap.reserve(1000);
 
 		// Set real window size
 		int width, height;
@@ -431,7 +432,7 @@ namespace QE
 		// https://developer.nvidia.com/blog/visualizing-depth-precision/
 		mvp.Projection = ReversedZPerspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 0.1f);
 
-		GPUDrawPushConstants pushConstants;
+		GPUDrawPushConstants pushConstants{};
 		pushConstants.MVP = mvp;
 		pushConstants.MeshBufferAddress = meshBuffer.VertexBufferAddress;
 

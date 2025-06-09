@@ -34,11 +34,13 @@ namespace QE
         void Update(float deltaTime);
         void ProcessMouseMovement(MouseMoveEvent event, bool constrainPitch = true);
         void ProcessMouseScroll(MouseScrollEvent event);
+        void ToggleUpdating();
         void DrawDebugInfo();
     private:
         float lastX;
         float lastY;
         bool firstMouse = true;
+        bool PauseUpdates = false;
         void UpdateCameraVectors();
     };
 }

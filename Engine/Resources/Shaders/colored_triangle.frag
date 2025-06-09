@@ -14,4 +14,5 @@ void main()
 {
 	//return red
 	outFragColor = texture(displayTexture, inUV);
+	//outFragColor = vec4(gl_FragCoord.z); // depth buffer
 }

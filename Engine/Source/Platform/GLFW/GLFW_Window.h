@@ -19,6 +19,8 @@ namespace QE
 
 		virtual void ToggleMouseInputProcessing() override;
 	private:
+		double m_LastXPos;
+		double m_LastYPos;
 		GLFWwindow* m_Window;
 	};
 }

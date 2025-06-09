@@ -6,7 +6,7 @@ namespace QE
 {
     enum class QUEST_API EventType : std::uint8_t
     {
-        WindowClose, WindowResize,
+        WindowClose, WindowResize, WindowMouseToggle,
         MouseMoved, MouseScrolled
     };
 

@@ -46,6 +46,9 @@ namespace QE
 
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{
+				auto win =  static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window));
+				win->m_ScreenWidth = width;
+				win->m_ScreenHeight = height;
 				g_Engine.GetGraphicsDevice().UpdateWindowSize(width, height);
 				WindowResizeEvent event;
 				event.Width = width;
@@ -180,15 +183,19 @@ namespace QE
 
 	void GLFW_Window::ToggleMouseInputProcessing()
 	{
+		GetGlobalEventManager()->QueueEvent<WindowMouseToggleEvent>({});
 		if (m_IsProcessingMouseInput)
 		{
 			// Mouse showing
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			//glfwGetCursorPos(m_Window, &m_LastXPos, &m_LastYPos);
+			glfwSetCursorPos(m_Window, m_ScreenWidth/2, m_ScreenHeight/2);
 			m_IsProcessingMouseInput = false;
 		} else
 		{
 			// No mouse showing
 			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			//glfwSetCursorPos(m_Window, m_LastXPos, m_LastYPos);
 			m_IsProcessingMouseInput = true;
 		}
 	}
