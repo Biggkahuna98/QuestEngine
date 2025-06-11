@@ -20,7 +20,12 @@ namespace QE
         EventManager(const EventManager&) = delete;
         EventManager& operator=(const EventManager&) = delete;
 
-        void Subscribe(EventType type, EventCallbackFn callback);
+        template<typename EventType>
+        void Subscribe(EventCallbackFn callback)
+        {
+            EventType dummy{};
+            m_Subscribers[dummy.GetEventType()].push_back(std::move(callback));
+        }
 
         void FireEvent(EventBase& e);
 
@@ -32,7 +37,7 @@ namespace QE
 
         void Flush();
     private:
-        std::unordered_map<EventType, std::vector<EventCallbackFn>> m_Subscribers;
+        std::unordered_map<EventID, std::vector<EventCallbackFn>> m_Subscribers;
         std::vector<std::unique_ptr<EventBase>> m_EventQueue;
     };
 

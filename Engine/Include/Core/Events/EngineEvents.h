@@ -5,35 +5,40 @@
 
 namespace QE
 {
+    struct QUEST_API TestEvent : public EventBase
+    {
+        EventID GetEventType() const override { return typeid(this).hash_code(); }
+    };
+
     // Window Events
     struct QUEST_API WindowCloseEvent : public EventBase
     {
-        EventType GetEventType() const override { return EventType::WindowClose; }
+        EventID GetEventType() const override { return typeid(this).hash_code(); }
     };
 
     struct QUEST_API WindowResizeEvent : public EventBase
     {
-        EventType GetEventType() const override { return EventType::WindowResize; }
+        EventID GetEventType() const override { return typeid(this).hash_code(); }
         int Width;
         int Height;
     };
 
     struct QUEST_API WindowMouseToggleEvent : public EventBase
     {
-        EventType GetEventType() const override { return EventType::WindowMouseToggle; }
+        EventID GetEventType() const override { return typeid(this).hash_code(); }
     };
 
     // Mouse Events
     struct QUEST_API MouseMoveEvent : public EventBase
     {
-        EventType GetEventType() const override { return EventType::MouseMoved; }
+        EventID GetEventType() const override { return typeid(this).hash_code(); }
         float MouseX;
         float MouseY;
     };
 
     struct QUEST_API MouseScrollEvent : public EventBase
     {
-        EventType GetEventType() const override { return EventType::MouseScrolled; }
+        EventID GetEventType() const override { return typeid(this).hash_code(); }
         float MouseXOffset;
         float MouseYOffset;
     };

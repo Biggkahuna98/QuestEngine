@@ -16,19 +16,19 @@ namespace QE
 
         // Subscribe to events
         auto eventManager = GetGlobalEventManager();
-        eventManager->Subscribe(EventType::MouseMoved, [this](const EventBase& e)
+        eventManager->Subscribe<MouseMoveEvent>([this](const EventBase& e)
         {
             MouseMoveEvent event = static_cast<const MouseMoveEvent&>(e);
             ProcessMouseMovement(event);
         });
 
-        eventManager->Subscribe(EventType::MouseScrolled, [this](const EventBase& e)
+        eventManager->Subscribe<MouseScrollEvent>([this](const EventBase& e)
         {
             MouseScrollEvent event = static_cast<const MouseScrollEvent&>(e);
             ProcessMouseScroll(event);
         });
 
-        eventManager->Subscribe(EventType::WindowMouseToggle, [this](const EventBase&e)
+        eventManager->Subscribe<WindowMouseToggleEvent>([this](const EventBase&e)
         {
            ToggleUpdating();
         });

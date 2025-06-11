@@ -9,12 +9,6 @@ namespace QE
         m_EventQueue.reserve(1000);
     }
 
-
-    void EventManager::Subscribe(EventType type, EventCallbackFn callback)
-    {
-        m_Subscribers[type].push_back(std::move(callback));
-    }
-
     void EventManager::FireEvent(EventBase &e)
     {
         auto iter = m_Subscribers.find(e.GetEventType());
