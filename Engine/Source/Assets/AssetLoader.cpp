@@ -13,10 +13,10 @@
 
 namespace QE
 {
-	void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90);
-	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene, bool rotate90);
+	void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90, bool flipVertical);
+	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene, bool rotate90, bool flipVertical);
 
-    std::optional<Model> LoadModel(const std::string &path, bool rotate90, bool flipVerticals)
+    std::optional<Model> LoadModel(const std::string &path, bool rotate90, bool flipVertical, bool flipUVs)
     {
         LOG_DEBUG("Loading Model: {}", path);
 
@@ -31,7 +31,7 @@ namespace QE
 			aiProcess_SortByPType |
 			aiProcess_GenSmoothNormals;
 
-    	if (flipVerticals)
+    	if (flipUVs)
     		pFlags |= aiProcess_FlipUVs;
 		const aiScene* scene = importer.ReadFile(_fp, pFlags);
 
@@ -43,12 +43,12 @@ namespace QE
 
 		Model model;
 
-    	ProcessNode(scene->mRootNode, scene, &model, rotate90);
+    	ProcessNode(scene->mRootNode, scene, &model, rotate90, flipVertical);
 
 		return model;
     }
 
-	void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90)
+	void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90, bool flipVertical)
     {
     	// Process each mesh located at the current node
 		for (unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -60,16 +60,16 @@ namespace QE
 			LOG_DEBUG("\tFace count: {}", mesh->mNumFaces);
 			LOG_DEBUG("\tIndice count: {}", mesh->mFaces->mNumIndices * mesh->mNumFaces);
 
-			model->Meshes.push_back(ProcessMesh(mesh, scene, rotate90));
+			model->Meshes.push_back(ProcessMesh(mesh, scene, rotate90, flipVertical));
 		}
     	// After mesh processing, recursively process children nodes
     	for (unsigned int i = 0; i < node->mNumChildren; i++)
     	{
-    		ProcessNode(node->mChildren[i], scene, model, rotate90);
+    		ProcessNode(node->mChildren[i], scene, model, rotate90, flipVertical);
     	}
     }
 
-	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene, bool rotate90)
+	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene, bool rotate90, bool flipVertical)
     {
     	std::vector<uint32_t> indices;
     	std::vector<Vertex> vertices;
@@ -85,6 +85,8 @@ namespace QE
     		if (rotate90)
     			pos = rotationMatrix * pos;
     		newVtx.Position.x = pos.x;
+    		if (flipVertical)
+    			newVtx.Position.y = -pos.y;
     		newVtx.Position.y = pos.y;
     		newVtx.Position.z = pos.z;
 

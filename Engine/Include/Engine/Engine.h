@@ -6,7 +6,6 @@
 #include "RHI/GraphicsDevice.h"
 #include "RHI/GraphicsContext.h"
 #include "GameApplication.h"
-#include "Renderer/OrthographicCameraController.h"
 #include "Renderer/TestCamera.h"
 #include "Renderer/VkGuideCamera.h"
 

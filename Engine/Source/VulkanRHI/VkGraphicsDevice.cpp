@@ -52,13 +52,13 @@ namespace QE
 	}
 
 	// Resource mappings
-	std::uint32_t s_BufferCount = 0; // starting handle
+	Handle_T s_BufferCount = 0; // starting handle
 	std::unordered_map<BufferHandle, AllocatedBuffer> s_BufferMap;
 
-	std::uint32_t s_TextureCount = 0; // starting handle
+	Handle_T s_TextureCount = 0; // starting handle
 	std::unordered_map<TextureHandle, AllocatedImage> s_TextureMap;
 
-	std::uint32_t s_MeshBufferCount = 0; // starting handle
+	Handle_T s_MeshBufferCount = 0; // starting handle
 	std::unordered_map<MeshHandle, GPUMeshBuffer> s_MeshMap;
 
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
@@ -403,9 +403,9 @@ namespace QE
 		//set dynamic viewport and scissor
 		VkViewport viewport = {};
 		viewport.x = 0;
-		viewport.y = 0;
-		viewport.width = m_DrawExtent.width;
-		viewport.height = m_DrawExtent.height;
+		viewport.y = (float)m_DrawExtent.height;
+		viewport.width = (float)m_DrawExtent.width;
+		viewport.height = -(float)m_DrawExtent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 
@@ -426,11 +426,13 @@ namespace QE
 		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 		// Push constants for MVP
 		ModelViewProjection mvp = {};
-		mvp.Model = glm::mat4(1.0f);
+		mvp.Model = glm::mat4{1.0f};
+		//mvp.Model = glm::scale(mvp.Model, glm::vec3(1.0f, -1.0f, 1.0f));
 		mvp.View = m_Camera->GetViewMatrix();
 		// reverse near and far plane because using reverse-Z depth
 		// https://developer.nvidia.com/blog/visualizing-depth-precision/
 		mvp.Projection = ReversedZPerspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 0.1f);
+		//mvp.Projection[1][1] *= -1;
 
 		GPUDrawPushConstants pushConstants{};
 		pushConstants.MVP = mvp;
