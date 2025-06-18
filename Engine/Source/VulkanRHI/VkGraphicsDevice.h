@@ -9,7 +9,7 @@
 #include "VkTypes.h"
 #include "VkDescriptors.h"
 
-#include "Renderer/TestCamera.h"
+#include "Graphics/TestCamera.h"
 
 #include "Core/Containers/DeletionQueue.h"
 

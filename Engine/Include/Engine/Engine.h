@@ -6,8 +6,8 @@
 #include "RHI/GraphicsDevice.h"
 #include "RHI/GraphicsContext.h"
 #include "GameApplication.h"
-#include "Renderer/TestCamera.h"
-#include "Renderer/VkGuideCamera.h"
+#include "Graphics/TestCamera.h"
+#include "Graphics/VkGuideCamera.h"
 
 namespace QE
 {

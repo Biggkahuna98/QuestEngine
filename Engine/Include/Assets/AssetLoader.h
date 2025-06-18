@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-#include "Renderer/RenderTypes.h"
+#include "Graphics/RenderTypes.h"
 
 #include <optional>
 

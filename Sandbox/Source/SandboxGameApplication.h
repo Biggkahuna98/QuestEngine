@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "Renderer/RenderTypes.h"
+#include "Graphics/RenderTypes.h"
 
 class SANDBOX_API SandboxGameApplication : public QE::GameApplication
 {
