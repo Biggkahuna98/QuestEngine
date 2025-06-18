@@ -217,12 +217,23 @@ namespace QE
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		// Draw triangle
-		//DrawTriangle(GetCurrentFrameData().CommandBuffer);
+		// TEMPORARY - BEGIN A RENDERPASS
+		//begin a render pass  connected to our draw image
+		VkClearValue clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
+		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		VkRenderingAttachmentInfo depthAttachment = VkInit::BuildDepthAttachment(m_DepthImage.ImageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+
+		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, &depthAttachment);
+		// Get the current command buffer
+		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
+		vkCmdBeginRendering(cmd, &renderInfo);
 	}
 
 	void VkGraphicsDevice::EndFrame()
 	{
+		// end renderpass - TEMPORARY
+		vkCmdEndRendering(GetCurrentFrameData().CommandBuffer);
+
 		// Transition the draw image and the swapchain image into their correct transfer layouts
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -370,16 +381,7 @@ namespace QE
 		AllocatedBuffer vertexBuffer = GetBufferFromHandle(meshBuffer.VertexBuffer);
 		AllocatedBuffer indexBuffer = GetBufferFromHandle(meshBuffer.IndexBuffer);
 
-		//begin a render pass  connected to our draw image
-		VkClearValue clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
-		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-		VkRenderingAttachmentInfo depthAttachment = VkInit::BuildDepthAttachment(m_DepthImage.ImageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
-
-		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, &depthAttachment);
-		// Get the current command buffer
 		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
-		vkCmdBeginRendering(cmd, &renderInfo);
-
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipeline);
 
 		// Bind a texture
@@ -419,11 +421,6 @@ namespace QE
 
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		// Gross but leaving for now
-		static auto startTime = std::chrono::high_resolution_clock::now();
-
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 		// Push constants for MVP
 		ModelViewProjection mvp = {};
 		mvp.Model = glm::mat4{1.0f};
@@ -449,8 +446,6 @@ namespace QE
 
 		//vkCmdDraw(cmd, allocatedBuffer.Size, 1, 0, 0);
 		vkCmdDrawIndexed(cmd, indexBuffer.Size, 1, 0, 0, 0);
-
-		vkCmdEndRendering(cmd);
 	}
 
 	void VkGraphicsDevice::SetCamera(TestCamera *camera)
@@ -746,7 +741,7 @@ namespace QE
 		//filled triangles
 		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
 		//no backface culling
-		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE); // VK_FRONT_FACE_COUNTER_CLOCKWISE
 		//no multisampling
 		pipelineBuilder.SetMultisamplingMode();
 		// additive blending
