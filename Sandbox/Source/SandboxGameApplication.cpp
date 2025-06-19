@@ -11,7 +11,7 @@
 
 #include "Core/StringID.h"
 #include "Core/Events/EventManager.h"
-#include "Core/Events/EngineEvents.h"
+#include "Core/Profiling.h"
 
 void SandboxGameApplication::Init()
 {
@@ -59,6 +59,7 @@ void SandboxGameApplication::Shutdown()
 
 void SandboxGameApplication::Update()
 {
+    PROFILE_SCOPE("SandboxGameApplication::Update");
     using namespace QE;
 
     //Mesh meshToDraw = selectedMesh == 0 ? m_TriangleMesh : m_RectangleMesh;

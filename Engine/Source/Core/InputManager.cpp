@@ -1,5 +1,6 @@
 #include "Core/InputManager.h"
 #include "Core/Log.h"
+#include "Core/Profiling.h"
 
 namespace QE
 {
@@ -74,6 +75,7 @@ namespace QE
 
 	void InputManager::ProcessTransitions()
 	{
+		PROFILE_SCOPE("InputManager::ProcessTransitions");
 		UpdatePressedKeysToHeld();
 		UpdatePressedMouseButtonsToHeld();
 	}

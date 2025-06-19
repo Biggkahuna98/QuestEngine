@@ -1,5 +1,6 @@
 #include "VkGraphicsDevice.h"
 #include "Core/Log.h"
+#include "Core/Profiling.h"
 
 #include "VkInit.h"
 #include "VkPipelines.h"
@@ -188,6 +189,7 @@ namespace QE
 
 	void VkGraphicsDevice::BeginFrame()
 	{
+		PROFILE_SCOPE("VkGraphicsDevice::BeginFrame");
 		// Wait for the previous frame to finish
 		vkWaitForFences(m_Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
 		vkResetFences(m_Device, 1, &GetCurrentFrameData().RenderFence);
@@ -231,6 +233,7 @@ namespace QE
 
 	void VkGraphicsDevice::EndFrame()
 	{
+		PROFILE_SCOPE("VkGraphicsDevice::EndFrame");
 		// end renderpass - TEMPORARY
 		vkCmdEndRendering(GetCurrentFrameData().CommandBuffer);
 
@@ -264,6 +267,7 @@ namespace QE
 
 	void VkGraphicsDevice::PresentFrame()
 	{
+		PROFILE_SCOPE("VkGraphicsDevice::PresentFrame");
 		//LOG_DEBUG_TAG("VkGraphicsDevice", "Presenting frame: {0}", m_CurrentFrameNumber);
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

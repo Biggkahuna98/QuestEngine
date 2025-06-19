@@ -44,7 +44,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${ENGINE_SHADERS}
 
 #set_source_files_properties(${SHADERS} PROPERTIES HEADER_FILE_ONLY TRUE)
 
-add_library(${TARGET_NAME} ${QUEST_LIBRARY_TYPE} ${SOURCES} ${IMGUI_SOURCES})
+add_library(${TARGET_NAME} ${QUEST_LIBRARY_TYPE} ${SOURCES} ${IMGUI_SOURCES} ${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1/public/TracyClient.cpp)
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE 
@@ -103,11 +103,12 @@ set(VENDOR_INCLUDES
 	${THIRD_PARTY_ENGINE_DIR}/assimp/include
 	${THIRD_PARTY_ENGINE_DIR}/stb
 	${THIRD_PARTY_ENGINE_DIR}/glaze/include
+		${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1/public
 )
 
 # Link private includes
 target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw spdlog assimp)
-target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze)
+target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze Tracy::TracyClient)
 
 # Include vendor includes
 target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})

@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "Platform/PlatformUtility.h"
 #include "Core/Events/EventManager.h"
+#include "Core/Profiling.h"
 
 namespace QE
 {
@@ -90,6 +91,8 @@ namespace QE
 			if (RunGraphics) m_GraphicsDevice->EndFrame();
 
 			if (RunGraphics) m_GraphicsDevice->PresentFrame();
+
+			PROFILE_MARK_FRAME();
 		}
 	}
 

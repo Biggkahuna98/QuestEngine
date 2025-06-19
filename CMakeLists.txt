@@ -26,5 +26,9 @@ add_subdirectory(Runtime)
 # Add the test project
 add_subdirectory(Sandbox)
 
+# Add tracy profiler project wide
+option(TRACY_ENABLE "" ON)
+add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1)
+
 # Set startup project to Sandbox (change later to only do it with visual studio)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Sandbox)

@@ -6,6 +6,7 @@
 #include "Core/Events/EngineEvents.h"
 #include "Engine/Engine.h"
 #include "Core/Events/EventManager.h"
+#include "Core/Profiling.h"
 
 namespace QE
 {
@@ -163,6 +164,7 @@ namespace QE
 
 	void GLFW_Window::ProcessEvents()
 	{
+		PROFILE_SCOPE("GLFW_Window::ProcessEvents");
 		glfwPollEvents();
 	}
 
