@@ -17,6 +17,8 @@ namespace QE
 		GraphicsDevice(Window* window);
 		virtual ~GraphicsDevice() = default;
 
+		virtual void ShutdownAndCleanup() = 0;
+
 		virtual void BeginFrame() = 0;
 		virtual void EndFrame() = 0;
 		virtual void PresentFrame() = 0;

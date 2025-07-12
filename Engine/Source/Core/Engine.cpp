@@ -10,23 +10,16 @@ namespace QE
 	// The global engine
 	Engine g_Engine{};
 
-	Engine::Engine()
-		: m_GameApplication(nullptr)
-	{
-
-	}
-
 	Engine* GetEngine()
 	{
 		return &g_Engine;
 	}
 
-	Engine::~Engine()
-	{
-	}
-
 	void Engine::Initialize()
 	{
+		// Default init
+		m_GameApplication = nullptr;
+
 		// Create Window
 		//m_Window = CreateWindowFactory("Quest Engine", 3840, 2160);
 		m_Window = CreateWindowFactory("Quest Engine", 2560, 1440);
@@ -38,12 +31,6 @@ namespace QE
 		m_TestCamera = std::make_unique<TestCamera>();
 		m_GraphicsDevice->SetCamera(m_TestCamera.get());
 
-		//m_Camera.Velocity = glm::vec3(0.f);
-		//m_Camera.Position = glm::vec3(30.f, -00.f, -085.f);
-
-		//m_Camera.Pitch = 0;
-		//m_Camera.Yaw = 0;
-
 		m_Running = true;
 	}
 
@@ -51,7 +38,8 @@ namespace QE
 	{
 		m_GameApplication->Shutdown();
 
-		m_GraphicsDevice.reset();
+		m_GraphicsContext.reset();
+		m_GraphicsDevice->ShutdownAndCleanup();
 	}
 
 	void Engine::Run()

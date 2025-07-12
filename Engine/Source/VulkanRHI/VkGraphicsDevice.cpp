@@ -158,8 +158,7 @@ namespace QE
 		// Stuff for tutorial setup before refactoring
 		TutorialSetupStuff();
 	}
-
-	VkGraphicsDevice::~VkGraphicsDevice()
+	void VkGraphicsDevice::ShutdownAndCleanup()
 	{
 		vkDeviceWaitIdle(m_Device);
 

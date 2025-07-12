@@ -14,8 +14,8 @@ namespace QE
 	class QUEST_API Engine final
 	{
 	public:
-		Engine();
-		~Engine();
+		Engine() = default;
+		~Engine() = default;
 		Engine(const Engine&) = delete;
 		void operator=(Engine const&) = delete;
 

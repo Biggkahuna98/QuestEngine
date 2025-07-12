@@ -144,16 +144,11 @@ namespace QE
 	{
 		glfwDestroyWindow(m_Window);
 		s_WindowCount--;
-
-		LOG_INFO_TAG("GLFW_Window", "Destroyed GLFW window: {0}", m_WindowName);
-		LOG_DEBUG_TAG("GLFW_Window", "S_WindowCount: {0}", s_WindowCount);
 			
 		if (s_WindowCount == 0)
 		{
 			glfwTerminate();
 			s_IsBackendInitialized = false;
-
-			LOG_DEBUG_TAG("GLFW_Window", "Terminated GLFW");
 		}
 	}
 

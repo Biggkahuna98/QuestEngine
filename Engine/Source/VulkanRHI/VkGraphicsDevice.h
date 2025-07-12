@@ -52,7 +52,9 @@ namespace QE
 	{
 	public: 
 		VkGraphicsDevice(Window* window);
-		~VkGraphicsDevice() override;
+		~VkGraphicsDevice() = default;
+
+		void ShutdownAndCleanup() override;
 
 		void BeginFrame() override;
 		void EndFrame() override;

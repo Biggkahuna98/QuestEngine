@@ -30,13 +30,13 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    QE::GetEngine()->SetGameApplication(GetGameApp());
+    QE::GameApplication* app = GetGameApp();
+    QE::GetEngine()->SetGameApplication(app);
 
     // Run the engine
     RunEngine();
 
     // Shutdown engine
-    QE::GameApplication* app = QE::GetEngine()->GetGameApplication();
     ShutdownEngineEntrypoint();
     DeleteGameApp(app);
 
