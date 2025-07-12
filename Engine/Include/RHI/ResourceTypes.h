@@ -86,6 +86,17 @@ namespace QE
         }
     };
 
+    struct QUEST_API RenderpassHandle
+    {
+        std::uint32_t Value;
+
+        RenderpassHandle(std::uint32_t value = -1) : Value(value) {}
+        bool operator==(const RenderpassHandle& other) const
+        {
+            return other.Value == Value;
+        }
+    };
+
     // Types depending on the above definitions
     // Descriptions
     struct QUEST_API BufferDescription
@@ -125,6 +136,11 @@ namespace QE
         DepthCompareOp DepthCompareOp;
         bool Blending;
         BlendingType BlendingType;
+    };
+
+    struct QUEST_API RenderpassDescription
+    {
+        PipelineHandle Pipeline;
     };
 }
 
@@ -169,6 +185,15 @@ template<>
 struct std::hash<QE::PipelineHandle>
 {
     std::size_t operator()(const QE::PipelineHandle& handle) const noexcept
+    {
+        return std::hash<std::uint32_t>()(handle.Value);
+    }
+};
+
+template<>
+struct std::hash<QE::RenderpassHandle>
+{
+    std::size_t operator()(const QE::RenderpassHandle& handle) const noexcept
     {
         return std::hash<std::uint32_t>()(handle.Value);
     }

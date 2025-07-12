@@ -235,23 +235,11 @@ namespace QE
 		ImGui::NewFrame();
 
 		// TEMPORARY - BEGIN A RENDERPASS
-		//begin a render pass  connected to our draw image
-		VkClearValue clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
-		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-		VkRenderingAttachmentInfo depthAttachment = VkInit::BuildDepthAttachment(m_DepthImage.ImageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
-
-		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, &depthAttachment);
-		// Get the current command buffer
-		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
-		vkCmdBeginRendering(cmd, &renderInfo);
 	}
 
 	void VkGraphicsDevice::EndFrame()
 	{
 		PROFILE_SCOPE("VkGraphicsDevice::EndFrame");
-		// end renderpass - TEMPORARY
-		vkCmdEndRendering(GetCurrentFrameData().CommandBuffer);
-
 		// Transition the draw image and the swapchain image into their correct transfer layouts
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -486,6 +474,26 @@ namespace QE
 		});
 	}
 
+	void VkGraphicsDevice::BeginRenderPass(RenderpassDescription desc)
+	{
+		//begin a render pass  connected to our draw image
+		VkClearValue clearValue = {0.0f, 0.0f, 0.0f, 1.0f};
+		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(m_DrawImage.ImageView, &clearValue, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		VkRenderingAttachmentInfo depthAttachment = VkInit::BuildDepthAttachment(m_DepthImage.ImageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+
+		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_DrawExtent, &colorAttachment, &depthAttachment);
+		// Get the current command buffer
+		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
+		vkCmdBeginRendering(cmd, &renderInfo);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineFromHandle(desc.Pipeline).Pipeline);
+	}
+	void VkGraphicsDevice::EndRenderPass(RenderpassDescription desc)
+	{
+		// end renderpass - TEMPORARY
+		vkCmdEndRendering(GetCurrentFrameData().CommandBuffer);
+	}
+
 	void VkGraphicsDevice::DrawMesh(MeshHandle mesh, TextureHandle* texture)
 	{
 		GPUMeshBuffer meshBuffer = s_MeshMap[mesh];
@@ -493,7 +501,7 @@ namespace QE
 		AllocatedBuffer indexBuffer = GetBufferFromHandle(meshBuffer.IndexBuffer);
 
 		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipeline);
+		//vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipeline);
 
 		// Bind a texture
 		VkDescriptorSet imageSet = GetCurrentFrameData().FrameDescriptors.Allocate(m_Device, m_SingleImageDescriptorLayout);
@@ -511,6 +519,7 @@ namespace QE
 			writer.UpdateSet(m_Device, imageSet);
 		}
 
+		// fix the layout
 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipelineLayout, 0, 1, &imageSet, 0, nullptr);
 
 		//set dynamic viewport and scissor

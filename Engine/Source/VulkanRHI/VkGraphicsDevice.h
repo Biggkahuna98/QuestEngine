@@ -69,6 +69,9 @@ namespace QE
 		ShaderHandle CreateShader(ShaderDescription desc) override;
 		PipelineHandle CreatePipeline(PipelineDescription desc) override;
 
+		void BeginRenderPass(RenderpassDescription desc) override;
+		void EndRenderPass(RenderpassDescription desc) override;
+
 		void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) override;
 		void SetCamera(TestCamera* camera) override;
 

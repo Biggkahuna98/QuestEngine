@@ -70,6 +70,11 @@ void SandboxGameApplication::Update()
     //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_RectangleMesh, &m_Texture);
     //GetEngine()->GetGraphicsDevice().DrawMesh(m_Model.Meshes[0], &m_Texture);
     auto device = GetEngine()->GetGraphicsDevicePtr();
+
+    PipelineHandle pipeline = selectedPipeline == 0 ? m_StandardPipeline : m_WireframePipeline;
+
+    device->BeginRenderPass({pipeline});
+
     for (const auto& mesh : m_Model.Meshes)
         device->DrawMesh(mesh);
     //device->DrawMesh(m_Model.Meshes[2]);
@@ -82,6 +87,14 @@ void SandboxGameApplication::Update()
         ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
         ImGui::End();
     }
+
+    {
+        ImGui::Begin("Pipeline");
+        ImGui::SliderInt("Pipeline", &selectedPipeline, 0, 1);
+        ImGui::End();
+    }
+
+    device->EndRenderPass({pipeline});
 }
 
 void SandboxGameApplication::CreatePipelines()
@@ -118,7 +131,7 @@ void SandboxGameApplication::CreatePipelines()
     };
     wireframePipelineDesc.Topology = PipelineTopology::TriangleList;
     wireframePipelineDesc.PrimitiveRestart = false;
-    wireframePipelineDesc.PolygonMode = PolygonMode::Fill;
+    wireframePipelineDesc.PolygonMode = PolygonMode::Line;
     wireframePipelineDesc.CullMode = CullMode::Back;
     wireframePipelineDesc.WindingOrder = WindingOrder::CounterClockwise;
     wireframePipelineDesc.DepthTest = true;

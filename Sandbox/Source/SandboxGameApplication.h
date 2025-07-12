@@ -24,6 +24,7 @@ private:
     QE::BufferHandle m_RectangleIndexBuffer;
     QE::MeshHandle m_RectangleMesh;
     int selectedMesh = 0;
+    int selectedPipeline = 0;
     QE::Model m_Model;
     QE::TextureHandle m_Texture;
 

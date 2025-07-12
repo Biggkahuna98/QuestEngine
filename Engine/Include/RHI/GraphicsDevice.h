@@ -30,6 +30,10 @@ namespace QE
 		virtual ShaderHandle CreateShader(ShaderDescription desc) = 0;
 		virtual PipelineHandle CreatePipeline(PipelineDescription desc) = 0;
 
+		// Will probably change
+		virtual void BeginRenderPass(RenderpassDescription desc) = 0;
+		virtual void EndRenderPass(RenderpassDescription desc) = 0;
+
 		// Temporary probably
 		virtual void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) = 0;
 		virtual void WaitForDeviceIdle() = 0;
