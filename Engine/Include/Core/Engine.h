@@ -5,7 +5,7 @@
 #include "Core/Window.h"
 #include "RHI/GraphicsDevice.h"
 #include "RHI/GraphicsContext.h"
-#include "GameApplication.h"
+#include "../Engine/GameApplication.h"
 #include "Graphics/TestCamera.h"
 #include "Graphics/VkGuideCamera.h"
 

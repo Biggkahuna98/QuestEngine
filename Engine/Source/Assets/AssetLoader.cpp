@@ -8,7 +8,7 @@
 #include <stb_image.h>
 
 // Need access to the graphics device
-#include "Engine/Engine.h"
+#include "Core/Engine.h"
 #include "gtx/quaternion.hpp"
 
 namespace QE
