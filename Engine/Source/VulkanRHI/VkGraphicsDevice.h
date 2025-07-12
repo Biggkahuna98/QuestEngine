@@ -66,6 +66,8 @@ namespace QE
 		BufferHandle CreateBuffer(BufferDescription desc) override;
 		TextureHandle CreateTexture(TextureDescription desc) override;
 		MeshHandle CreateMesh(std::span<Vertex> vertices,  std::span<uint32_t> indices) override;
+		ShaderHandle CreateShader(ShaderDescription desc) override;
+		PipelineHandle CreatePipeline(PipelineDescription desc) override;
 
 		void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) override;
 		void SetCamera(TestCamera* camera) override;
@@ -82,6 +84,8 @@ namespace QE
 		AllocatedBuffer GetBufferFromHandle(BufferHandle handle);
 		AllocatedImage GetTextureFromHandle(TextureHandle handle);
 		GPUMeshBuffer GetMeshFromHandle(MeshHandle handle);
+		VulkanShader GetShaderFromHandle(ShaderHandle handle);
+		VulkanPipeline GetPipelineFromHandle(PipelineHandle handle);
 
 	private:
 		Window* m_Window;

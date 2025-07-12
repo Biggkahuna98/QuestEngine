@@ -146,6 +146,15 @@ namespace QE
 		ShaderStages.push_back(VkInit::BuildShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShader));
 	}
 
+	void PipelineBuilder::SetShaders(std::vector<VulkanShader> &shaders)
+	{
+		ShaderStages.clear();
+
+		for (const auto& shader : shaders)
+			ShaderStages.push_back(VkInit::BuildShaderStageCreateInfo(shader.ShaderStage, shader.ShaderModule));
+	}
+
+
 	void PipelineBuilder::SetInputTopology(VkPrimitiveTopology topology)
 	{
 		InputAssembly.topology = topology;
@@ -181,7 +190,7 @@ namespace QE
 	{
 		ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 		ColorBlendAttachment.blendEnable = VK_TRUE;
-		ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
 		ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
 		ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 		ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;

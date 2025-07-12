@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include "VkTypes.h"
 #include <vector>
 #include <array>
 
@@ -26,6 +27,7 @@ namespace QE
 		VkPipeline BuildPipeline(VkDevice device);
 
 		void SetShaders(VkShaderModule vertexShader, VkShaderModule fragmentShader);
+		void SetShaders(std::vector<VulkanShader>& shaders);
 		void SetInputTopology(VkPrimitiveTopology topology);
 		void SetPolygonMode(VkPolygonMode mode);
 		void SetCullMode(VkCullModeFlags cullMode, VkFrontFace frontFace);

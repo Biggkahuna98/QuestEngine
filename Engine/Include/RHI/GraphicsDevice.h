@@ -27,6 +27,8 @@ namespace QE
 		virtual BufferHandle CreateBuffer(BufferDescription desc) = 0;
 		virtual TextureHandle CreateTexture(TextureDescription desc) = 0;
 		virtual MeshHandle CreateMesh(std::span<Vertex> vertices, std::span<uint32_t> indices) = 0;
+		virtual ShaderHandle CreateShader(ShaderDescription desc) = 0;
+		virtual PipelineHandle CreatePipeline(PipelineDescription desc) = 0;
 
 		// Temporary probably
 		virtual void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) = 0;

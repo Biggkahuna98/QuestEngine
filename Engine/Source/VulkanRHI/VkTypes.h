@@ -46,5 +46,18 @@ namespace QE
 		VkExtent3D ImageExtent;
 		VkFormat ImageFormat;
 	};
+
+	struct VulkanShader
+	{
+		VkShaderModule ShaderModule;
+		VkShaderStageFlagBits ShaderStage;
+	};
+
+	struct VulkanPipeline
+	{
+		VkPipeline Pipeline;
+		VkPipelineLayout PipelineLayout;
+		std::vector<ShaderHandle> Shaders; // refactor later maybe, these are the handles associated with the shaders in the pipeline
+	};
 	
 }

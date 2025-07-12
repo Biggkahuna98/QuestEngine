@@ -53,14 +53,20 @@ namespace QE
 	}
 
 	// Resource mappings
-	Handle_T s_BufferCount = 0; // starting handle
+	std::uint32_t s_BufferCount = 0; // starting handle
 	std::unordered_map<BufferHandle, AllocatedBuffer> s_BufferMap;
 
-	Handle_T s_TextureCount = 0; // starting handle
+	std::uint32_t s_TextureCount = 0; // starting handle
 	std::unordered_map<TextureHandle, AllocatedImage> s_TextureMap;
 
-	Handle_T s_MeshBufferCount = 0; // starting handle
+	std::uint32_t s_MeshBufferCount = 0; // starting handle
 	std::unordered_map<MeshHandle, GPUMeshBuffer> s_MeshMap;
+
+	std::uint32_t s_ShaderCount = 0; // starting handle
+	std::unordered_map<ShaderHandle, VulkanShader> s_ShaderMap;
+
+	std::uint32_t s_PipelineCount = 0; // starting handle
+	std::unordered_map<PipelineHandle, VulkanPipeline> s_PipelineMap;
 
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
 		: GraphicsDevice(window), m_Window(window) // refactor to stored in graphicsdevice
@@ -69,6 +75,7 @@ namespace QE
 		s_BufferMap.reserve(1000);
 		s_TextureMap.reserve(1000);
 		s_MeshMap.reserve(1000);
+		s_PipelineMap.reserve(1000);
 
 		// Set real window size
 		int width, height;
@@ -175,6 +182,14 @@ namespace QE
 
 		// Cleanup all resources
 		//vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+		for (const auto& [handle, pipeline] : s_PipelineMap)
+		{
+			vkDestroyPipeline(m_Device, pipeline.Pipeline, nullptr);
+			vkDestroyPipelineLayout(m_Device, pipeline.PipelineLayout, nullptr);
+		}
+
+		for (const auto& [handle, shader] : s_ShaderMap)
+			vkDestroyShaderModule(m_Device, shader.ShaderModule, nullptr);
 
 		DestroySwapchain();
 
@@ -379,6 +394,98 @@ namespace QE
 		return newMeshHandle;
 	}
 
+	ShaderHandle VkGraphicsDevice::CreateShader(ShaderDescription desc)
+	{
+		ShaderHandle handle{s_ShaderCount++};
+		VulkanShader shader{};
+		shader.ShaderModule = VkInit::CreateShaderModule(m_Device, desc.SourcePath);
+		shader.ShaderStage = ShaderStageFlagBitsFromRHI(desc.Stage);
+		s_ShaderMap[handle] = shader;
+		return handle;
+	}
+
+	PipelineHandle VkGraphicsDevice::CreatePipeline(PipelineDescription desc)
+	{
+		// Load the shaders from their description
+		std::vector<ShaderHandle> shaders;
+		for (auto& shader : desc.Shaders)
+		{
+			if (shader.Handle == InvalidHandleValue)
+				shaders.emplace_back(CreateShader(shader));
+			else
+				shaders.emplace_back(shader.Handle);
+		}
+
+		std::vector<VulkanShader> shaderModules;
+		for (auto& shader : shaders)
+			shaderModules.emplace_back(GetShaderFromHandle(shader));
+
+		// UNIFORM STUFF
+		VkPushConstantRange bufferRange{};
+		bufferRange.offset = 0;
+		bufferRange.size = sizeof(GPUDrawPushConstants);
+		bufferRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		// NEED TO ABSTRACT BASED ON SHADER STUFF
+		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo(); // rename this function, i was confused
+		pipeline_layout_info.pPushConstantRanges = &bufferRange;
+		pipeline_layout_info.pushConstantRangeCount = 1;
+		pipeline_layout_info.pSetLayouts = &m_SingleImageDescriptorLayout;
+		pipeline_layout_info.setLayoutCount = 1;
+
+		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_MeshPipelineLayout));
+
+		PipelineBuilder pipelineBuilder;
+		// use the default layout
+		pipelineBuilder.PipelineLayout = m_MeshPipelineLayout;
+		pipelineBuilder.SetShaders(shaderModules);
+		pipelineBuilder.SetInputTopology(PrimitiveTopologyFromRHI(desc.Topology));
+		pipelineBuilder.SetPolygonMode(PolygonModeFromRHI(desc.PolygonMode));
+		pipelineBuilder.SetCullMode(CullModeFromRHI(desc.CullMode), FaceWindingOrderFromRHI(desc.WindingOrder));
+		pipelineBuilder.SetMultisamplingMode(); // update this
+		if (desc.Blending)
+		{
+			if (desc.BlendingType == BlendingType::Add)
+				pipelineBuilder.EnableBlendingAdditive();
+			if (desc.BlendingType == BlendingType::Alpha)
+				pipelineBuilder.EnableBlendingAlphaBlend();
+			if (desc.BlendingType == BlendingType::None)
+				pipelineBuilder.DisableBlending();
+		}
+
+		if (desc.DepthTest)
+		{
+			pipelineBuilder.EnableDepthTest(desc.DepthWrite, DepthCompareOpFromRHI(desc.DepthCompareOp));
+		}
+
+		// UPDATE THIS, COULD BE A FRAMEBUFFER THAT'S NOT IMPLEMENTED YET
+		//connect the image format we will draw into, from draw image
+		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
+		pipelineBuilder.SetDepthFormat(m_DepthImage.ImageFormat);
+
+		// Finally build the pipeline
+		m_MeshPipeline = pipelineBuilder.BuildPipeline(m_Device);
+
+		PipelineHandle handle{s_PipelineCount++};
+		VulkanPipeline pipeline{};
+		pipeline.Pipeline = m_MeshPipeline;
+		pipeline.PipelineLayout = m_MeshPipelineLayout;
+		pipeline.Shaders = shaders;
+		s_PipelineMap[handle] = pipeline;
+		return handle;
+
+		// OLD --------------------------------------------------------------------------------------------------
+
+		//clean structures
+		//vkDestroyShaderModule(m_Device, triangleFragShader, nullptr);
+		//vkDestroyShaderModule(m_Device, triangleVertexShader, nullptr);
+
+		m_CleanupQueue.PushFunction([&]() {
+			vkDestroyPipelineLayout(m_Device, m_MeshPipelineLayout, nullptr);
+			vkDestroyPipeline(m_Device, m_MeshPipeline, nullptr);
+		});
+	}
+
 	void VkGraphicsDevice::DrawMesh(MeshHandle mesh, TextureHandle* texture)
 	{
 		GPUMeshBuffer meshBuffer = s_MeshMap[mesh];
@@ -398,7 +505,7 @@ namespace QE
 				writer.WriteImage(0, tex.ImageView, m_DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 			} else
 			{
-				writer.WriteImage(0, m_ErrorCheckerboardImage.ImageView, m_DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+				writer.WriteImage(0, m_GreyImage.ImageView, m_DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 			}
 
 			writer.UpdateSet(m_Device, imageSet);
@@ -475,6 +582,16 @@ namespace QE
 	GPUMeshBuffer VkGraphicsDevice::GetMeshFromHandle(MeshHandle handle)
 	{
 		return s_MeshMap[handle];
+	}
+
+	VulkanShader VkGraphicsDevice::GetShaderFromHandle(ShaderHandle handle)
+	{
+		return s_ShaderMap[handle];
+	}
+
+	VulkanPipeline VkGraphicsDevice::GetPipelineFromHandle(PipelineHandle handle)
+	{
+		return s_PipelineMap[handle];
 	}
 
 	// PRIVATE FUNCTIONS

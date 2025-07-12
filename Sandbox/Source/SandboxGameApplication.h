@@ -26,4 +26,9 @@ private:
     int selectedMesh = 0;
     QE::Model m_Model;
     QE::TextureHandle m_Texture;
+
+    QE::PipelineHandle m_StandardPipeline;
+    QE::PipelineHandle m_WireframePipeline;
+
+    void CreatePipelines();
 };

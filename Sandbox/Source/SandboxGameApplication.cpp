@@ -36,6 +36,9 @@ void SandboxGameApplication::Init()
     Engine* engine = QE::GetEngine();
     GraphicsDevice* device = engine->GetGraphicsDevicePtr();
 
+    // Create pipelines needed
+    CreatePipelines();
+
     m_RectangleMesh = device->CreateMesh(RectangleVertices, RectangleIndices);
 
     //auto m = QE::LoadModel("Models/viking_room.obj", true, true);
@@ -79,4 +82,50 @@ void SandboxGameApplication::Update()
         ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
         ImGui::End();
     }
+}
+
+void SandboxGameApplication::CreatePipelines()
+{
+    using namespace QE;
+
+    auto engine = QE::GetEngine();
+    auto device = engine->GetGraphicsDevicePtr();
+
+    // Standard pipeline
+    PipelineDescription standardPipelineDesc{};
+    standardPipelineDesc.Shaders = {
+        { "colored_triangle_mesh-vert.spv", 0xFFFFFFFF, ShaderStage::Vertex },
+        { "colored_triangle-frag.spv", 0xFFFFFFFF, ShaderStage::Fragment }
+    };
+    standardPipelineDesc.Topology = PipelineTopology::TriangleList;
+    standardPipelineDesc.PrimitiveRestart = false;
+    standardPipelineDesc.PolygonMode = PolygonMode::Fill;
+    standardPipelineDesc.CullMode = CullMode::Back;
+    standardPipelineDesc.WindingOrder = WindingOrder::CounterClockwise;
+    standardPipelineDesc.DepthTest = true;
+    standardPipelineDesc.DepthWrite = true;
+    standardPipelineDesc.DepthCompareOp = DepthCompareOp::GreaterEqual;
+    standardPipelineDesc.Blending = true;
+    standardPipelineDesc.BlendingType = BlendingType::Alpha;
+
+    m_StandardPipeline = device->CreatePipeline(standardPipelineDesc);
+
+    // Wireframe pipeline
+    PipelineDescription wireframePipelineDesc{};
+    wireframePipelineDesc.Shaders = {
+        { "colored_triangle_mesh-vert.spv", 0xFFFFFFFF, ShaderStage::Vertex },
+        { "colored_triangle-frag.spv", 0xFFFFFFFF, ShaderStage::Fragment }
+    };
+    wireframePipelineDesc.Topology = PipelineTopology::TriangleList;
+    wireframePipelineDesc.PrimitiveRestart = false;
+    wireframePipelineDesc.PolygonMode = PolygonMode::Fill;
+    wireframePipelineDesc.CullMode = CullMode::Back;
+    wireframePipelineDesc.WindingOrder = WindingOrder::CounterClockwise;
+    wireframePipelineDesc.DepthTest = true;
+    wireframePipelineDesc.DepthWrite = true;
+    wireframePipelineDesc.DepthCompareOp = DepthCompareOp::GreaterEqual;
+    wireframePipelineDesc.Blending = true;
+    wireframePipelineDesc.BlendingType = BlendingType::Alpha;
+
+    m_WireframePipeline = device->CreatePipeline(wireframePipelineDesc);
 }
