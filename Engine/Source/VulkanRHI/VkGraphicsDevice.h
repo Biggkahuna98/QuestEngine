@@ -151,9 +151,9 @@ namespace QE
 		std::vector<ComputeEffect> m_BackgroundEffects;
 		int m_CurrentBackgroundEffect = 0;
 
-		// Mesh
-		VkPipelineLayout m_MeshPipelineLayout;
-		VkPipeline m_MeshPipeline;
+		// Current renderpass pipeline and layout
+		VkPipeline m_CurrentPipeline = nullptr;
+		VkPipelineLayout m_CurrentPipelineLayout = nullptr;
 
 		VkDescriptorSetLayout m_SingleImageDescriptorLayout;
 
@@ -172,9 +172,7 @@ namespace QE
 		void DestroySwapchain();
 		void InitializeFrameData();
 		void InitializeDescriptors();
-		void InitializePipelines();
 		void InitializeBackgroundPipelines();
-		void InitializeMeshPipeline();
 		void InitializeImGui();
 		void InitializeDefaultData();
 

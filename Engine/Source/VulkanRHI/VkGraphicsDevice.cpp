@@ -496,11 +496,12 @@ namespace QE
 		pipeline_layout_info.pSetLayouts = &m_SingleImageDescriptorLayout;
 		pipeline_layout_info.setLayoutCount = 1;
 
-		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_MeshPipelineLayout));
+		VkPipelineLayout pipelineLayout;
+		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &pipelineLayout));
 
 		PipelineBuilder pipelineBuilder;
 		// use the default layout
-		pipelineBuilder.PipelineLayout = m_MeshPipelineLayout;
+		pipelineBuilder.PipelineLayout = pipelineLayout;
 		pipelineBuilder.SetShaders(shaderModules);
 		pipelineBuilder.SetInputTopology(PrimitiveTopologyFromRHI(desc.Topology));
 		pipelineBuilder.SetPolygonMode(PolygonModeFromRHI(desc.PolygonMode));
@@ -527,7 +528,7 @@ namespace QE
 		pipelineBuilder.SetDepthFormat(m_DepthImage.ImageFormat);
 
 		// Finally build the pipeline
-		m_MeshPipeline = pipelineBuilder.BuildPipeline(m_Device);
+		VkPipeline builtPipeline = pipelineBuilder.BuildPipeline(m_Device);
 
 
 		PipelineHandle handle;
@@ -539,14 +540,15 @@ namespace QE
 		}
 		else
 		{
+			LOG_DEBUG("Recreating pipeline");
 			handle = *prevPipeline;
 			// Safely delete old pipeline
 			pipeline = GetPipelineFromHandle(handle);
 			vkDestroyPipeline(m_Device, pipeline.Pipeline, nullptr);
 			vkDestroyPipelineLayout(m_Device, pipeline.PipelineLayout, nullptr);
 		}
-		pipeline.Pipeline = m_MeshPipeline;
-		pipeline.PipelineLayout = m_MeshPipelineLayout;
+		pipeline.Pipeline = builtPipeline;
+		pipeline.PipelineLayout = pipelineLayout;
 		pipeline.Description = desc;
 		pipeline.Shaders = shaders;
 		s_PipelineMap[handle] = pipeline;
@@ -565,7 +567,15 @@ namespace QE
 		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
 		vkCmdBeginRendering(cmd, &renderInfo);
 
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineFromHandle(desc.Pipeline).Pipeline);
+		// Get the VulkanPipeline from handle
+		VulkanPipeline pipeline = GetPipelineFromHandle(desc.Pipeline);
+
+		// Set the currently bound pipeline and layout for the renderpass
+		m_CurrentPipeline = pipeline.Pipeline;
+		m_CurrentPipelineLayout = pipeline.PipelineLayout;
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_CurrentPipeline);
+
 	}
 	void VkGraphicsDevice::EndRenderPass(RenderpassDescription desc)
 	{
@@ -599,7 +609,7 @@ namespace QE
 		}
 
 		// fix the layout
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipelineLayout, 0, 1, &imageSet, 0, nullptr);
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_CurrentPipelineLayout, 0, 1, &imageSet, 0, nullptr);
 
 		//set dynamic viewport and scissor
 		VkViewport viewport = {};
@@ -634,7 +644,7 @@ namespace QE
 		pushConstants.MVP = mvp;
 		pushConstants.MeshBufferAddress = meshBuffer.VertexBufferAddress;
 
-		vkCmdPushConstants(cmd, m_MeshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
+		vkCmdPushConstants(cmd, m_CurrentPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
 
 		// Bind vertex buffer
 		//VkDeviceSize offsets[] = {0};
@@ -848,15 +858,6 @@ namespace QE
 		}
 	}
 
-	void VkGraphicsDevice::InitializePipelines()
-	{
-		// Compute
-		InitializeBackgroundPipelines();
-
-		// Graphics
-		InitializeMeshPipeline();
-	}
-
 	void VkGraphicsDevice::InitializeBackgroundPipelines()
 	{
 		// Pipeline layout
@@ -918,63 +919,6 @@ namespace QE
 			vkDestroyPipelineLayout(m_Device, m_GradientPipelineLayout, nullptr);
 			vkDestroyPipeline(m_Device, sky.Pipeline, nullptr);
 			vkDestroyPipeline(m_Device, gradient.Pipeline, nullptr);
-		});
-	}
-
-	void VkGraphicsDevice::InitializeMeshPipeline()
-	{
-		VkShaderModule triangleFragShader = VkInit::CreateShaderModule(m_Device, "colored_triangle.frag");
-		VkShaderModule triangleVertexShader = VkInit::CreateShaderModule(m_Device, "colored_triangle_mesh.vert");
-
-		VkPushConstantRange bufferRange{};
-		bufferRange.offset = 0;
-		bufferRange.size = sizeof(GPUDrawPushConstants);
-		bufferRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		VkPipelineLayoutCreateInfo pipeline_layout_info = VkInit::BuildPipelineCreateInfo(); // rename this function, i was confused
-		pipeline_layout_info.pPushConstantRanges = &bufferRange;
-		pipeline_layout_info.pushConstantRangeCount = 1;
-		pipeline_layout_info.pSetLayouts = &m_SingleImageDescriptorLayout;
-		pipeline_layout_info.setLayoutCount = 1;
-
-		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &m_MeshPipelineLayout));
-
-		PipelineBuilder pipelineBuilder;
-
-		//use the triangle layout we created
-		pipelineBuilder.PipelineLayout = m_MeshPipelineLayout;
-		//connecting the vertex and pixel shaders to the pipeline
-		pipelineBuilder.SetShaders(triangleVertexShader, triangleFragShader);
-		//it will draw triangles
-		pipelineBuilder.SetInputTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		//filled triangles
-		pipelineBuilder.SetPolygonMode(VK_POLYGON_MODE_FILL);
-		//no backface culling
-		pipelineBuilder.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE); // VK_FRONT_FACE_COUNTER_CLOCKWISE
-		//no multisampling
-		pipelineBuilder.SetMultisamplingMode();
-		// additive blending
-		//pipelineBuilder.EnableBlendingAdditive();
-		pipelineBuilder.EnableBlendingAlphaBlend();
-		//pipelineBuilder.DisableBlending();
-
-		// VK_COMPARE_OP_GREATER_OR_EQUAL
-		pipelineBuilder.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
-
-		//connect the image format we will draw into, from draw image
-		pipelineBuilder.SetColorAttachmentFormat(m_DrawImage.ImageFormat);
-		pipelineBuilder.SetDepthFormat(m_DepthImage.ImageFormat);
-
-		//finally build the pipeline
-		m_MeshPipeline = pipelineBuilder.BuildPipeline(m_Device);
-
-		//clean structures
-		vkDestroyShaderModule(m_Device, triangleFragShader, nullptr);
-		vkDestroyShaderModule(m_Device, triangleVertexShader, nullptr);
-
-		m_CleanupQueue.PushFunction([&]() {
-			vkDestroyPipelineLayout(m_Device, m_MeshPipelineLayout, nullptr);
-			vkDestroyPipeline(m_Device, m_MeshPipeline, nullptr);
 		});
 	}
 
