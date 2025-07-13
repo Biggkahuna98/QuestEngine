@@ -103,11 +103,11 @@ set(VENDOR_INCLUDES
 	${THIRD_PARTY_ENGINE_DIR}/assimp/include
 	${THIRD_PARTY_ENGINE_DIR}/stb
 	${THIRD_PARTY_ENGINE_DIR}/glaze/include
-		${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1/public
+	${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1/public
 )
 
 # Link private includes
-target_link_libraries(${TARGET_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw spdlog assimp)
+target_link_libraries(${TARGET_NAME} PRIVATE ${VULKAN_LIBRARIES} glfw spdlog assimp)
 target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze Tracy::TracyClient)
 
 # Include vendor includes

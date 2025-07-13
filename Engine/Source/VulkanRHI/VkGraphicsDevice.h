@@ -60,6 +60,8 @@ namespace QE
 		void EndFrame() override;
 		void PresentFrame() override;
 
+		void RecompileShaders() override;
+
 		void UpdateWindowSize(uint32_t width, uint32_t height) override;
 
 		std::unique_ptr<GraphicsContext> CreateGraphicsContext() override;

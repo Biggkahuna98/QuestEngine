@@ -6,11 +6,6 @@
 #include "VkPipelines.h"
 
 #pragma warning(push, 0)
-//#pragma warning(disable: 4100)
-//#pragma warning(disable: 4189)
-//#pragma warning(disable: 4127)
-//#pragma warning(disable: 4244)
-//#pragma warning(disable: 4324)
 #define VMA_IMPLEMENTATION
 #include <vma/vk_mem_alloc.h>
 #pragma warning(pop)
@@ -35,6 +30,10 @@
 // temporary
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+// shader compiling
+#include <shaderc/shaderc.hpp>
+#include "Utility/Filesystem.h"
 
 namespace QE
 {
@@ -67,6 +66,36 @@ namespace QE
 
 	std::uint32_t s_PipelineCount = 0; // starting handle
 	std::unordered_map<PipelineHandle, VulkanPipeline> s_PipelineMap;
+
+	// Here for now, hopefully will move later
+	shaderc_shader_kind GetShaderExtensionToShadercShaderKind(const std::string& extension)
+	{
+		if (extension == "vert")
+			return shaderc_vertex_shader;
+		if (extension == "frag")
+			return shaderc_fragment_shader;
+		if (extension == "comp")
+			return shaderc_compute_shader;
+
+		return shaderc_glsl_infer_from_source;
+	}
+	std::vector<std::uint32_t> CompileShaderToSPIRV(const std::string source, const std::string& name, shaderc_shader_kind kind)
+	{
+		shaderc::Compiler compiler;
+		shaderc::CompileOptions options;
+		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+		options.SetOptimizationLevel(shaderc_optimization_level_performance);
+		options.SetGenerateDebugInfo();
+
+		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(source.c_str(), kind, name.c_str(), options);
+		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
+		{
+			LOG_ERROR("Failed to compile shader: {}", result.GetErrorMessage());
+			return {};
+		}
+
+		return std::vector<std::uint32_t>(result.cbegin(), result.cend());
+	}
 
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
 		: GraphicsDevice(window), m_Window(window) // refactor to stored in graphicsdevice
@@ -286,6 +315,22 @@ namespace QE
 		VK_CHECK(vkQueuePresentKHR(m_PresentQueue, &presentInfo));
 
 		m_CurrentFrameNumber++;
+	}
+
+	// Check the shader cache to see if a shader either exists or is newer than the one in the cache, if so, compile/recompile it
+	void VkGraphicsDevice::RecompileShaders()
+	{
+		LOG_DEBUG("Recompiling the following shaders");
+		auto files = Utils::GetShadersToCompile();
+		for (const auto& file : files)
+		{
+			LOG_DEBUG("\t{}", file);
+			auto spirv = CompileShaderToSPIRV(Utils::LoadShaderFromFile(file),
+				Utils::GetFileNameWithoutExtension(file),
+				GetShaderExtensionToShadercShaderKind(Utils::GetFileExtension(file)));
+
+			Utils::WriteSPIRVToCache(file, spirv);
+		}
 	}
 
 	void VkGraphicsDevice::UpdateWindowSize(uint32_t width, uint32_t height)

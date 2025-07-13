@@ -48,9 +48,13 @@ void SandboxGameApplication::Init()
     m_Model = m.value();
     LOG_DEBUG("Model mesh count: {}", m_Model.Meshes.size());
 
+    m_Cube = LoadModel("Models/cube.glb").value();
+
     //auto tex = QE::LoadTexture("Textures/viking_room.png");
     auto tex = QE::LoadTexture("Textures/texture.jpg");
     m_Texture = tex.value();
+
+    device->RecompileShaders();
 }
 
 void SandboxGameApplication::Shutdown()
@@ -75,7 +79,7 @@ void SandboxGameApplication::Update()
 
     device->BeginRenderPass({pipeline});
 
-    for (const auto& mesh : m_Model.Meshes)
+    for (const auto& mesh : m_Cube.Meshes)
         device->DrawMesh(mesh);
     //device->DrawMesh(m_Model.Meshes[2]);
     //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[0]);
