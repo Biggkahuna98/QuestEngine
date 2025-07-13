@@ -7,7 +7,6 @@
 #include "RHI/GraphicsContext.h"
 #include "../Engine/GameApplication.h"
 #include "Graphics/TestCamera.h"
-#include "Graphics/VkGuideCamera.h"
 
 namespace QE
 {

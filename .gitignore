@@ -37,3 +37,4 @@ build/
 out/
 ThirdParty/
 .idea/
+Engine/Resources/ShaderCache/

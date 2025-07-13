@@ -106,6 +106,9 @@ namespace QE
 		s_MeshMap.reserve(1000);
 		s_PipelineMap.reserve(1000);
 
+		// Make sure shaders are compiled and updated
+		RecompileShaders();
+
 		// Set real window size
 		int width, height;
 		glfwGetFramebufferSize(static_cast<GLFWwindow*>(window->GetNativeWindow()), &width, &height);
@@ -331,7 +334,29 @@ namespace QE
 
 			Utils::WriteSPIRVToCache(file, spirv);
 		}
+		if (files.size() > 0)
+		{
+			LOG_DEBUG("Recompiled {} shaders", files.size());
+			RemakePipelinesWhenShadersChange(files);
+		}
 	}
+
+	void VkGraphicsDevice::RemakePipelinesWhenShadersChange(std::vector<std::string>& compiledShaders)
+	{
+		for (const auto& [handle, pipeline] : s_PipelineMap)
+		{
+			// If one of the shaders that got recompiled is used in a pipeline, remake it with the new version
+			for (const auto& shader : pipeline.Shaders)
+			{
+				if (std::find(compiledShaders.begin(), compiledShaders.end(), GetShaderFromHandle(shader).Name) != compiledShaders.end())
+				{
+					CreatePipelineWrapper(pipeline.Description, &handle);
+					break;
+				}
+			}
+		}
+	}
+
 
 	void VkGraphicsDevice::UpdateWindowSize(uint32_t width, uint32_t height)
 	{
@@ -432,11 +457,17 @@ namespace QE
 		VulkanShader shader{};
 		shader.ShaderModule = VkInit::CreateShaderModule(m_Device, desc.SourcePath);
 		shader.ShaderStage = ShaderStageFlagBitsFromRHI(desc.Stage);
+		shader.Name = desc.SourcePath;
 		s_ShaderMap[handle] = shader;
 		return handle;
 	}
 
 	PipelineHandle VkGraphicsDevice::CreatePipeline(PipelineDescription desc)
+	{
+		return CreatePipelineWrapper(desc);
+	}
+
+	PipelineHandle VkGraphicsDevice::CreatePipelineWrapper(PipelineDescription desc, const PipelineHandle* prevPipeline)
 	{
 		// Load the shaders from their description
 		std::vector<ShaderHandle> shaders;
@@ -498,24 +529,28 @@ namespace QE
 		// Finally build the pipeline
 		m_MeshPipeline = pipelineBuilder.BuildPipeline(m_Device);
 
-		PipelineHandle handle{s_PipelineCount++};
+
+		PipelineHandle handle;
 		VulkanPipeline pipeline{};
+		// Check to see if this is a new pipeline or a remake
+		if (!prevPipeline)
+		{
+			handle = s_PipelineCount++;
+		}
+		else
+		{
+			handle = *prevPipeline;
+			// Safely delete old pipeline
+			pipeline = GetPipelineFromHandle(handle);
+			vkDestroyPipeline(m_Device, pipeline.Pipeline, nullptr);
+			vkDestroyPipelineLayout(m_Device, pipeline.PipelineLayout, nullptr);
+		}
 		pipeline.Pipeline = m_MeshPipeline;
 		pipeline.PipelineLayout = m_MeshPipelineLayout;
+		pipeline.Description = desc;
 		pipeline.Shaders = shaders;
 		s_PipelineMap[handle] = pipeline;
 		return handle;
-
-		// OLD --------------------------------------------------------------------------------------------------
-
-		//clean structures
-		//vkDestroyShaderModule(m_Device, triangleFragShader, nullptr);
-		//vkDestroyShaderModule(m_Device, triangleVertexShader, nullptr);
-
-		m_CleanupQueue.PushFunction([&]() {
-			vkDestroyPipelineLayout(m_Device, m_MeshPipelineLayout, nullptr);
-			vkDestroyPipeline(m_Device, m_MeshPipeline, nullptr);
-		});
 	}
 
 	void VkGraphicsDevice::BeginRenderPass(RenderpassDescription desc)
@@ -1077,7 +1112,7 @@ namespace QE
 	void VkGraphicsDevice::TutorialSetupStuff()
 	{
 		//InitializeMesh2DPipeline();
-		InitializeMeshPipeline();
+		//InitializeMeshPipeline();
 		InitializeDefaultData();
 	}
 

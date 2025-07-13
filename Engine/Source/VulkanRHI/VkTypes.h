@@ -51,12 +51,15 @@ namespace QE
 	{
 		VkShaderModule ShaderModule;
 		VkShaderStageFlagBits ShaderStage;
+		std::string Name;
 	};
 
 	struct VulkanPipeline
 	{
 		VkPipeline Pipeline;
 		VkPipelineLayout PipelineLayout;
+		// Cache the description
+		PipelineDescription Description;
 		std::vector<ShaderHandle> Shaders; // refactor later maybe, these are the handles associated with the shaders in the pipeline
 	};
 	

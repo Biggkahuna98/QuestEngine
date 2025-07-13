@@ -61,6 +61,7 @@ namespace QE
 		void PresentFrame() override;
 
 		void RecompileShaders() override;
+		void RemakePipelinesWhenShadersChange(std::vector<std::string>& compiledShaders);
 
 		void UpdateWindowSize(uint32_t width, uint32_t height) override;
 
@@ -72,6 +73,9 @@ namespace QE
 		MeshHandle CreateMesh(std::span<Vertex> vertices,  std::span<uint32_t> indices) override;
 		ShaderHandle CreateShader(ShaderDescription desc) override;
 		PipelineHandle CreatePipeline(PipelineDescription desc) override;
+
+		// Wrappers
+		PipelineHandle CreatePipelineWrapper(PipelineDescription desc, const PipelineHandle* prevPipeline = nullptr);
 
 		void BeginRenderPass(RenderpassDescription desc) override;
 		void EndRenderPass(RenderpassDescription desc) override;
