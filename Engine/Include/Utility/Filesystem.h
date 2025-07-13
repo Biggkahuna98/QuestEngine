@@ -24,4 +24,5 @@ namespace QE::Utils
     QUEST_API std::vector<std::string> GetShadersToCompile();
     QUEST_API std::string LoadShaderFromFile(const std::string& shaderName);
     QUEST_API void WriteSPIRVToCache(const std::string& shaderName, const std::vector<uint32_t>& spirv);
+    QUEST_API std::vector<uint32_t> LoadSPIRVFromCache(const std::string& shaderName);
 }

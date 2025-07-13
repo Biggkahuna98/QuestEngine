@@ -833,8 +833,8 @@ namespace QE
 
 		VK_CHECK(vkCreatePipelineLayout(m_Device, &computeLayout, nullptr, &m_GradientPipelineLayout));
 
-		VkShaderModule gradientShader = VkInit::CreateShaderModule(m_Device, "gradient-comp.spv");
-		VkShaderModule skyShader = VkInit::CreateShaderModule(m_Device, "sky-comp.spv");
+		VkShaderModule gradientShader = VkInit::CreateShaderModule(m_Device, "gradient.comp");
+		VkShaderModule skyShader = VkInit::CreateShaderModule(m_Device, "sky.comp");
 
 		VkPipelineShaderStageCreateInfo stageinfo{};
 		stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -888,8 +888,8 @@ namespace QE
 
 	void VkGraphicsDevice::InitializeMeshPipeline()
 	{
-		VkShaderModule triangleFragShader = VkInit::CreateShaderModule(m_Device, "colored_triangle-frag.spv");
-		VkShaderModule triangleVertexShader = VkInit::CreateShaderModule(m_Device, "colored_triangle_mesh-vert.spv");
+		VkShaderModule triangleFragShader = VkInit::CreateShaderModule(m_Device, "colored_triangle.frag");
+		VkShaderModule triangleVertexShader = VkInit::CreateShaderModule(m_Device, "colored_triangle_mesh.vert");
 
 		VkPushConstantRange bufferRange{};
 		bufferRange.offset = 0;

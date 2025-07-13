@@ -118,4 +118,32 @@ namespace QE::Utils
         file.write(reinterpret_cast<const char*>(spirv.data()), spirv.size() * sizeof(uint32_t));
         file.close();
     }
+
+    std::vector<uint32_t> LoadSPIRVFromCache(const std::string &shaderName)
+    {
+        std::ifstream file{ShaderCachePath / ConvertShaderNameToCacheName(shaderName), std::ios::ate | std::ios::binary};
+        if (!file.is_open())
+        {
+            LOG_ERROR("Failed to open shader cache file: {}", ConvertShaderNameToCacheName(shaderName));
+            return {};
+        }
+
+        std::streamsize size = file.tellg();
+        if (size % 4 != 0)
+        {
+            LOG_ERROR("Shader cache file is not a multiple of 4 bytes: {}", ConvertShaderNameToCacheName(shaderName));
+            return {};
+        }
+
+        file.seekg(0, std::ios::beg);
+        std::vector<uint32_t> buffer(size);
+        if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
+        {
+            LOG_ERROR("Failed to read shader cache file: {}", ConvertShaderNameToCacheName(shaderName));
+            return {};
+        }
+        file.close();
+
+        return buffer;
+    }
 }

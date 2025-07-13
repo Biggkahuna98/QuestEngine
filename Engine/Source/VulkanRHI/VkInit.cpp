@@ -1,6 +1,8 @@
 #include "VkInit.h"
 #include "Core/Log.h"
 
+#include "Utility/Filesystem.h"
+
 #include <GLFW/glfw3.h>
 #include <set>
 #include <algorithm>
@@ -1041,8 +1043,7 @@ namespace VkInit
 
 	VkShaderModule CreateShaderModule(VkDevice device, const std::string_view& filename)
 	{
-		// Get some kind of error checking for empty shader code
-		auto shaderCode = ReadShaderFile(filename.data());
+		auto shaderCode = QE::Utils::LoadSPIRVFromCache(filename.data());
 
 		VkShaderModuleCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

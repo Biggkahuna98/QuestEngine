@@ -111,8 +111,8 @@ void SandboxGameApplication::CreatePipelines()
     // Standard pipeline
     PipelineDescription standardPipelineDesc{};
     standardPipelineDesc.Shaders = {
-        { "colored_triangle_mesh-vert.spv", 0xFFFFFFFF, ShaderStage::Vertex },
-        { "colored_triangle-frag.spv", 0xFFFFFFFF, ShaderStage::Fragment }
+        { "colored_triangle_mesh.vert", 0xFFFFFFFF, ShaderStage::Vertex },
+        { "colored_triangle.frag", 0xFFFFFFFF, ShaderStage::Fragment }
     };
     standardPipelineDesc.Topology = PipelineTopology::TriangleList;
     standardPipelineDesc.PrimitiveRestart = false;
@@ -130,8 +130,8 @@ void SandboxGameApplication::CreatePipelines()
     // Wireframe pipeline
     PipelineDescription wireframePipelineDesc{};
     wireframePipelineDesc.Shaders = {
-        { "colored_triangle_mesh-vert.spv", 0xFFFFFFFF, ShaderStage::Vertex },
-        { "colored_triangle-frag.spv", 0xFFFFFFFF, ShaderStage::Fragment }
+        { "colored_triangle_mesh.vert", 0xFFFFFFFF, ShaderStage::Vertex },
+        { "colored_triangle.frag", 0xFFFFFFFF, ShaderStage::Fragment }
     };
     wireframePipelineDesc.Topology = PipelineTopology::TriangleList;
     wireframePipelineDesc.PrimitiveRestart = false;
