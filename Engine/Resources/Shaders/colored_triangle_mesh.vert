@@ -7,9 +7,8 @@ layout (location = 1) out vec2 outUV;
 struct Vertex {
 
 	vec3 position;
-	float uv_x;
 	vec3 normal;
-	float uv_y;
+	vec2 texcoords;
 	vec4 color;
 }; 
 
@@ -34,6 +33,6 @@ void main()
 	//output data
 	gl_Position = PushConstants.Projection * PushConstants.View * PushConstants.Model * vec4(v.position, 1.0f);
 	outColor = v.color.xyz;
-	outUV.x = v.uv_x;
-	outUV.y = v.uv_y;
+	outUV.x = v.texcoords.x;
+	outUV.y = v.texcoords.y;
 }

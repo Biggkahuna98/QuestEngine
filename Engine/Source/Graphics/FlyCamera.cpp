@@ -1,4 +1,4 @@
-#include "Graphics/TestCamera.h"
+#include "Graphics/FlyCamera.h"
 #include "Core/Engine.h"
 #include "Core/Events/EventManager.h"
 
@@ -6,7 +6,7 @@
 
 namespace QE
 {
-    TestCamera::TestCamera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
+    FlyCamera::FlyCamera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
                 Front(glm::vec3{0.0f, 0.0f, -1.0f}), MovementSpeed(g_SPEED), MouseSensitivity(g_SENSITIVITY), Zoom(g_ZOOM)
     {
         Position = position;
@@ -37,12 +37,12 @@ namespace QE
         UpdateCameraVectors();
     }
 
-    glm::mat4 TestCamera::GetViewMatrix()
+    glm::mat4 FlyCamera::GetViewMatrix()
     {
         return glm::lookAt(Position, Position + Front, Up);
     }
 
-    void TestCamera::Update(float deltaTime)
+    void FlyCamera::Update(float deltaTime)
     {
         if (PauseUpdates)
             return;
@@ -63,7 +63,7 @@ namespace QE
         //ProcessMouseScroll();
     }
 
-    void TestCamera::ProcessMouseMovement(MouseMoveEvent event, bool constrainPitch)
+    void FlyCamera::ProcessMouseMovement(MouseMoveEvent event, bool constrainPitch)
     {
         if (PauseUpdates)
             return;
@@ -104,7 +104,7 @@ namespace QE
         UpdateCameraVectors();
     }
 
-    void TestCamera::ProcessMouseScroll(MouseScrollEvent event)
+    void FlyCamera::ProcessMouseScroll(MouseScrollEvent event)
     {
         if (PauseUpdates)
             return;
@@ -116,7 +116,7 @@ namespace QE
             Zoom = 45.0f;
     }
 
-    void TestCamera::ToggleUpdating()
+    void FlyCamera::ToggleUpdating()
     {
         if (PauseUpdates)
         {
@@ -128,7 +128,7 @@ namespace QE
         }
     }
 
-    void TestCamera::DrawDebugInfo()
+    void FlyCamera::DrawDebugInfo()
     {
         ImGui::Begin("Camera Debug Info");
             ImGui::Text("PosX: %.2f, PosY: %.2f, PosZ: %.2f", Position.x, Position.y, Position.z);
@@ -138,7 +138,7 @@ namespace QE
     }
 
 
-    void TestCamera::UpdateCameraVectors()
+    void FlyCamera::UpdateCameraVectors()
     {
         // calculate the new Front vector
         glm::vec3 front;

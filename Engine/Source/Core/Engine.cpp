@@ -28,7 +28,7 @@ namespace QE
 		// Initialize graphics device and context
 		m_GraphicsDevice = CreateGraphicsDeviceFactory(m_Window.get());
 		m_GraphicsContext = m_GraphicsDevice->CreateGraphicsContext();
-		m_TestCamera = std::make_unique<TestCamera>();
+		m_TestCamera = std::make_unique<FlyCamera>();
 		m_GraphicsDevice->SetCamera(m_TestCamera.get());
 
 		m_Running = true;
@@ -132,7 +132,7 @@ namespace QE
 		return m_GameApplication;
 	}
 
-	TestCamera *Engine::GetCamera()
+	FlyCamera *Engine::GetCamera()
 	{
 		return m_TestCamera.get();
 	}

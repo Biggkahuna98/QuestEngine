@@ -22,7 +22,7 @@ void SandboxGameApplication::Init()
     LOG_DEBUG("SID: {}, String: {}", test2, GetStringFromID(test2).data());
 
     glm::vec3 recNormals = {0.0f, 0.0f, 1.0f};
-    RectangleVertices = {
+    /*RectangleVertices = {
         {{-0.5f, -0.5f, 0.0f}, 0, recNormals, 0, {1.0f, 1.0f, 1.0f, 1.0f}},
         {{0.5f, -0.5f, 0.0f}, 1.0f, recNormals, 0, {1.0f, 1.0f, 1.0f, 1.0f}},
         {{0.5f, 0.5f, 0.0f}, 1.0f, recNormals, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f}},
@@ -31,7 +31,7 @@ void SandboxGameApplication::Init()
 
     RectangleIndices = {
         0, 1, 2, 2, 3, 0
-    };
+    };*/
 
     Engine* engine = QE::GetEngine();
     GraphicsDevice* device = engine->GetGraphicsDevicePtr();
@@ -39,14 +39,11 @@ void SandboxGameApplication::Init()
     // Create pipelines needed
     CreatePipelines();
 
-    m_RectangleMesh = device->CreateMesh(RectangleVertices, RectangleIndices);
+    //m_RectangleMesh = device->CreateMesh(RectangleVertices, RectangleIndices);
 
     //auto m = QE::LoadModel("Models/viking_room.obj", true, true);
     //auto m = QE::LoadModel("Models/basicmesh.glb");
     //auto m = QE::LoadModel("Models/NewSponza_Main_glTF_003.gltf");
-    auto m = LoadModel("Models/monkey.glb");
-    m_Model = m.value();
-    LOG_DEBUG("Model mesh count: {}", m_Model.Meshes.size());
 
     m_Cube = LoadModel("Models/cube.glb").value();
 

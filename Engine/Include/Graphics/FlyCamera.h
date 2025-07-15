@@ -13,7 +13,7 @@ namespace QE
     constexpr float g_SENSITIVITY = 0.1f;
     constexpr float g_ZOOM = 45.0f;
 
-    class QUEST_API TestCamera
+    class QUEST_API FlyCamera
     {
     public:
         glm::vec3 Position;
@@ -28,7 +28,7 @@ namespace QE
         float MouseSensitivity;
         float Zoom;
 
-        TestCamera(glm::vec3 position = glm::vec3{0.0f, 0.0f, 4.0f}, glm::vec3 up = glm::vec3{0.0f, 1.0f, 0.0f}, float yaw = g_YAW, float pitch = g_PITCH);
+        FlyCamera(glm::vec3 position = glm::vec3{0.0f, 0.0f, 4.0f}, glm::vec3 up = glm::vec3{0.0f, 1.0f, 0.0f}, float yaw = g_YAW, float pitch = g_PITCH);
 
         glm::mat4 GetViewMatrix();
         void Update(float deltaTime);

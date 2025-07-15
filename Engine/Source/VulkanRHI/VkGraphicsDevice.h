@@ -9,7 +9,7 @@
 #include "VkTypes.h"
 #include "VkDescriptors.h"
 
-#include "Graphics/TestCamera.h"
+#include "Graphics/FlyCamera.h"
 
 #include "Core/Containers/DeletionQueue.h"
 
@@ -46,7 +46,8 @@ namespace QE
 		ComputePushConstants Data;
 	};
 
-	constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 2;
+	// TODO: NOTE - SWAPCHAIN IMAGES NEED TO BE THE SAME AS THIS VALUE OTHERWISE VALIDATION ERRORS AND PERFORMANCE PROBLEMS
+	constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 3;
 
 	class VkGraphicsDevice : public GraphicsDevice
 	{
@@ -81,7 +82,7 @@ namespace QE
 		void EndRenderPass(RenderpassDescription desc) override;
 
 		void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) override;
-		void SetCamera(TestCamera* camera) override;
+		void SetCamera(FlyCamera* camera) override;
 
 		VkInstance GetVkInstance() const { return m_Instance; }
 		VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
@@ -100,7 +101,7 @@ namespace QE
 
 	private:
 		Window* m_Window;
-		TestCamera* m_Camera;
+		FlyCamera* m_Camera;
 
 		VkInstance m_Instance;
 		VkDebugUtilsMessengerEXT m_DebugMessenger;

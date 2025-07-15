@@ -9,7 +9,7 @@
 namespace QE
 {
 	class GraphicsContext;
-	class TestCamera;
+	class FlyCamera;
 
 	class QUEST_API GraphicsDevice
 	{
@@ -41,7 +41,7 @@ namespace QE
 		// Temporary probably
 		virtual void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) = 0;
 		virtual void WaitForDeviceIdle() = 0;
-		virtual void SetCamera(TestCamera* camera) = 0;
+		virtual void SetCamera(FlyCamera* camera) = 0;
 
 		friend class GraphicsContext;
 	};

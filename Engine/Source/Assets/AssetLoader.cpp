@@ -101,8 +101,10 @@ namespace QE
     		// Texture coords
     		if (mesh->mTextureCoords[0])
     		{
-				newVtx.uv_x = mesh->mTextureCoords[0][i].x;
-    			newVtx.uv_y = mesh->mTextureCoords[0][i].y;
+				//newVtx.uv_x = mesh->mTextureCoords[0][i].x;
+    			//newVtx.uv_y = mesh->mTextureCoords[0][i].y;
+    			newVtx.TexCoords.x = mesh->mTextureCoords[0][i].x;
+    			newVtx.TexCoords.y = mesh->mTextureCoords[0][i].y;
     		}
 
     		// Placeholder

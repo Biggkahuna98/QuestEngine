@@ -657,7 +657,7 @@ namespace QE
 		vkCmdDrawIndexed(cmd, indexBuffer.Size, 1, 0, 0, 0);
 	}
 
-	void VkGraphicsDevice::SetCamera(TestCamera *camera)
+	void VkGraphicsDevice::SetCamera(FlyCamera *camera)
 	{
 		m_Camera = camera;
 	}

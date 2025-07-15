@@ -15,11 +15,12 @@ namespace QE
     // Vertex - uv_x and uv_y are tex coords
     struct QUEST_API Vertex
     {
-        glm::vec3 Position;
-        float uv_x = 0;
-        glm::vec3 Normal;
-        float uv_y = 0;
-        glm::vec4 Color;
+        alignas(16) glm::vec3 Position;
+        //float uv_x = 0;
+        alignas(16) glm::vec3 Normal;
+        alignas(16) glm::vec2 TexCoords;
+        //float uv_y = 0;
+        alignas(16) glm::vec4 Color;
     };
 
     // Matters to RHIs

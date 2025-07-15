@@ -6,7 +6,7 @@
 #include "RHI/GraphicsDevice.h"
 #include "RHI/GraphicsContext.h"
 #include "../Engine/GameApplication.h"
-#include "Graphics/TestCamera.h"
+#include "Graphics/FlyCamera.h"
 
 namespace QE
 {
@@ -37,7 +37,7 @@ namespace QE
 		GraphicsDevice& GetGraphicsDevice();
 		GraphicsDevice* GetGraphicsDevicePtr();
 		GameApplication* GetGameApplication();
-		TestCamera* GetCamera();
+		FlyCamera* GetCamera();
 	private:
 		bool m_Running = false;
 
@@ -49,7 +49,7 @@ namespace QE
 
 		GameApplication* m_GameApplication;
 
-		std::unique_ptr<TestCamera> m_TestCamera;
+		std::unique_ptr<FlyCamera> m_TestCamera;
 	};
 
 	extern Engine g_Engine;

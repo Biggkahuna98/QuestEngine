@@ -27,7 +27,9 @@ namespace VkInit
 		VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
 
 		// 1.1 extensions
-		VK_KHR_MAINTENANCE1_EXTENSION_NAME
+		VK_KHR_MAINTENANCE1_EXTENSION_NAME,
+
+		// idk what version
 	};
 
 	// Debug messenger
@@ -432,7 +434,7 @@ namespace VkInit
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "Quest Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_3;
+		appInfo.apiVersion = VK_API_VERSION_1_4;
 
 		VkInstanceCreateInfo instanceCreateInfo{};
 		instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -601,6 +603,7 @@ namespace VkInit
 		{
 			imageCount = swapChainSupport.capabilities.maxImageCount;
 		}
+		LOG_DEBUG("Swapchain image count: {}", imageCount);
 
 		// Change image usage back to VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
 		//VK_IMAGE_USAGE_TRANSFER_DST_BIT
