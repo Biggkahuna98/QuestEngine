@@ -293,7 +293,7 @@ namespace QE
 		VkCommandBufferSubmitInfo cmdSubmitInfo = VkInit::BuildCommandBufferSubmitInfo(GetCurrentFrameData().CommandBuffer);
 
 		VkSemaphoreSubmitInfo waitInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,GetCurrentFrameData().SwapchainSemaphore);
-		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrameData().RenderSemaphore);
+		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, m_RenderingFinishedSemaphores[m_CurrentSwapchainImageIndex]);
 
 		VkSubmitInfo2 submitInfo = VkInit::BuildSubmitInfo2(&cmdSubmitInfo, &signalInfo, &waitInfo);
 		VK_CHECK(vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, GetCurrentFrameData().RenderFence));
@@ -309,7 +309,7 @@ namespace QE
 		presentInfo.pSwapchains = &m_Swapchain;
 		presentInfo.swapchainCount = 1;
 
-		presentInfo.pWaitSemaphores = &GetCurrentFrameData().RenderSemaphore;
+		presentInfo.pWaitSemaphores = &m_RenderingFinishedSemaphores[m_CurrentSwapchainImageIndex];
 		presentInfo.waitSemaphoreCount = 1;
 
 		presentInfo.pImageIndices = &m_CurrentSwapchainImageIndex;
@@ -744,10 +744,18 @@ namespace QE
 
 		VK_CHECK(vkCreateImageView(m_Device, &dview_info, nullptr, &m_DepthImage.ImageView));
 
+		// Create rendering finishes semaphores
+		m_RenderingFinishedSemaphores.resize(m_SwapchainImages.size());
+		for (int i = 0; i < m_RenderingFinishedSemaphores.size(); i++)
+			m_RenderingFinishedSemaphores[i] = VkInit::CreateSemaphore(m_Device);
+
 		//add to deletion queues
 		m_CleanupQueue.PushFunction([=]() {
 			DestroyImage(m_DepthImage);
 			DestroyImage(m_DrawImage);
+
+			for (int i = 0; i < m_RenderingFinishedSemaphores.size(); i++)
+				vkDestroySemaphore(m_Device, m_RenderingFinishedSemaphores[i], nullptr);
 		});
 	}
 

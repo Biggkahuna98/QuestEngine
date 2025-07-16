@@ -47,7 +47,7 @@ namespace QE
 	};
 
 	// TODO: NOTE - SWAPCHAIN IMAGES NEED TO BE THE SAME AS THIS VALUE OTHERWISE VALIDATION ERRORS AND PERFORMANCE PROBLEMS
-	constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 3;
+	constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 1;
 
 	class VkGraphicsDevice : public GraphicsDevice
 	{
@@ -121,6 +121,7 @@ namespace QE
 		VkFormat m_SwapchainImageFormat;
 		std::vector<VkImage> m_SwapchainImages;
 		std::vector<VkImageView> m_SwapchainImageViews;
+		std::vector<VkSemaphore> m_RenderingFinishedSemaphores;
 		uint32_t m_CurrentSwapchainImageIndex;
 
 		// Frame data
