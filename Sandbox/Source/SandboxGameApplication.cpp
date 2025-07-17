@@ -84,13 +84,6 @@ void SandboxGameApplication::Update()
     //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[0]);
 
     // Render ImGui
-    // ImGui fps window
-    {
-        ImGui::Begin("FPS");
-        ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
-        ImGui::End();
-    }
-
     {
         ImGui::Begin("Pipeline");
         ImGui::SliderInt("Pipeline", &selectedPipeline, 0, 1);

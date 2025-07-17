@@ -11,6 +11,15 @@ namespace QE
 	class GraphicsContext;
 	class FlyCamera;
 
+	struct RHIStats
+	{
+		float Frametime = 0.0f;
+		int TriangleCount = 0;
+		int DrawCallCount = 0;
+		float SceneUpdateTime = 0.0f;
+		float MeshDrawTime = 0.0f;
+	};
+
 	class QUEST_API GraphicsDevice
 	{
 	public:
@@ -24,6 +33,7 @@ namespace QE
 		virtual void PresentFrame() = 0;
 
 		virtual void RecompileShaders() = 0;
+		virtual RHIStats GetStats() = 0;
 
 		virtual void UpdateWindowSize(uint32_t width, uint32_t height) = 0;
 		virtual std::unique_ptr<GraphicsContext> CreateGraphicsContext() = 0;

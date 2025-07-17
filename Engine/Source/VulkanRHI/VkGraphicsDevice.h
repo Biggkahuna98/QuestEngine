@@ -25,6 +25,8 @@ namespace QE
 
 		DeletionQueue CleanupQueue;
 		DescriptorAllocatorGrowable FrameDescriptors{};
+
+		RHIStats Stats;
 	};
 
 	struct ComputePushConstants
@@ -61,6 +63,7 @@ namespace QE
 
 		void RecompileShaders() override;
 		void RemakePipelinesWhenShadersChange(std::vector<std::string>& compiledShaders);
+		RHIStats GetStats() override;
 
 		void UpdateWindowSize(uint32_t width, uint32_t height) override;
 

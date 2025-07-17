@@ -4,6 +4,7 @@
 #include "Platform/PlatformUtility.h"
 #include "Core/Events/EventManager.h"
 #include "Core/Profiling.h"
+#include <chrono>
 
 namespace QE
 {
@@ -48,8 +49,10 @@ namespace QE
 		constexpr bool RunGraphics = true;
 		float deltaTime = 0.0f; // time between current frame and last frame
 		float lastFrame = 0.0f; // time of last frame
+		RHIStats Stats{};
 		while (m_Running)
 		{
+			auto startTime = std::chrono::high_resolution_clock::now();
 			float currentFrameTime = static_cast<float>(GetTime());
 			deltaTime = currentFrameTime - lastFrame;
 			lastFrame = currentFrameTime;
@@ -71,6 +74,16 @@ namespace QE
 
 			// Great value headless mode, will definitely fix later on
 			if (RunGraphics) m_GraphicsDevice->BeginFrame();
+			// Draw stats
+			{
+				ImGui::Begin("Engine Stats");
+					ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
+					ImGui::Text("DeltaTime: %.2f ms", deltaTime);
+					ImGui::Text("Frametime: %.2f ms", Stats.Frametime);
+					ImGui::Text("Triangle Count: %i", Stats.TriangleCount);
+					ImGui::Text("Draws: %i", Stats.DrawCallCount);
+				ImGui::End();
+			}
 
 			m_TestCamera->DrawDebugInfo();
 
@@ -79,6 +92,12 @@ namespace QE
 			if (RunGraphics) m_GraphicsDevice->EndFrame();
 
 			if (RunGraphics) m_GraphicsDevice->PresentFrame();
+
+			// Get engine stats
+			auto endTime = std::chrono::high_resolution_clock::now();
+			auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+			Stats = m_GraphicsDevice->GetStats();
+			Stats.Frametime = elapsed.count() / 1000.0f;
 
 			PROFILE_MARK_FRAME();
 		}

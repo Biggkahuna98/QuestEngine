@@ -235,6 +235,10 @@ namespace QE
 	void VkGraphicsDevice::BeginFrame()
 	{
 		PROFILE_SCOPE("VkGraphicsDevice::BeginFrame");
+		// Reset stats
+		GetCurrentFrameData().Stats.DrawCallCount = 0;
+		GetCurrentFrameData().Stats.TriangleCount = 0;
+
 		// Wait for the previous frame to finish
 		vkWaitForFences(m_Device.Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
 		vkResetFences(m_Device.Device, 1, &GetCurrentFrameData().RenderFence);
@@ -354,6 +358,11 @@ namespace QE
 				}
 			}
 		}
+	}
+
+	RHIStats VkGraphicsDevice::GetStats()
+	{
+		return GetCurrentFrameData().Stats;
 	}
 
 
@@ -654,6 +663,8 @@ namespace QE
 
 		//vkCmdDraw(cmd, allocatedBuffer.Size, 1, 0, 0);
 		vkCmdDrawIndexed(cmd, indexBuffer.Size, 1, 0, 0, 0);
+		GetCurrentFrameData().Stats.DrawCallCount++;
+		GetCurrentFrameData().Stats.TriangleCount += indexBuffer.Size / 3;
 	}
 
 	void VkGraphicsDevice::SetCamera(FlyCamera *camera)
