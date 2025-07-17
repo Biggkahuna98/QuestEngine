@@ -5,6 +5,7 @@
 #include "glm/glm.hpp"
 #include <array>
 #include "RHI/ResourceTypes.h"
+#include "VkInit.h"
 
 namespace QE
 {
@@ -61,6 +62,27 @@ namespace QE
 		// Cache the description
 		PipelineDescription Description;
 		std::vector<ShaderHandle> Shaders; // refactor later maybe, these are the handles associated with the shaders in the pipeline
+	};
+
+	struct VulkanDevice
+	{
+		VkPhysicalDevice PhysicalDevice;
+		VkDevice Device;
+		VkInit::QueueFamilyIndices QueueFamilyIndices;
+		VkQueue GraphicsQueue;
+		VkQueue PresentQueue;
+	};
+
+	struct VulkanSwapchain
+	{
+		VkSwapchainKHR Swapchain;
+		VkSurfaceKHR Surface;
+		VkExtent2D SwapchainExtent;
+		VkFormat SwapchainImageFormat;
+		std::vector<VkImage> SwapchainImages;
+		std::vector<VkImageView> SwapchainImageViews;
+		std::vector<VkSemaphore> RenderingFinishedSemaphores;
+		uint32_t CurrentSwapchainImageIndex;
 	};
 	
 }

@@ -29,6 +29,9 @@ private:
     QE::Model m_Model;
     QE::TextureHandle m_Texture;
 
+    QE::Model m_Backpack;
+    QE::TextureHandle m_BackpackTexture;
+
     QE::PipelineHandle m_StandardPipeline;
     QE::PipelineHandle m_WireframePipeline;
 

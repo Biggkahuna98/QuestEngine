@@ -38,6 +38,8 @@ void SandboxGameApplication::Init()
 
     // Create pipelines needed
     CreatePipelines();
+    m_Backpack = LoadModel("Models/backpack.obj").value();
+    m_BackpackTexture = LoadTexture("Textures/diffuse.jpg").value();
 
     //m_RectangleMesh = device->CreateMesh(RectangleVertices, RectangleIndices);
 
@@ -76,8 +78,8 @@ void SandboxGameApplication::Update()
 
     device->BeginRenderPass({pipeline});
 
-    for (const auto& mesh : m_Cube.Meshes)
-        device->DrawMesh(mesh);
+    for (const auto& mesh : m_Backpack.Meshes)
+        device->DrawMesh(mesh, &m_BackpackTexture);
     //device->DrawMesh(m_Model.Meshes[2]);
     //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[0]);
 

@@ -21,7 +21,6 @@ namespace QE
 		VkCommandBuffer CommandBuffer;
 
 		VkSemaphore SwapchainSemaphore;
-		VkSemaphore RenderSemaphore;
 		VkFence RenderFence;
 
 		DeletionQueue CleanupQueue;
@@ -46,7 +45,6 @@ namespace QE
 		ComputePushConstants Data;
 	};
 
-	// TODO: NOTE - SWAPCHAIN IMAGES NEED TO BE THE SAME AS THIS VALUE OTHERWISE VALIDATION ERRORS AND PERFORMANCE PROBLEMS
 	constexpr unsigned int MAX_FRAMES_IN_FLIGHT = 1;
 
 	class VkGraphicsDevice : public GraphicsDevice
@@ -85,10 +83,10 @@ namespace QE
 		void SetCamera(FlyCamera* camera) override;
 
 		VkInstance GetVkInstance() const { return m_Instance; }
-		VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
-		VkDevice GetVkDevice() const { return m_Device; }
-		VkQueue GetVkGraphicsQueue() const { return m_GraphicsQueue; }
-		VkSurfaceKHR GetVkSurface() const { return m_Surface; }
+		VkPhysicalDevice GetVkPhysicalDevice() const { return m_Device.PhysicalDevice; }
+		VkDevice GetVkDevice() const { return m_Device.Device; }
+		VkQueue GetVkGraphicsQueue() const { return m_Device.GraphicsQueue; }
+		VkSurfaceKHR GetVkSurface() const { return m_Swapchain.Surface; }
 
 		uint32_t GetCurrentFrameNumber() const { return m_CurrentFrameNumber; }
 		FrameData& GetCurrentFrameData();
@@ -105,24 +103,12 @@ namespace QE
 
 		VkInstance m_Instance;
 		VkDebugUtilsMessengerEXT m_DebugMessenger;
-		VkPhysicalDevice m_PhysicalDevice;
-		VkDevice m_Device;
 
-		VkInit::QueueFamilyIndices m_QueueFamilyIndices;
-		VkQueue m_GraphicsQueue;
-		VkQueue m_PresentQueue;
+		VulkanDevice m_Device;
+		VulkanSwapchain m_Swapchain;
 
-		VkSurfaceKHR m_Surface;
 		VkExtent2D m_WindowExtent; // window size
-
 		bool m_ResizeRequested = false;
-		VkSwapchainKHR m_Swapchain;
-		VkExtent2D m_SwapchainExtent;
-		VkFormat m_SwapchainImageFormat;
-		std::vector<VkImage> m_SwapchainImages;
-		std::vector<VkImageView> m_SwapchainImageViews;
-		std::vector<VkSemaphore> m_RenderingFinishedSemaphores;
-		uint32_t m_CurrentSwapchainImageIndex;
 
 		// Frame data
 		FrameData m_FrameData[MAX_FRAMES_IN_FLIGHT];

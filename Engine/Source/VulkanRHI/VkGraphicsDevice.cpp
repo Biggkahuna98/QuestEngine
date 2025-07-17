@@ -141,21 +141,21 @@ namespace QE
 
 		// Setup the surface
 		// Only using GLFW for now, change this later to detect window backend later if needed
-		glfwCreateWindowSurface(m_Instance, static_cast<GLFWwindow*>(window->GetNativeWindow()), nullptr, &m_Surface);
+		glfwCreateWindowSurface(m_Instance, static_cast<GLFWwindow*>(window->GetNativeWindow()), nullptr, &m_Swapchain.Surface);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan surface created and linked to GLFWwindow");
 
 		// Pick a GPU
-		m_PhysicalDevice = VkInit::PickPhysicalDevice(m_Instance, m_Surface);
+		m_Device.PhysicalDevice = VkInit::PickPhysicalDevice(m_Instance, m_Swapchain.Surface);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan device created");
 
 		// Logical device creation
-		m_Device = VkInit::CreateLogicalDevice(m_PhysicalDevice, m_Surface, &m_GraphicsQueue, &m_PresentQueue);
+		m_Device.Device = VkInit::CreateLogicalDevice(m_Device.PhysicalDevice, m_Swapchain.Surface, &m_Device.GraphicsQueue, &m_Device.PresentQueue);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan physical device created");
 
 		// VMA Allocator
 		VmaAllocatorCreateInfo allocatorInfo = {};
-		allocatorInfo.physicalDevice = m_PhysicalDevice;
-		allocatorInfo.device = m_Device;
+		allocatorInfo.physicalDevice = m_Device.PhysicalDevice;
+		allocatorInfo.device = m_Device.Device;
 		allocatorInfo.instance = m_Instance;
 		allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 		//allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3;
@@ -168,7 +168,7 @@ namespace QE
 		});
 
 		// Set the queue family indices
-		m_QueueFamilyIndices = VkInit::FindQueueFamilies(m_PhysicalDevice, m_Surface);
+		m_Device.QueueFamilyIndices = VkInit::FindQueueFamilies(m_Device.PhysicalDevice, m_Swapchain.Surface);
 
 		// Swapchain
 		InitSwapchain(m_WindowExtent);
@@ -192,16 +192,15 @@ namespace QE
 	}
 	void VkGraphicsDevice::ShutdownAndCleanup()
 	{
-		vkDeviceWaitIdle(m_Device);
+		vkDeviceWaitIdle(m_Device.Device);
 
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			vkFreeCommandBuffers(m_Device, m_FrameData[i].CommandPool, 1, &m_FrameData[i].CommandBuffer);
-			vkDestroyCommandPool(m_Device, m_FrameData[i].CommandPool, nullptr);
+			vkFreeCommandBuffers(m_Device.Device, m_FrameData[i].CommandPool, 1, &m_FrameData[i].CommandBuffer);
+			vkDestroyCommandPool(m_Device.Device, m_FrameData[i].CommandPool, nullptr);
 
-			vkDestroyFence(m_Device, m_FrameData[i].RenderFence, nullptr);
-			vkDestroySemaphore(m_Device, m_FrameData[i].RenderSemaphore, nullptr);
-			vkDestroySemaphore(m_Device, m_FrameData[i].SwapchainSemaphore, nullptr);
+			vkDestroyFence(m_Device.Device, m_FrameData[i].RenderFence, nullptr);
+			vkDestroySemaphore(m_Device.Device, m_FrameData[i].SwapchainSemaphore, nullptr);
 		}
 
 		// Flush global lifetime deletion queue
@@ -212,20 +211,20 @@ namespace QE
 			DestroyBuffer(buffer);
 
 		// Cleanup all resources
-		//vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+		//vkDestroyPipelineLayout(m_Device.Device, m_PipelineLayout, nullptr);
 		for (const auto& [handle, pipeline] : s_PipelineMap)
 		{
-			vkDestroyPipeline(m_Device, pipeline.Pipeline, nullptr);
-			vkDestroyPipelineLayout(m_Device, pipeline.PipelineLayout, nullptr);
+			vkDestroyPipeline(m_Device.Device, pipeline.Pipeline, nullptr);
+			vkDestroyPipelineLayout(m_Device.Device, pipeline.PipelineLayout, nullptr);
 		}
 
 		for (const auto& [handle, shader] : s_ShaderMap)
-			vkDestroyShaderModule(m_Device, shader.ShaderModule, nullptr);
+			vkDestroyShaderModule(m_Device.Device, shader.ShaderModule, nullptr);
 
 		DestroySwapchain();
 
-		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-		vkDestroyDevice(m_Device, nullptr);
+		vkDestroySurfaceKHR(m_Instance, m_Swapchain.Surface, nullptr);
+		vkDestroyDevice(m_Device.Device, nullptr);
 
 		if (VkInit::s_EnableValidationLayers)
 			VkInit::DestroyDebugMessenger(&m_Instance, &m_DebugMessenger);
@@ -237,16 +236,16 @@ namespace QE
 	{
 		PROFILE_SCOPE("VkGraphicsDevice::BeginFrame");
 		// Wait for the previous frame to finish
-		vkWaitForFences(m_Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
-		vkResetFences(m_Device, 1, &GetCurrentFrameData().RenderFence);
+		vkWaitForFences(m_Device.Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
+		vkResetFences(m_Device.Device, 1, &GetCurrentFrameData().RenderFence);
 
 		// See if there is a better place later
 		GetCurrentFrameData().CleanupQueue.Flush();
-		GetCurrentFrameData().FrameDescriptors.ClearPools(m_Device);
+		GetCurrentFrameData().FrameDescriptors.ClearPools(m_Device.Device);
 
 
 		// Request the image from the swapchain
-		vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_CurrentSwapchainImageIndex);
+		vkAcquireNextImageKHR(m_Device.Device, m_Swapchain.Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_Swapchain.CurrentSwapchainImageIndex);
 
 		// Reset command buffer
 		vkResetCommandBuffer(GetCurrentFrameData().CommandBuffer, 0);
@@ -273,18 +272,18 @@ namespace QE
 		PROFILE_SCOPE("VkGraphicsDevice::EndFrame");
 		// Transition the draw image and the swapchain image into their correct transfer layouts
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_Swapchain.SwapchainImages[m_Swapchain.CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		// Execute a copy from the draw image into the swapchain
-		VkInit::CopyImageToImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, m_SwapchainImages[m_CurrentSwapchainImageIndex], m_DrawExtent, m_SwapchainExtent);
+		VkInit::CopyImageToImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, m_Swapchain.SwapchainImages[m_Swapchain.CurrentSwapchainImageIndex], m_DrawExtent, m_Swapchain.SwapchainExtent);
 
 		// Set swapchain image layout to Present so we can show it on the screen
-		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_SwapchainImages[m_CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_Swapchain.SwapchainImages[m_Swapchain.CurrentSwapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 		// Render ImGui
 		ImGui::Render();
 		// Draw imgui
-		DrawImGui(GetCurrentFrameData().CommandBuffer, m_SwapchainImageViews[m_CurrentSwapchainImageIndex]);
+		DrawImGui(GetCurrentFrameData().CommandBuffer, m_Swapchain.SwapchainImageViews[m_Swapchain.CurrentSwapchainImageIndex]);
 
 		// End command buffer recording
 		VK_CHECK(vkEndCommandBuffer(GetCurrentFrameData().CommandBuffer));
@@ -293,10 +292,10 @@ namespace QE
 		VkCommandBufferSubmitInfo cmdSubmitInfo = VkInit::BuildCommandBufferSubmitInfo(GetCurrentFrameData().CommandBuffer);
 
 		VkSemaphoreSubmitInfo waitInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,GetCurrentFrameData().SwapchainSemaphore);
-		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, m_RenderingFinishedSemaphores[m_CurrentSwapchainImageIndex]);
+		VkSemaphoreSubmitInfo signalInfo = VkInit::BuildSemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, m_Swapchain.RenderingFinishedSemaphores[m_Swapchain.CurrentSwapchainImageIndex]);
 
 		VkSubmitInfo2 submitInfo = VkInit::BuildSubmitInfo2(&cmdSubmitInfo, &signalInfo, &waitInfo);
-		VK_CHECK(vkQueueSubmit2(m_GraphicsQueue, 1, &submitInfo, GetCurrentFrameData().RenderFence));
+		VK_CHECK(vkQueueSubmit2(m_Device.GraphicsQueue, 1, &submitInfo, GetCurrentFrameData().RenderFence));
 	}
 
 	void VkGraphicsDevice::PresentFrame()
@@ -306,16 +305,16 @@ namespace QE
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
-		presentInfo.pSwapchains = &m_Swapchain;
+		presentInfo.pSwapchains = &m_Swapchain.Swapchain;
 		presentInfo.swapchainCount = 1;
 
-		presentInfo.pWaitSemaphores = &m_RenderingFinishedSemaphores[m_CurrentSwapchainImageIndex];
+		presentInfo.pWaitSemaphores = &m_Swapchain.RenderingFinishedSemaphores[m_Swapchain.CurrentSwapchainImageIndex];
 		presentInfo.waitSemaphoreCount = 1;
 
-		presentInfo.pImageIndices = &m_CurrentSwapchainImageIndex;
+		presentInfo.pImageIndices = &m_Swapchain.CurrentSwapchainImageIndex;
 
 		// Present the image
-		VK_CHECK(vkQueuePresentKHR(m_PresentQueue, &presentInfo));
+		VK_CHECK(vkQueuePresentKHR(m_Device.PresentQueue, &presentInfo));
 
 		m_CurrentFrameNumber++;
 	}
@@ -372,7 +371,7 @@ namespace QE
 
 	void VkGraphicsDevice::WaitForDeviceIdle()
 	{
-		vkDeviceWaitIdle(m_Device);
+		vkDeviceWaitIdle(m_Device.Device);
 	}
 
 	BufferHandle VkGraphicsDevice::CreateBuffer(BufferDescription desc)
@@ -428,7 +427,7 @@ namespace QE
 			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
 			.buffer = GetBufferFromHandle(vertexBuff).Buffer,
 		};
-		newMeshBuffer.VertexBufferAddress = vkGetBufferDeviceAddress(m_Device, &deviceAdressInfo);
+		newMeshBuffer.VertexBufferAddress = vkGetBufferDeviceAddress(m_Device.Device, &deviceAdressInfo);
 
 		//create index buffer
 		std::vector<std::uint8_t> indicesbuff(indices.size());
@@ -455,7 +454,7 @@ namespace QE
 	{
 		ShaderHandle handle{s_ShaderCount++};
 		VulkanShader shader{};
-		shader.ShaderModule = VkInit::CreateShaderModule(m_Device, desc.SourcePath);
+		shader.ShaderModule = VkInit::CreateShaderModule(m_Device.Device, desc.SourcePath);
 		shader.ShaderStage = ShaderStageFlagBitsFromRHI(desc.Stage);
 		shader.Name = desc.SourcePath;
 		s_ShaderMap[handle] = shader;
@@ -497,7 +496,7 @@ namespace QE
 		pipeline_layout_info.setLayoutCount = 1;
 
 		VkPipelineLayout pipelineLayout;
-		VK_CHECK(vkCreatePipelineLayout(m_Device, &pipeline_layout_info, nullptr, &pipelineLayout));
+		VK_CHECK(vkCreatePipelineLayout(m_Device.Device, &pipeline_layout_info, nullptr, &pipelineLayout));
 
 		PipelineBuilder pipelineBuilder;
 		// use the default layout
@@ -528,7 +527,7 @@ namespace QE
 		pipelineBuilder.SetDepthFormat(m_DepthImage.ImageFormat);
 
 		// Finally build the pipeline
-		VkPipeline builtPipeline = pipelineBuilder.BuildPipeline(m_Device);
+		VkPipeline builtPipeline = pipelineBuilder.BuildPipeline(m_Device.Device);
 
 
 		PipelineHandle handle;
@@ -544,8 +543,8 @@ namespace QE
 			handle = *prevPipeline;
 			// Safely delete old pipeline
 			pipeline = GetPipelineFromHandle(handle);
-			vkDestroyPipeline(m_Device, pipeline.Pipeline, nullptr);
-			vkDestroyPipelineLayout(m_Device, pipeline.PipelineLayout, nullptr);
+			vkDestroyPipeline(m_Device.Device, pipeline.Pipeline, nullptr);
+			vkDestroyPipelineLayout(m_Device.Device, pipeline.PipelineLayout, nullptr);
 		}
 		pipeline.Pipeline = builtPipeline;
 		pipeline.PipelineLayout = pipelineLayout;
@@ -593,7 +592,7 @@ namespace QE
 		//vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_MeshPipeline);
 
 		// Bind a texture
-		VkDescriptorSet imageSet = GetCurrentFrameData().FrameDescriptors.Allocate(m_Device, m_SingleImageDescriptorLayout);
+		VkDescriptorSet imageSet = GetCurrentFrameData().FrameDescriptors.Allocate(m_Device.Device, m_SingleImageDescriptorLayout);
 		{
 			DescriptorWriter writer;
 			if (texture)
@@ -605,7 +604,7 @@ namespace QE
 				writer.WriteImage(0, m_GreyImage.ImageView, m_DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 			}
 
-			writer.UpdateSet(m_Device, imageSet);
+			writer.UpdateSet(m_Device.Device, imageSet);
 		}
 
 		// fix the layout
@@ -637,7 +636,7 @@ namespace QE
 		mvp.View = m_Camera->GetViewMatrix();
 		// reverse near and far plane because using reverse-Z depth
 		// https://developer.nvidia.com/blog/visualizing-depth-precision/
-		mvp.Projection = ReversedZPerspective(glm::radians(m_Camera->Zoom), (float)m_SwapchainExtent.width / (float)m_SwapchainExtent.height, 0.1f);
+		mvp.Projection = ReversedZPerspective(glm::radians(m_Camera->Zoom), (float)m_Swapchain.SwapchainExtent.width / (float)m_Swapchain.SwapchainExtent.height, 0.1f);
 		//mvp.Projection[1][1] *= -1;
 
 		GPUDrawPushConstants pushConstants{};
@@ -726,7 +725,7 @@ namespace QE
 
 		// Build the image view
 		VkImageViewCreateInfo imageViewInfo = VkInit::BuildImageViewCreateInfo(m_DrawImage.ImageFormat, m_DrawImage.Image, VK_IMAGE_ASPECT_COLOR_BIT);
-		VK_CHECK(vkCreateImageView(m_Device, &imageViewInfo, nullptr, &m_DrawImage.ImageView));
+		VK_CHECK(vkCreateImageView(m_Device.Device, &imageViewInfo, nullptr, &m_DrawImage.ImageView));
 
 		// Setup the depth image
 		// https://www.reddit.com/r/vulkan/comments/1l6n502/gtx_1080_vulkan_tutorial_and_poor_depth_stencil/
@@ -742,27 +741,27 @@ namespace QE
 
 		VkImageViewCreateInfo dview_info = VkInit::BuildImageViewCreateInfo(m_DepthImage.ImageFormat, m_DepthImage.Image, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-		VK_CHECK(vkCreateImageView(m_Device, &dview_info, nullptr, &m_DepthImage.ImageView));
+		VK_CHECK(vkCreateImageView(m_Device.Device, &dview_info, nullptr, &m_DepthImage.ImageView));
 
 		// Create rendering finishes semaphores
-		m_RenderingFinishedSemaphores.resize(m_SwapchainImages.size());
-		for (int i = 0; i < m_RenderingFinishedSemaphores.size(); i++)
-			m_RenderingFinishedSemaphores[i] = VkInit::CreateSemaphore(m_Device);
+		m_Swapchain.RenderingFinishedSemaphores.resize(m_Swapchain.SwapchainImages.size());
+		for (int i = 0; i < m_Swapchain.RenderingFinishedSemaphores.size(); i++)
+			m_Swapchain.RenderingFinishedSemaphores[i] = VkInit::CreateSemaphore(m_Device.Device);
 
 		//add to deletion queues
 		m_CleanupQueue.PushFunction([=]() {
 			DestroyImage(m_DepthImage);
 			DestroyImage(m_DrawImage);
 
-			for (int i = 0; i < m_RenderingFinishedSemaphores.size(); i++)
-				vkDestroySemaphore(m_Device, m_RenderingFinishedSemaphores[i], nullptr);
+			for (int i = 0; i < m_Swapchain.RenderingFinishedSemaphores.size(); i++)
+				vkDestroySemaphore(m_Device.Device, m_Swapchain.RenderingFinishedSemaphores[i], nullptr);
 		});
 	}
 
 	void VkGraphicsDevice::CreateSwapchain(VkExtent2D windowExtent)
 	{
-		m_Swapchain = VkInit::CreateSwapchain(m_PhysicalDevice, m_Device, m_Surface, windowExtent, &m_SwapchainImages, &m_SwapchainImageFormat, &m_SwapchainExtent);
-		VkInit::CreateSwapchainImageViews(m_Device, &m_SwapchainImages, m_SwapchainImageFormat, &m_SwapchainImageViews);
+		m_Swapchain.Swapchain = VkInit::CreateSwapchain(m_Device.PhysicalDevice, m_Device.Device, m_Swapchain.Surface, windowExtent, &m_Swapchain.SwapchainImages, &m_Swapchain.SwapchainImageFormat, &m_Swapchain.SwapchainExtent);
+		VkInit::CreateSwapchainImageViews(m_Device.Device, &m_Swapchain.SwapchainImages, m_Swapchain.SwapchainImageFormat, &m_Swapchain.SwapchainImageViews);
 		LOG_DEBUG_TAG("VkGraphicsDevice", "Vulkan Swapchain and views created");
 	}
 
@@ -778,12 +777,12 @@ namespace QE
 	void VkGraphicsDevice::DestroySwapchain()
 	{
 		// Destroy swapchain resources
-		for (int i = 0; i < m_SwapchainImageViews.size(); i++)
+		for (int i = 0; i < m_Swapchain.SwapchainImageViews.size(); i++)
 		{
-			vkDestroyImageView(m_Device, m_SwapchainImageViews[i], nullptr);
+			vkDestroyImageView(m_Device.Device, m_Swapchain.SwapchainImageViews[i], nullptr);
 		}
 
-		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
+		vkDestroySwapchainKHR(m_Device.Device, m_Swapchain.Swapchain, nullptr);
 	}
 
 	void VkGraphicsDevice::InitializeFrameData()
@@ -791,15 +790,14 @@ namespace QE
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			// Command pools and buffers
-			m_FrameData[i].CommandPool = VkInit::CreateCommandPool(m_Device, m_QueueFamilyIndices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-			m_FrameData[i].CommandBuffer = VkInit::CreateCommandBuffer(m_Device, m_FrameData[i].CommandPool);
+			m_FrameData[i].CommandPool = VkInit::CreateCommandPool(m_Device.Device, m_Device.QueueFamilyIndices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+			m_FrameData[i].CommandBuffer = VkInit::CreateCommandBuffer(m_Device.Device, m_FrameData[i].CommandPool);
 
 			// Semaphores
-			m_FrameData[i].SwapchainSemaphore = VkInit::CreateSemaphore(m_Device);
-			m_FrameData[i].RenderSemaphore = VkInit::CreateSemaphore(m_Device);
+			m_FrameData[i].SwapchainSemaphore = VkInit::CreateSemaphore(m_Device.Device);
 
 			// Fences
-			m_FrameData[i].RenderFence = VkInit::CreateFence(m_Device, VK_FENCE_CREATE_SIGNALED_BIT);
+			m_FrameData[i].RenderFence = VkInit::CreateFence(m_Device.Device, VK_FENCE_CREATE_SIGNALED_BIT);
 		}
 	}
 
@@ -813,36 +811,36 @@ namespace QE
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}
 		};
 
-		m_DescriptorAllocator.InitPool(m_Device, 10, sizes);
+		m_DescriptorAllocator.InitPool(m_Device.Device, 10, sizes);
 
 		//make the descriptor set layout for our compute draw
 		{
 			DescriptorLayoutBuilder builder;
 			builder.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
-			m_DrawImageDescriptorSetLayout = builder.Build(m_Device, VK_SHADER_STAGE_COMPUTE_BIT);
+			m_DrawImageDescriptorSetLayout = builder.Build(m_Device.Device, VK_SHADER_STAGE_COMPUTE_BIT);
 		}
 
 		// Single image descriptor set
 		{
 			DescriptorLayoutBuilder builder;
 			builder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-			m_SingleImageDescriptorLayout = builder.Build(m_Device, VK_SHADER_STAGE_FRAGMENT_BIT);
+			m_SingleImageDescriptorLayout = builder.Build(m_Device.Device, VK_SHADER_STAGE_FRAGMENT_BIT);
 		}
 
 		//allocate a descriptor set for our draw image
-		m_DrawImageDescriptors = m_DescriptorAllocator.Allocate(m_Device, m_DrawImageDescriptorSetLayout);
+		m_DrawImageDescriptors = m_DescriptorAllocator.Allocate(m_Device.Device, m_DrawImageDescriptorSetLayout);
 
 		DescriptorWriter writer;
 		writer.WriteImage(0, m_DrawImage.ImageView, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
-		writer.UpdateSet(m_Device, m_DrawImageDescriptors);
+		writer.UpdateSet(m_Device.Device, m_DrawImageDescriptors);
 
 		//make sure both the descriptor allocator and the new layout get cleaned up properly
 		m_CleanupQueue.PushFunction([&]() {
-			m_DescriptorAllocator.DestroyPool(m_Device);
+			m_DescriptorAllocator.DestroyPool(m_Device.Device);
 
-			vkDestroyDescriptorSetLayout(m_Device, m_DrawImageDescriptorSetLayout, nullptr);
-			vkDestroyDescriptorSetLayout(m_Device, m_SingleImageDescriptorLayout, nullptr);
+			vkDestroyDescriptorSetLayout(m_Device.Device, m_DrawImageDescriptorSetLayout, nullptr);
+			vkDestroyDescriptorSetLayout(m_Device.Device, m_SingleImageDescriptorLayout, nullptr);
 		});
 
 		// Growable descriptor allocator
@@ -857,11 +855,11 @@ namespace QE
 			};
 
 			m_FrameData[i].FrameDescriptors = DescriptorAllocatorGrowable{};
-			m_FrameData[i].FrameDescriptors.Init(m_Device, 1000, sizes);
+			m_FrameData[i].FrameDescriptors.Init(m_Device.Device, 1000, sizes);
 
 			m_CleanupQueue.PushFunction([&, i]()
 			{
-				m_FrameData[i].FrameDescriptors.DestroyPools(m_Device);
+				m_FrameData[i].FrameDescriptors.DestroyPools(m_Device.Device);
 			});
 		}
 	}
@@ -875,10 +873,10 @@ namespace QE
 		computeLayout.pSetLayouts = &m_DrawImageDescriptorSetLayout;
 		computeLayout.setLayoutCount = 1;
 
-		VK_CHECK(vkCreatePipelineLayout(m_Device, &computeLayout, nullptr, &m_GradientPipelineLayout));
+		VK_CHECK(vkCreatePipelineLayout(m_Device.Device, &computeLayout, nullptr, &m_GradientPipelineLayout));
 
-		VkShaderModule gradientShader = VkInit::CreateShaderModule(m_Device, "gradient.comp");
-		VkShaderModule skyShader = VkInit::CreateShaderModule(m_Device, "sky.comp");
+		VkShaderModule gradientShader = VkInit::CreateShaderModule(m_Device.Device, "gradient.comp");
+		VkShaderModule skyShader = VkInit::CreateShaderModule(m_Device.Device, "sky.comp");
 
 		VkPipelineShaderStageCreateInfo stageinfo{};
 		stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -902,7 +900,7 @@ namespace QE
 		gradient.Data.Data1 = glm::vec4(1, 0, 0, 1);
 		gradient.Data.Data2 = glm::vec4(0, 0, 1, 1);
 
-		VK_CHECK(vkCreateComputePipelines(m_Device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &gradient.Pipeline));
+		VK_CHECK(vkCreateComputePipelines(m_Device.Device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &gradient.Pipeline));
 
 		//change the shader module only to create the sky shader
 		computePipelineCreateInfo.stage.module = skyShader;
@@ -914,41 +912,41 @@ namespace QE
 		//default sky parameters
 		sky.Data.Data1 = glm::vec4(0.1, 0.2, 0.4, 0.97);
 
-		VK_CHECK(vkCreateComputePipelines(m_Device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &sky.Pipeline));
+		VK_CHECK(vkCreateComputePipelines(m_Device.Device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &sky.Pipeline));
 
 		//add the 2 background effects into the array
 		m_BackgroundEffects.push_back(gradient);
 		m_BackgroundEffects.push_back(sky);
 
 		//destroy structures properly
-		vkDestroyShaderModule(m_Device, gradientShader, nullptr);
-		vkDestroyShaderModule(m_Device, skyShader, nullptr);
+		vkDestroyShaderModule(m_Device.Device, gradientShader, nullptr);
+		vkDestroyShaderModule(m_Device.Device, skyShader, nullptr);
 		m_CleanupQueue.PushFunction([=]() {
-			vkDestroyPipelineLayout(m_Device, m_GradientPipelineLayout, nullptr);
-			vkDestroyPipeline(m_Device, sky.Pipeline, nullptr);
-			vkDestroyPipeline(m_Device, gradient.Pipeline, nullptr);
+			vkDestroyPipelineLayout(m_Device.Device, m_GradientPipelineLayout, nullptr);
+			vkDestroyPipeline(m_Device.Device, sky.Pipeline, nullptr);
+			vkDestroyPipeline(m_Device.Device, gradient.Pipeline, nullptr);
 		});
 	}
 
 	void VkGraphicsDevice::InitializeImGui()
 	{
 		// ImGui command pools
-		VkCommandPoolCreateInfo commandPoolInfo = VkInit::BuildCommandPoolCreateInfo(m_QueueFamilyIndices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-		VK_CHECK(vkCreateCommandPool(m_Device, &commandPoolInfo, nullptr, &m_ImGuiCommandPool));
+		VkCommandPoolCreateInfo commandPoolInfo = VkInit::BuildCommandPoolCreateInfo(m_Device.QueueFamilyIndices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+		VK_CHECK(vkCreateCommandPool(m_Device.Device, &commandPoolInfo, nullptr, &m_ImGuiCommandPool));
 
 		// allocate the command buffer for immediate submits
 		VkCommandBufferAllocateInfo cmdAllocInfo = VkInit::BuildCommandBufferAllocateInfo(m_ImGuiCommandPool);
 
-		VK_CHECK(vkAllocateCommandBuffers(m_Device, &cmdAllocInfo, &m_ImGuiCommandBuffer));
+		VK_CHECK(vkAllocateCommandBuffers(m_Device.Device, &cmdAllocInfo, &m_ImGuiCommandBuffer));
 
 		m_CleanupQueue.PushFunction([=]() {
-			vkDestroyCommandPool(m_Device, m_ImGuiCommandPool, nullptr);
+			vkDestroyCommandPool(m_Device.Device, m_ImGuiCommandPool, nullptr);
 		});
 
 		VkFenceCreateInfo fenceCreateInfo = VkInit::BuildFenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-		VK_CHECK(vkCreateFence(m_Device, &fenceCreateInfo, nullptr, &m_ImGuiFence));
+		VK_CHECK(vkCreateFence(m_Device.Device, &fenceCreateInfo, nullptr, &m_ImGuiFence));
 		m_CleanupQueue.PushFunction([=]() {
-			vkDestroyFence(m_Device, m_ImGuiFence, nullptr);
+			vkDestroyFence(m_Device.Device, m_ImGuiFence, nullptr);
 		});
 
 		// 1: create descriptor pool for IMGUI
@@ -976,7 +974,7 @@ namespace QE
 		pool_info.pPoolSizes = pool_sizes;
 
 		VkDescriptorPool imguiPool;
-		VK_CHECK(vkCreateDescriptorPool(m_Device, &pool_info, nullptr, &imguiPool));
+		VK_CHECK(vkCreateDescriptorPool(m_Device.Device, &pool_info, nullptr, &imguiPool));
 
 		// 2: initialize imgui library
 
@@ -989,9 +987,9 @@ namespace QE
 		// this initializes imgui for Vulkan
 		ImGui_ImplVulkan_InitInfo init_info = {};
 		init_info.Instance = m_Instance;
-		init_info.PhysicalDevice = m_PhysicalDevice;
-		init_info.Device = m_Device;
-		init_info.Queue = m_GraphicsQueue;
+		init_info.PhysicalDevice = m_Device.PhysicalDevice;
+		init_info.Device = m_Device.Device;
+		init_info.Queue = m_Device.GraphicsQueue;
 		init_info.DescriptorPool = imguiPool;
 		init_info.MinImageCount = 3;
 		init_info.ImageCount = 3;
@@ -1000,7 +998,7 @@ namespace QE
 		//dynamic rendering parameters for imgui to use
 		init_info.PipelineRenderingCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
 		init_info.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
-		init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &m_SwapchainImageFormat;
+		init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &m_Swapchain.SwapchainImageFormat;
 
 
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
@@ -1014,7 +1012,7 @@ namespace QE
 			ImGui_ImplVulkan_Shutdown();
 			ImGui_ImplGlfw_Shutdown();
 			ImGui::DestroyContext();
-			vkDestroyDescriptorPool(m_Device, imguiPool, nullptr);
+			vkDestroyDescriptorPool(m_Device.Device, imguiPool, nullptr);
 		});
 	}
 
@@ -1042,17 +1040,17 @@ namespace QE
 		sampl.magFilter = VK_FILTER_NEAREST;
 		sampl.minFilter = VK_FILTER_NEAREST;
 
-		vkCreateSampler(m_Device, &sampl, nullptr, &m_DefaultSamplerNearest);
+		vkCreateSampler(m_Device.Device, &sampl, nullptr, &m_DefaultSamplerNearest);
 
 		sampl.magFilter = VK_FILTER_LINEAR;
 		sampl.minFilter = VK_FILTER_LINEAR;
 
-		vkCreateSampler(m_Device, &sampl, nullptr, &m_DefaultSamplerLinear);
+		vkCreateSampler(m_Device.Device, &sampl, nullptr, &m_DefaultSamplerLinear);
 
 		m_CleanupQueue.PushFunction([=]()
 		{
-			vkDestroySampler(m_Device, m_DefaultSamplerNearest, nullptr);
-			vkDestroySampler(m_Device, m_DefaultSamplerLinear, nullptr);
+			vkDestroySampler(m_Device.Device, m_DefaultSamplerNearest, nullptr);
+			vkDestroySampler(m_Device.Device, m_DefaultSamplerLinear, nullptr);
 
 			DestroyImage(m_WhiteImage);
 			DestroyImage(m_GreyImage);
@@ -1094,7 +1092,7 @@ namespace QE
 
 	void VkGraphicsDevice::ImmediateCommandSubmit(std::function<void(VkCommandBuffer cmd)>&& function)
 	{
-		VK_CHECK(vkResetFences(m_Device, 1, &m_ImGuiFence));
+		VK_CHECK(vkResetFences(m_Device.Device, 1, &m_ImGuiFence));
 		VK_CHECK(vkResetCommandBuffer(m_ImGuiCommandBuffer, 0));
 
 		VkCommandBuffer cmd = m_ImGuiCommandBuffer;
@@ -1112,15 +1110,15 @@ namespace QE
 
 		// submit command buffer to the queue and execute it.
 		//  _renderFence will now block until the graphic commands finish execution
-		VK_CHECK(vkQueueSubmit2(m_GraphicsQueue, 1, &submit, m_ImGuiFence));
+		VK_CHECK(vkQueueSubmit2(m_Device.GraphicsQueue, 1, &submit, m_ImGuiFence));
 
-		VK_CHECK(vkWaitForFences(m_Device, 1, &m_ImGuiFence, true, 9999999999));
+		VK_CHECK(vkWaitForFences(m_Device.Device, 1, &m_ImGuiFence, true, 9999999999));
 	}
 
 	void VkGraphicsDevice::DrawImGui(VkCommandBuffer cmd, VkImageView targetImageView)
 	{
 		VkRenderingAttachmentInfo colorAttachment = VkInit::BuildRenderingAttachmentInfo(targetImageView, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_SwapchainExtent, &colorAttachment, nullptr);
+		VkRenderingInfo renderInfo = VkInit::BuildRenderingInfo(m_Swapchain.SwapchainExtent, &colorAttachment, nullptr);
 
 		vkCmdBeginRendering(cmd, &renderInfo);
 
@@ -1204,7 +1202,7 @@ namespace QE
 		VkImageViewCreateInfo viewInfo = VkInit::BuildImageViewCreateInfo(format, newImage.Image, aspectMask);
 		viewInfo.subresourceRange.levelCount = imgInfo.mipLevels;
 
-		VK_CHECK(vkCreateImageView(m_Device, &viewInfo, nullptr, &newImage.ImageView));
+		VK_CHECK(vkCreateImageView(m_Device.Device, &viewInfo, nullptr, &newImage.ImageView));
 
 		return newImage;
 	}
@@ -1248,7 +1246,7 @@ namespace QE
 
 	void VkGraphicsDevice::DestroyImage(const AllocatedImage &image)
 	{
-		vkDestroyImageView(m_Device, image.ImageView, nullptr);
+		vkDestroyImageView(m_Device.Device, image.ImageView, nullptr);
 		vmaDestroyImage(m_Allocator, image.Image, image.Allocation);
 	}
 }
