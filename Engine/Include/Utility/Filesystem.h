@@ -13,6 +13,7 @@ namespace QE::Utils
     inline const QUEST_API std::filesystem::path ModelsPath{ResourcesPath / "Models/"};
     inline const QUEST_API std::filesystem::path TexturesPath{ResourcesPath / "Textures/"};
 
+    QUEST_API void CreateDirectory(const std::filesystem::path& path);
     QUEST_API std::vector<std::string> GetFilesInDirectory(const std::filesystem::path& path);
     QUEST_API bool FileExists(const std::string fileName, const std::filesystem::path& path);
     QUEST_API bool IsFileNewer(const std::filesystem::path& path, const std::filesystem::path& otherPath); // path newer than otherPath -> true

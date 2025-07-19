@@ -9,18 +9,10 @@
 
 namespace QE
 {
-	struct VertexOld
-	{
-		glm::vec3 Position;
-		float uv_x;
-		glm::vec3 Normal;
-		float uv_y;
-		glm::vec4 Color;
-	};
-
 	struct AllocatedBuffer
 	{
 		VkBuffer Buffer;
+		VkDeviceAddress BufferAddress;
 		size_t Size;
 		VmaAllocation Allocation;
 		VmaAllocationInfo AllocationInfo;

@@ -76,6 +76,24 @@ if (NOT Vulkan_FOUND)
 	return()
 endif()
 
+# Find SPIRV-Cross
+set(VulkanSDKPath $ENV{VULKAN_SDK})
+set(SPIRV_CROSS_LIBS
+		${VulkanSDKPath}/Lib/spirv-cross-glsl.lib
+		${VulkanSDKPath}/Lib/spirv-cross-core.lib
+		${VulkanSDKPath}/Lib/spirv-cross-cpp.lib
+		${VulkanSDKPath}/Lib/spirv-cross-reflect.lib
+		${VulkanSDKPath}/Lib/SPIRV.lib
+)
+
+set(SPIRV_CROSS_LIBS-debug
+		${VulkanSDKPath}/Lib/spirv-cross-glsld.lib
+		${VulkanSDKPath}/Lib/spirv-cross-cored.lib
+		${VulkanSDKPath}/Lib/spirv-cross-cppd.lib
+		${VulkanSDKPath}/Lib/spirv-cross-reflectd.lib
+		${VulkanSDKPath}/Lib/SPIRVd.lib
+)
+
 set(VULKAN_LIBRARIES
 	${Vulkan_LIBRARY}
 	${Vulkan_glslang_LIBRARY}
@@ -107,7 +125,7 @@ set(VENDOR_INCLUDES
 )
 
 # Link private includes
-target_link_libraries(${TARGET_NAME} PRIVATE ${VULKAN_LIBRARIES} glfw spdlog assimp)
+target_link_libraries(${TARGET_NAME} PRIVATE ${VULKAN_LIBRARIES} ${SPIRV_CROSS_LIBS} glfw spdlog assimp)
 target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze Tracy::TracyClient)
 
 # Include vendor includes

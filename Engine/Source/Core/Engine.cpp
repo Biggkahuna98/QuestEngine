@@ -78,7 +78,6 @@ namespace QE
 			{
 				ImGui::Begin("Engine Stats");
 					ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
-					ImGui::Text("DeltaTime: %.2f ms", deltaTime);
 					ImGui::Text("Frametime: %.2f ms", Stats.Frametime);
 					ImGui::Text("Triangle Count: %i", Stats.TriangleCount);
 					ImGui::Text("Draws: %i", Stats.DrawCallCount);

@@ -38,7 +38,7 @@ void SandboxGameApplication::Init()
 
     // Create pipelines needed
     CreatePipelines();
-    m_Backpack = LoadModel("Models/backpack.obj").value();
+    m_Backpack = LoadModel("Models/updated_backpack.obj").value();
     m_BackpackTexture = LoadTexture("Textures/diffuse.jpg").value();
 
     //m_RectangleMesh = device->CreateMesh(RectangleVertices, RectangleIndices);

@@ -7,6 +7,12 @@
 
 namespace QE::Utils
 {
+    void CreateDirectory(const std::filesystem::path& path)
+    {
+        if (!std::filesystem::exists(path))
+            std::filesystem::create_directories(path);
+    }
+
     std::vector<std::string> GetFilesInDirectory(const std::filesystem::path &path)
     {
         std::vector<std::string> files{};
@@ -135,14 +141,17 @@ namespace QE::Utils
             return {};
         }
 
-        file.seekg(0, std::ios::beg);
-        std::vector<uint32_t> buffer(size);
+        file.seekg(0);
+        std::vector<uint32_t> buffer(size / sizeof(uint32_t));
         if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
         {
             LOG_ERROR("Failed to read shader cache file: {}", ConvertShaderNameToCacheName(shaderName));
             return {};
         }
         file.close();
+
+        if (buffer[0] != 0x07230203)
+            LOG_ERROR("Invalid SPIR-V magic number: 0x{:08x}", buffer[0]);
 
         return buffer;
     }

@@ -1050,7 +1050,7 @@ namespace VkInit
 
 		VkShaderModuleCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.codeSize = shaderCode.size();
+		createInfo.codeSize = shaderCode.size() * sizeof(uint32_t);
 		createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
 		
 

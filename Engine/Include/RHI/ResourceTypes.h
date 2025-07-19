@@ -16,10 +16,8 @@ namespace QE
     struct QUEST_API Vertex
     {
         alignas(16) glm::vec3 Position;
-        //float uv_x = 0;
         alignas(16) glm::vec3 Normal;
         alignas(16) glm::vec2 TexCoords;
-        //float uv_y = 0;
         alignas(16) glm::vec4 Color;
     };
 

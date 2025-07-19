@@ -93,6 +93,7 @@ namespace QE
 
 		uint32_t GetCurrentFrameNumber() const { return m_CurrentFrameNumber; }
 		FrameData& GetCurrentFrameData();
+		FrameData& GetLastFrameData();
 
 		AllocatedBuffer GetBufferFromHandle(BufferHandle handle);
 		AllocatedImage GetTextureFromHandle(TextureHandle handle);

@@ -25,7 +25,6 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
-#include "ext/matrix_transform.hpp"
 
 // temporary
 #define STB_IMAGE_IMPLEMENTATION
@@ -34,6 +33,7 @@
 // shader compiling
 #include <shaderc/shaderc.hpp>
 #include "Utility/Filesystem.h"
+#include <spirv_cross/spirv_glsl.hpp>
 
 namespace QE
 {
@@ -81,6 +81,9 @@ namespace QE
 	}
 	std::vector<std::uint32_t> CompileShaderToSPIRV(const std::string source, const std::string& name, shaderc_shader_kind kind)
 	{
+		// Make sure the cache exists
+		Utils::CreateDirectory(Utils::ShaderCachePath);
+
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
 		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
@@ -95,6 +98,55 @@ namespace QE
 		}
 
 		return std::vector<std::uint32_t>(result.cbegin(), result.cend());
+	}
+
+	void ReflectSPIRV(const std::string& shaderName)
+	{
+		auto spirv = Utils::LoadSPIRVFromCache(shaderName);
+		if (spirv.empty())
+		{
+			LOG_ERROR("Failed to load SPIRV from cache");
+			return;
+		}
+		LOG_ERROR("SPIRV Size {}", spirv.size());
+
+		try
+		{
+			spirv_cross::CompilerGLSL shader(std::move(spirv));
+			spirv_cross::ShaderResources resources = shader.get_shader_resources();
+			// Push constants
+			for (const auto& pushConstant : resources.push_constant_buffers)
+			{
+				LOG_DEBUG_TAG("Reflection", "Push constant: {}", pushConstant.name);
+			}
+			// Uniform buffers
+			for (const auto& uniformBuffer : resources.uniform_buffers)
+			{
+				LOG_DEBUG_TAG("Reflection", "Uniform buffer: {}", uniformBuffer.name);
+			}
+			// Storage buffers
+			for (const auto& storageBuffer : resources.storage_buffers)
+			{
+				LOG_DEBUG_TAG("Reflection", "Storage buffer: {}", storageBuffer.name);
+			}
+			// Inputs
+			for (const auto& input : resources.stage_inputs)
+			{
+				LOG_DEBUG_TAG("Reflection", "Inputs: {}", input.name);
+			}
+			// Outputs
+			for (const auto& output : resources.stage_outputs)
+			{
+				LOG_DEBUG_TAG("Reflection", "Outputs: {}", output.name);
+			}
+
+		} catch (const std::exception& e)
+		{
+			LOG_ERROR("Exception: {}", e.what());
+		}
+
+
+
 	}
 
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
@@ -189,6 +241,9 @@ namespace QE
 
 		// Stuff for tutorial setup before refactoring
 		TutorialSetupStuff();
+
+		// Temp
+		ReflectSPIRV("colored_triangle_mesh.vert");
 	}
 	void VkGraphicsDevice::ShutdownAndCleanup()
 	{
@@ -239,17 +294,17 @@ namespace QE
 		GetCurrentFrameData().Stats.DrawCallCount = 0;
 		GetCurrentFrameData().Stats.TriangleCount = 0;
 
-		// Wait for the previous frame to finish
+		// Make sure we can start recording a frame again in this command buffer
 		vkWaitForFences(m_Device.Device, 1, &GetCurrentFrameData().RenderFence, VK_TRUE, UINT64_MAX);
+
+		// Request the image from the swapchain
+		vkAcquireNextImageKHR(m_Device.Device, m_Swapchain.Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_Swapchain.CurrentSwapchainImageIndex);
+
 		vkResetFences(m_Device.Device, 1, &GetCurrentFrameData().RenderFence);
 
 		// See if there is a better place later
 		GetCurrentFrameData().CleanupQueue.Flush();
 		GetCurrentFrameData().FrameDescriptors.ClearPools(m_Device.Device);
-
-
-		// Request the image from the swapchain
-		vkAcquireNextImageKHR(m_Device.Device, m_Swapchain.Swapchain, UINT64_MAX, GetCurrentFrameData().SwapchainSemaphore, VK_NULL_HANDLE, &m_Swapchain.CurrentSwapchainImageIndex);
 
 		// Reset command buffer
 		vkResetCommandBuffer(GetCurrentFrameData().CommandBuffer, 0);
@@ -263,12 +318,11 @@ namespace QE
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DrawImage.Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		VkInit::TransitionImage(GetCurrentFrameData().CommandBuffer, m_DepthImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+
 		// Imgui
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-
-		// TEMPORARY - BEGIN A RENDERPASS
 	}
 
 	void VkGraphicsDevice::EndFrame()
@@ -675,6 +729,11 @@ namespace QE
 	FrameData& VkGraphicsDevice::GetCurrentFrameData()
 	{
 		return m_FrameData[m_CurrentFrameNumber % MAX_FRAMES_IN_FLIGHT];
+	}
+
+	FrameData & VkGraphicsDevice::GetLastFrameData()
+	{
+		return m_FrameData[(m_CurrentFrameNumber - 1) % MAX_FRAMES_IN_FLIGHT];
 	}
 
 	AllocatedBuffer VkGraphicsDevice::GetBufferFromHandle(BufferHandle handle)
