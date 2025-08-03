@@ -49,6 +49,7 @@ namespace QE
 		virtual void EndRenderPass(RenderpassDescription desc) = 0;
 
 		// Temporary probably
+		virtual void Draw(BufferHandle vertexBuffer, BufferHandle indexBuffer, TextureHandle texture) = 0;
 		virtual void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) = 0;
 		virtual void WaitForDeviceIdle() = 0;
 		virtual void SetCamera(FlyCamera* camera) = 0;

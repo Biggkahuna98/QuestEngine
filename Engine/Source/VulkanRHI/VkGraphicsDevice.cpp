@@ -144,9 +144,6 @@ namespace QE
 		{
 			LOG_ERROR("Exception: {}", e.what());
 		}
-
-
-
 	}
 
 	VkGraphicsDevice::VkGraphicsDevice(Window* window)
@@ -613,6 +610,7 @@ namespace QE
 		pipeline.PipelineLayout = pipelineLayout;
 		pipeline.Description = desc;
 		pipeline.Shaders = shaders;
+		LOG_DEBUG("Pipeline handle: {}", handle.Value);
 		s_PipelineMap[handle] = pipeline;
 		return handle;
 	}
@@ -643,6 +641,11 @@ namespace QE
 	{
 		// end renderpass - TEMPORARY
 		vkCmdEndRendering(GetCurrentFrameData().CommandBuffer);
+	}
+
+	void VkGraphicsDevice::Draw(BufferHandle vertexBuffer, BufferHandle indexBuffer, TextureHandle texture)
+	{
+
 	}
 
 	void VkGraphicsDevice::DrawMesh(MeshHandle mesh, TextureHandle* texture)

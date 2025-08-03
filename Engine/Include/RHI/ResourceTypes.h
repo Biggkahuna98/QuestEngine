@@ -9,10 +9,12 @@
 
 namespace QE
 {
-    // Invalid handle is 0xFFFFFFFF
-    constexpr int InvalidHandleValue = -1;
+    using ResourceHandle_T = std::uint64_t;
 
-    // Vertex - uv_x and uv_y are tex coords
+    // Invalid handle is 0xFFFFFFFF
+    constexpr ResourceHandle_T InvalidHandleValue = -1;
+
+    // Vertex
     struct QUEST_API Vertex
     {
         alignas(16) glm::vec3 Position;
@@ -32,9 +34,9 @@ namespace QE
     // Handles
     struct QUEST_API BufferHandle
     {
-        std::uint32_t Value;
+        ResourceHandle_T Value;
 
-        BufferHandle(std::uint32_t value = -1) : Value(value) {}
+        BufferHandle(ResourceHandle_T value = InvalidHandleValue) : Value(value) {}
         bool operator==(const BufferHandle& other) const
         {
             return other.Value == Value;
@@ -43,9 +45,9 @@ namespace QE
 
     struct QUEST_API TextureHandle
     {
-        std::uint32_t Value;
+        ResourceHandle_T Value;
 
-        TextureHandle(std::uint32_t value = -1) : Value(value) {}
+        TextureHandle(ResourceHandle_T value = InvalidHandleValue) : Value(value) {}
         bool operator==(const TextureHandle& other) const
         {
             return other.Value == Value;
@@ -54,9 +56,9 @@ namespace QE
 
     struct QUEST_API MeshHandle
     {
-        std::uint32_t Value;
+        ResourceHandle_T Value;
 
-        MeshHandle(std::uint32_t value = -1) : Value(value) {}
+        MeshHandle(ResourceHandle_T value = InvalidHandleValue) : Value(value) {}
         bool operator==(const MeshHandle& other) const
         {
             return other.Value == Value;
@@ -65,9 +67,9 @@ namespace QE
 
     struct QUEST_API ShaderHandle
     {
-        std::uint32_t Value;
+        ResourceHandle_T Value;
 
-        ShaderHandle(std::uint32_t value = -1) : Value(value) {}
+        ShaderHandle(ResourceHandle_T value = InvalidHandleValue) : Value(value) {}
         bool operator==(const ShaderHandle& other) const
         {
             return other.Value == Value;
@@ -76,9 +78,9 @@ namespace QE
 
     struct QUEST_API PipelineHandle
     {
-        std::uint32_t Value;
+        ResourceHandle_T Value;
 
-        PipelineHandle(std::uint32_t value = -1) : Value(value) {}
+        PipelineHandle(ResourceHandle_T value = InvalidHandleValue) : Value(value) {}
         bool operator==(const PipelineHandle& other) const
         {
             return other.Value == Value;
@@ -87,9 +89,9 @@ namespace QE
 
     struct QUEST_API RenderpassHandle
     {
-        std::uint32_t Value;
+        ResourceHandle_T Value;
 
-        RenderpassHandle(std::uint32_t value = -1) : Value(value) {}
+        RenderpassHandle(ResourceHandle_T value = InvalidHandleValue) : Value(value) {}
         bool operator==(const RenderpassHandle& other) const
         {
             return other.Value == Value;
@@ -149,7 +151,7 @@ struct std::hash<QE::BufferHandle>
 {
     std::size_t operator()(const QE::BufferHandle& handle) const noexcept
     {
-        return std::hash<std::uint32_t>()(handle.Value);
+        return std::hash<QE::ResourceHandle_T>()(handle.Value);
     }
 };
 
@@ -158,7 +160,7 @@ struct std::hash<QE::TextureHandle>
 {
     std::size_t operator()(const QE::TextureHandle& handle) const noexcept
     {
-        return std::hash<std::uint32_t>()(handle.Value);
+        return std::hash<QE::ResourceHandle_T>()(handle.Value);
     }
 };
 
@@ -167,7 +169,7 @@ struct std::hash<QE::MeshHandle>
 {
     std::size_t operator()(const QE::MeshHandle& handle) const noexcept
     {
-        return std::hash<std::uint32_t>()(handle.Value);
+        return std::hash<QE::ResourceHandle_T>()(handle.Value);
     }
 };
 
@@ -176,7 +178,7 @@ struct std::hash<QE::ShaderHandle>
 {
     std::size_t operator()(const QE::ShaderHandle& handle) const noexcept
     {
-        return std::hash<std::uint32_t>()(handle.Value);
+        return std::hash<QE::ResourceHandle_T>()(handle.Value);
     }
 };
 
@@ -185,7 +187,7 @@ struct std::hash<QE::PipelineHandle>
 {
     std::size_t operator()(const QE::PipelineHandle& handle) const noexcept
     {
-        return std::hash<std::uint32_t>()(handle.Value);
+        return std::hash<QE::ResourceHandle_T>()(handle.Value);
     }
 };
 
@@ -194,6 +196,6 @@ struct std::hash<QE::RenderpassHandle>
 {
     std::size_t operator()(const QE::RenderpassHandle& handle) const noexcept
     {
-        return std::hash<std::uint32_t>()(handle.Value);
+        return std::hash<QE::ResourceHandle_T>()(handle.Value);
     }
 };

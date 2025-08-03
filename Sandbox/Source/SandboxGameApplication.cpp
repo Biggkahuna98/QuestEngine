@@ -76,7 +76,7 @@ void SandboxGameApplication::Update()
 
     PipelineHandle pipeline = selectedPipeline == 0 ? m_StandardPipeline : m_WireframePipeline;
 
-    device->BeginRenderPass({pipeline});
+    device->BeginRenderPass({.Pipeline = pipeline });
 
     for (const auto& mesh : m_Backpack.Meshes)
         device->DrawMesh(mesh, &m_BackpackTexture);
@@ -90,7 +90,7 @@ void SandboxGameApplication::Update()
         ImGui::End();
     }
 
-    device->EndRenderPass({pipeline});
+    device->EndRenderPass({.Pipeline = pipeline });
 }
 
 void SandboxGameApplication::CreatePipelines()
@@ -103,8 +103,8 @@ void SandboxGameApplication::CreatePipelines()
     // Standard pipeline
     PipelineDescription standardPipelineDesc{};
     standardPipelineDesc.Shaders = {
-        { "colored_triangle_mesh.vert", 0xFFFFFFFF, ShaderStage::Vertex },
-        { "colored_triangle.frag", 0xFFFFFFFF, ShaderStage::Fragment }
+        { "colored_triangle_mesh.vert", InvalidHandleValue, ShaderStage::Vertex },
+        { "colored_triangle.frag", InvalidHandleValue, ShaderStage::Fragment }
     };
     standardPipelineDesc.Topology = PipelineTopology::TriangleList;
     standardPipelineDesc.PrimitiveRestart = false;
@@ -118,12 +118,13 @@ void SandboxGameApplication::CreatePipelines()
     standardPipelineDesc.BlendingType = BlendingType::Alpha;
 
     m_StandardPipeline = device->CreatePipeline(standardPipelineDesc);
+    LOG_INFO("StandardPipelineHandle: {}", m_StandardPipeline.Value);
 
     // Wireframe pipeline
     PipelineDescription wireframePipelineDesc{};
     wireframePipelineDesc.Shaders = {
-        { "colored_triangle_mesh.vert", 0xFFFFFFFF, ShaderStage::Vertex },
-        { "colored_triangle.frag", 0xFFFFFFFF, ShaderStage::Fragment }
+        { "colored_triangle_mesh.vert", InvalidHandleValue, ShaderStage::Vertex },
+        { "colored_triangle.frag", InvalidHandleValue, ShaderStage::Fragment }
     };
     wireframePipelineDesc.Topology = PipelineTopology::TriangleList;
     wireframePipelineDesc.PrimitiveRestart = false;
@@ -137,4 +138,5 @@ void SandboxGameApplication::CreatePipelines()
     wireframePipelineDesc.BlendingType = BlendingType::Alpha;
 
     m_WireframePipeline = device->CreatePipeline(wireframePipelineDesc);
+    LOG_INFO("WireframePipelineHandle: {}", m_WireframePipeline.Value);
 }

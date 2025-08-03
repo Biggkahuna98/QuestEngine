@@ -82,6 +82,7 @@ namespace QE
 		void BeginRenderPass(RenderpassDescription desc) override;
 		void EndRenderPass(RenderpassDescription desc) override;
 
+		void Draw(BufferHandle vertexBuffer, BufferHandle indexBuffer, TextureHandle texture) override;
 		void DrawMesh(MeshHandle mesh, TextureHandle* texture = nullptr) override;
 		void SetCamera(FlyCamera* camera) override;
 
@@ -103,7 +104,7 @@ namespace QE
 
 	private:
 		Window* m_Window;
-		FlyCamera* m_Camera;
+		FlyCamera* m_Camera{};
 
 		VkInstance m_Instance;
 		VkDebugUtilsMessengerEXT m_DebugMessenger;
@@ -111,33 +112,33 @@ namespace QE
 		VulkanDevice m_Device;
 		VulkanSwapchain m_Swapchain;
 
-		VkExtent2D m_WindowExtent; // window size
+		VkExtent2D m_WindowExtent{}; // window size
 		bool m_ResizeRequested = false;
 
 		// Frame data
 		FrameData m_FrameData[MAX_FRAMES_IN_FLIGHT];
 		uint32_t m_CurrentFrameNumber = 0;
 
-		VmaAllocator m_Allocator;
+		VmaAllocator m_Allocator{};
 		DeletionQueue m_CleanupQueue;
 
 		// Drawing resources
-		AllocatedImage m_DrawImage;
-		AllocatedImage m_DepthImage;
-		VkExtent2D m_DrawExtent;
+		AllocatedImage m_DrawImage{};
+		AllocatedImage m_DepthImage{};
+		VkExtent2D m_DrawExtent{};
 
-		DescriptorAllocator m_DescriptorAllocator;
-		VkDescriptorSet m_DrawImageDescriptors;
-		VkDescriptorSetLayout m_DrawImageDescriptorSetLayout;
+		DescriptorAllocator m_DescriptorAllocator{};
+		VkDescriptorSet m_DrawImageDescriptors{};
+		VkDescriptorSetLayout m_DrawImageDescriptorSetLayout{};
 
 		// Pipeline stuff
-		VkPipeline m_GradientPipeline;
-		VkPipelineLayout m_GradientPipelineLayout;
+		VkPipeline m_GradientPipeline{};
+		VkPipelineLayout m_GradientPipelineLayout{};
 
 		// ImGui stuff (refactor later)
-		VkFence m_ImGuiFence;
-		VkCommandBuffer m_ImGuiCommandBuffer;
-		VkCommandPool m_ImGuiCommandPool;
+		VkFence m_ImGuiFence{};
+		VkCommandBuffer m_ImGuiCommandBuffer{};
+		VkCommandPool m_ImGuiCommandPool{};
 
 		// Compute effects
 		std::vector<ComputeEffect> m_BackgroundEffects;
@@ -147,15 +148,15 @@ namespace QE
 		VkPipeline m_CurrentPipeline = nullptr;
 		VkPipelineLayout m_CurrentPipelineLayout = nullptr;
 
-		VkDescriptorSetLayout m_SingleImageDescriptorLayout;
+		VkDescriptorSetLayout m_SingleImageDescriptorLayout{};
 
-		AllocatedImage m_WhiteImage;
-		AllocatedImage m_BlackImage;
-		AllocatedImage m_GreyImage;
-		AllocatedImage m_ErrorCheckerboardImage;
+		AllocatedImage m_WhiteImage{};
+		AllocatedImage m_BlackImage{};
+		AllocatedImage m_GreyImage{};
+		AllocatedImage m_ErrorCheckerboardImage{};
 
-		VkSampler m_DefaultSamplerLinear;
-		VkSampler m_DefaultSamplerNearest;
+		VkSampler m_DefaultSamplerLinear{};
+		VkSampler m_DefaultSamplerNearest{};
 
 		// Initialize Vulkan Resources
 		void InitSwapchain(VkExtent2D windowExtent);
