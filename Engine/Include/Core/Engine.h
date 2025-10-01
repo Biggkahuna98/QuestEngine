@@ -5,6 +5,7 @@
 #include "Core/Window.h"
 #include "RHI/GraphicsDevice.h"
 #include "RHI/GraphicsContext.h"
+#include "Graphics/Renderer.h"
 #include "../Engine/GameApplication.h"
 #include "Graphics/FlyCamera.h"
 
@@ -37,6 +38,8 @@ namespace QE
 		GraphicsDevice& GetGraphicsDevice();
 		GraphicsDevice* GetGraphicsDevicePtr();
 		GameApplication* GetGameApplication();
+		Renderer& GetRenderer();
+		Renderer* GetRendererPtr();
 		FlyCamera* GetCamera();
 	private:
 		bool m_Running = false;
@@ -46,6 +49,8 @@ namespace QE
 
 		std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
 		std::unique_ptr<GraphicsContext> m_GraphicsContext;
+
+		std::unique_ptr<Renderer> m_Renderer;
 
 		GameApplication* m_GameApplication;
 

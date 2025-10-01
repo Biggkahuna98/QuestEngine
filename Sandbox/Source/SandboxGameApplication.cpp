@@ -79,7 +79,10 @@ void SandboxGameApplication::Update()
     device->BeginRenderPass({.Pipeline = pipeline });
 
     for (const auto& mesh : m_Backpack.Meshes)
+    {
         device->DrawMesh(mesh, &m_BackpackTexture);
+    }
+
     //device->DrawMesh(m_Model.Meshes[2]);
     //GetEngine()->GetGraphicsDevicePtr()->DrawMesh(m_Model.Meshes[0]);
 

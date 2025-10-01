@@ -645,7 +645,70 @@ namespace QE
 
 	void VkGraphicsDevice::Draw(BufferHandle vertexBuffer, BufferHandle indexBuffer, TextureHandle texture)
 	{
+		AllocatedBuffer vertBuff = GetBufferFromHandle(vertexBuffer);
+		AllocatedBuffer indexBuff = GetBufferFromHandle(indexBuffer);
+		AllocatedImage tex = GetTextureFromHandle(texture);
 
+		VkCommandBuffer cmd = GetCurrentFrameData().CommandBuffer;
+
+		// Bind a texture
+		VkDescriptorSet imageSet = GetCurrentFrameData().FrameDescriptors.Allocate(m_Device.Device, m_SingleImageDescriptorLayout);
+		{
+			DescriptorWriter writer;
+			writer.WriteImage(0, tex.ImageView, m_DefaultSamplerNearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
+			writer.UpdateSet(m_Device.Device, imageSet);
+		}
+
+		// fix the layout
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_CurrentPipelineLayout, 0, 1, &imageSet, 0, nullptr);
+
+		//set dynamic viewport and scissor
+		VkViewport viewport = {};
+		viewport.x = 0;
+		viewport.y = (float)m_DrawExtent.height;
+		viewport.width = (float)m_DrawExtent.width;
+		viewport.height = -(float)m_DrawExtent.height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor = {};
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		scissor.extent.width = m_DrawExtent.width;
+		scissor.extent.height = m_DrawExtent.height;
+
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		// Push constants for MVP
+		ModelViewProjection mvp = {};
+		mvp.Model = glm::mat4{1.0f};
+		//mvp.Model = glm::scale(mvp.Model, glm::vec3(1.0f, -1.0f, 1.0f));
+		mvp.View = m_Camera->GetViewMatrix();
+		// reverse near and far plane because using reverse-Z depth
+		// https://developer.nvidia.com/blog/visualizing-depth-precision/
+		mvp.Projection = ReversedZPerspective(glm::radians(m_Camera->Zoom), (float)m_Swapchain.SwapchainExtent.width / (float)m_Swapchain.SwapchainExtent.height, 0.1f);
+		//mvp.Projection[1][1] *= -1;
+
+		GPUDrawPushConstants pushConstants{};
+		pushConstants.MVP = mvp;
+		pushConstants.MeshBufferAddress = vertBuff.BufferAddress;
+
+		vkCmdPushConstants(cmd, m_CurrentPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &pushConstants);
+
+		// Bind vertex buffer
+		//VkDeviceSize offsets[] = {0};
+		//vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.Buffer, offsets);
+
+		// Bind index buffer
+		vkCmdBindIndexBuffer(cmd, indexBuff.Buffer, 0, VK_INDEX_TYPE_UINT32);
+
+		//vkCmdDraw(cmd, allocatedBuffer.Size, 1, 0, 0);
+		vkCmdDrawIndexed(cmd, indexBuff.Size, 1, 0, 0, 0);
+		GetCurrentFrameData().Stats.DrawCallCount++;
+		GetCurrentFrameData().Stats.TriangleCount += indexBuff.Size / 3;
 	}
 
 	void VkGraphicsDevice::DrawMesh(MeshHandle mesh, TextureHandle* texture)

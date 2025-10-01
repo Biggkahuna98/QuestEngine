@@ -32,12 +32,17 @@ namespace QE
 		m_TestCamera = std::make_unique<FlyCamera>();
 		m_GraphicsDevice->SetCamera(m_TestCamera.get());
 
+		m_Renderer = std::make_unique<Renderer>();
+
 		m_Running = true;
 	}
 
 	void Engine::Shutdown()
 	{
 		m_GameApplication->Shutdown();
+
+		// Delete renderer first
+		m_Renderer.reset();
 
 		m_GraphicsContext.reset();
 		m_GraphicsDevice->ShutdownAndCleanup();
@@ -148,6 +153,16 @@ namespace QE
 	GameApplication* Engine::GetGameApplication()
 	{
 		return m_GameApplication;
+	}
+
+	Renderer & Engine::GetRenderer()
+	{
+		return *m_Renderer;
+	}
+
+	Renderer * Engine::GetRendererPtr()
+	{
+		return m_Renderer.get();
 	}
 
 	FlyCamera *Engine::GetCamera()

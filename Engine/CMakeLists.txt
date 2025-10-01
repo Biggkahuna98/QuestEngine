@@ -111,6 +111,8 @@ add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/assimp ThirdParty/assimp)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glaze ThirdParty/glaze)
 
 #add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/imgui ThirdParty/imgui)
+# SLANG
+set(PREBUILT_BINARIES $ENV{PREBUILT_BINARIES})
 
 # Set vendor includes
 set(VENDOR_INCLUDES
@@ -122,10 +124,11 @@ set(VENDOR_INCLUDES
 	${THIRD_PARTY_ENGINE_DIR}/stb
 	${THIRD_PARTY_ENGINE_DIR}/glaze/include
 	${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1/public
+		${PREBUILT_BINARIES}/slang/include
 )
 
 # Link private includes
-target_link_libraries(${TARGET_NAME} PRIVATE ${VULKAN_LIBRARIES} ${SPIRV_CROSS_LIBS} glfw spdlog assimp)
+target_link_libraries(${TARGET_NAME} PRIVATE ${VULKAN_LIBRARIES} ${SPIRV_CROSS_LIBS} glfw spdlog assimp ${PREBUILT_BINARIES}/slang/lib/slang.lib ${PREBUILT_BINARIES}/slang/lib/slang-rt.lib ${PREBUILT_BINARIES}/slang/lib/gfx.lib)
 target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze Tracy::TracyClient)
 
 # Include vendor includes
