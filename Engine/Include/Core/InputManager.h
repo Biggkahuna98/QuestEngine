@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-namespace QE
+namespace Quest
 {
 	struct QUEST_API KeyData
 	{

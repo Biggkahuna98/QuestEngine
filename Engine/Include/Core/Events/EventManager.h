@@ -10,7 +10,7 @@
 
 #include "EventBase.h"
 
-namespace QE
+namespace Quest
 {
     class QUEST_API EventManager
     {

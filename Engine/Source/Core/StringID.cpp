@@ -2,7 +2,7 @@
 #include "Utility/Hash.h"
 #include <unordered_map>
 
-namespace QE
+namespace Quest
 {
     static std::unordered_map<StringID, std::string> s_StringIDRegistry;
 

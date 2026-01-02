@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 #include "EventBase.h"
 
-namespace QE
+namespace Quest
 {
     struct QUEST_API TestEvent : public EventBase
     {

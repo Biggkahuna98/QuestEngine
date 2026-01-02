@@ -4,7 +4,7 @@
 #include <deque>
 #include <functional>
 
-namespace QE
+namespace Quest
 {
     struct QUEST_API DeletionQueue
     {

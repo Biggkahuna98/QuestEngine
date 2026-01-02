@@ -5,8 +5,8 @@
 
 #include <Windows.h>
 
-using GetGameAppFn = QE::GameApplication* (*)();
-using DeleteGameAppFn = void (*)(QE::GameApplication*);
+using GetGameAppFn = Quest::GameApplication* (*)();
+using DeleteGameAppFn = void (*)(Quest::GameApplication*);
 
 int main(int argc, char** argv)
 {
@@ -14,10 +14,10 @@ int main(int argc, char** argv)
     InitializeEngineEntrypoint();
 
     // Load the Sandbox program dynamically
-    HMODULE gameLibDLL = LoadLibrary("Sandbox.dll");
+    HMODULE gameLibDLL = LoadLibrary("RHITest.dll");
     if (gameLibDLL == nullptr)
     {
-        LOG_ERROR("Failed to load Sandbox.dll");
+        LOG_ERROR("Failed to load RHITest.dll");
         exit(1);
     }
 
@@ -30,8 +30,8 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    QE::GameApplication* app = GetGameApp();
-    QE::GetEngine()->SetGameApplication(app);
+    Quest::GameApplication* app = GetGameApp();
+    Quest::GetEngine()->SetGameApplication(app);
 
     // Run the engine
     RunEngine();

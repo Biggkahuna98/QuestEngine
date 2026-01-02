@@ -5,8 +5,9 @@
 #include "Core/Events/EventManager.h"
 #include "Core/Profiling.h"
 #include <chrono>
+#include <wrl/client.h>
 
-namespace QE
+namespace Quest
 {
 	// The global engine
 	Engine g_Engine{};
@@ -18,6 +19,7 @@ namespace QE
 
 	void Engine::Initialize()
 	{
+		//Microsoft::WRL::ComPtr<int> test = nullptr;
 		// Default init
 		m_GameApplication = nullptr;
 
@@ -27,10 +29,10 @@ namespace QE
 		m_InputManager = m_Window->GetInputManagerPtr(); // This is the *ACTIVE* input manager from the active window
 
 		// Initialize graphics device and context
-		m_GraphicsDevice = CreateGraphicsDeviceFactory(m_Window.get());
-		m_GraphicsContext = m_GraphicsDevice->CreateGraphicsContext();
+		//m_GraphicsDevice = CreateGraphicsDeviceFactory(m_Window.get());
+		//m_GraphicsContext = m_GraphicsDevice->CreateGraphicsContext();
 		m_TestCamera = std::make_unique<FlyCamera>();
-		m_GraphicsDevice->SetCamera(m_TestCamera.get());
+		//m_GraphicsDevice->SetCamera(m_TestCamera.get());
 
 		m_Renderer = std::make_unique<Renderer>();
 
@@ -44,8 +46,8 @@ namespace QE
 		// Delete renderer first
 		m_Renderer.reset();
 
-		m_GraphicsContext.reset();
-		m_GraphicsDevice->ShutdownAndCleanup();
+		//m_GraphicsContext.reset();
+		//m_GraphicsDevice->ShutdownAndCleanup();
 	}
 
 	void Engine::Run()
@@ -54,7 +56,7 @@ namespace QE
 		constexpr bool RunGraphics = true;
 		float deltaTime = 0.0f; // time between current frame and last frame
 		float lastFrame = 0.0f; // time of last frame
-		RHIStats Stats{};
+		//RHIStats Stats{};
 		while (m_Running)
 		{
 			auto startTime = std::chrono::high_resolution_clock::now();
@@ -77,31 +79,26 @@ namespace QE
 
 			m_TestCamera->Update(deltaTime);
 
-			// Great value headless mode, will definitely fix later on
-			if (RunGraphics) m_GraphicsDevice->BeginFrame();
 			// Draw stats
 			{
-				ImGui::Begin("Engine Stats");
+				/*ImGui::Begin("Engine Stats");
 					ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
 					ImGui::Text("Frametime: %.2f ms", Stats.Frametime);
 					ImGui::Text("Triangle Count: %i", Stats.TriangleCount);
 					ImGui::Text("Draws: %i", Stats.DrawCallCount);
-				ImGui::End();
+				ImGui::End();*/
 			}
 
-			m_TestCamera->DrawDebugInfo();
+			//m_TestCamera->DrawDebugInfo();
 
 			m_GameApplication->Update();
 
-			if (RunGraphics) m_GraphicsDevice->EndFrame();
-
-			if (RunGraphics) m_GraphicsDevice->PresentFrame();
 
 			// Get engine stats
 			auto endTime = std::chrono::high_resolution_clock::now();
 			auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
-			Stats = m_GraphicsDevice->GetStats();
-			Stats.Frametime = elapsed.count() / 1000.0f;
+			//Stats = m_GraphicsDevice->GetStats();
+			//Stats.Frametime = elapsed.count() / 1000.0f;
 
 			PROFILE_MARK_FRAME();
 		}
@@ -125,29 +122,9 @@ namespace QE
 		return *m_Window;
 	}
 
-	Window* Engine::GetWindowPtr()
-	{
-		return m_Window.get();
-	}
-
 	InputManager& Engine::GetInput()
 	{
 		return m_Window->GetInputManager();
-	}
-
-	InputManager* Engine::GetInputPtr()
-	{
-		return &m_Window->GetInputManager();
-	}
-
-	GraphicsDevice& Engine::GetGraphicsDevice()
-	{
-		return *m_GraphicsDevice;
-	}
-
-	GraphicsDevice* Engine::GetGraphicsDevicePtr()
-	{
-		return m_GraphicsDevice.get();
 	}
 
 	GameApplication* Engine::GetGameApplication()
@@ -158,11 +135,6 @@ namespace QE
 	Renderer & Engine::GetRenderer()
 	{
 		return *m_Renderer;
-	}
-
-	Renderer * Engine::GetRendererPtr()
-	{
-		return m_Renderer.get();
 	}
 
 	FlyCamera *Engine::GetCamera()

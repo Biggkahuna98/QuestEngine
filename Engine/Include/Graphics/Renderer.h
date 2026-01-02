@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/QuestExport.h"
 
-namespace QE
+namespace Quest
 {
     class QUEST_API Renderer
     {

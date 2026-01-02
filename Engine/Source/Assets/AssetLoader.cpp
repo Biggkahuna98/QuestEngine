@@ -11,9 +11,9 @@
 #include "Core/Engine.h"
 #include "gtx/quaternion.hpp"
 
-namespace QE
+namespace Quest
 {
-	void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90, bool flipVertical);
+	/*void ProcessNode(aiNode* node, const aiScene* scene, Model* model, bool rotate90, bool flipVertical);
 	MeshHandle ProcessMesh(aiMesh* mesh, const aiScene* scene, bool rotate90, bool flipVertical);
 
     std::optional<Model> LoadModel(const std::string &path, bool rotate90, bool flipVertical, bool flipUVs)
@@ -41,7 +41,7 @@ namespace QE
 			return std::nullopt;
 		}
 
-		Model model;
+		//Model model;
 
     	ProcessNode(scene->mRootNode, scene, &model, rotate90, flipVertical);
 
@@ -161,6 +161,6 @@ namespace QE
     	TextureHandle texture =  g_Engine.GetGraphicsDevice().CreateTexture(desc);
 
     	return texture;
-	}
+	}*/
 
 }

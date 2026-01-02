@@ -34,7 +34,7 @@ void SandboxGameApplication::Init()
     };*/
 
     Engine* engine = QE::GetEngine();
-    GraphicsDevice* device = engine->GetGraphicsDevicePtr();
+    //GraphicsDevice* device = engine->GetGraphicsDevicePtr();
 
     // Create pipelines needed
     CreatePipelines();

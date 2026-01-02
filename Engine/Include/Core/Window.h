@@ -7,7 +7,7 @@
 #include "Core.h"
 #include "Core/InputManager.h"
 
-namespace QE
+namespace Quest
 {
 	class QUEST_API Window
 	{

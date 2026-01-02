@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iostream>
 
-namespace QE::Utils
+namespace Quest::Utils
 {
     void CreateDirectory(const std::filesystem::path& path)
     {

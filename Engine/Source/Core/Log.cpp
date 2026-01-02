@@ -5,9 +5,9 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
-std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> QE::Log::s_Loggers;
+std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> Quest::Log::s_Loggers;
 
-namespace QE
+namespace Quest
 {
 	// Create a default engine logger that is guaranteed to exist
 	void Log::Init()

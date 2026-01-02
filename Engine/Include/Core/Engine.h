@@ -3,13 +3,12 @@
 #include "Core/Core.h"
 #include "Core/Log.h"
 #include "Core/Window.h"
-#include "RHI/GraphicsDevice.h"
-#include "RHI/GraphicsContext.h"
+//#include "RHI/GraphicsDevice.h"
 #include "Graphics/Renderer.h"
 #include "../Engine/GameApplication.h"
 #include "Graphics/FlyCamera.h"
 
-namespace QE
+namespace Quest
 {
 	class QUEST_API Engine final
 	{
@@ -32,14 +31,9 @@ namespace QE
 		void SetGameApplication(GameApplication* gameApplication);
 
 		Window& GetWindow();
-		Window* GetWindowPtr();
 		InputManager& GetInput();
-		InputManager* GetInputPtr();
-		GraphicsDevice& GetGraphicsDevice();
-		GraphicsDevice* GetGraphicsDevicePtr();
 		GameApplication* GetGameApplication();
 		Renderer& GetRenderer();
-		Renderer* GetRendererPtr();
 		FlyCamera* GetCamera();
 	private:
 		bool m_Running = false;
@@ -47,8 +41,7 @@ namespace QE
 		std::unique_ptr<Window> m_Window;
 		InputManager* m_InputManager = nullptr; // active input manager from the active window, updated here for convenience
 
-		std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
-		std::unique_ptr<GraphicsContext> m_GraphicsContext;
+		//std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
 
 		std::unique_ptr<Renderer> m_Renderer;
 

@@ -1,7 +1,7 @@
 #include "Core/Events/EventManager.h"
 #include "Core/Profiling.h"
 
-namespace QE
+namespace Quest
 {
     static EventManager g_EventManager{};
 

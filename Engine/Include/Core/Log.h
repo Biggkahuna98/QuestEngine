@@ -10,40 +10,40 @@
 // Macros for logging
 // Prefer to use the tagged macros for better readability/usability to track down errors
 #ifdef QE_INTERNAL_USE_ONLY // These log macros assume that the logger is "Engine" for internal library use, otherwise the logger name must be specified in the client application
-	#define LOG_TRACE(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Trace, __VA_ARGS__)
-	#define LOG_DEBUG(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Debug, __VA_ARGS__)
-	#define LOG_INFO(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Info, __VA_ARGS__)
-	#define LOG_WARN(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Warning, __VA_ARGS__)
-	#define LOG_ERROR(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Error, __VA_ARGS__)
-	#define LOG_FATAL(...) QE::Log::PrintMessage("Engine", QE::Log::Level::Fatal, __VA_ARGS__)
+	#define LOG_TRACE(...) Quest::Log::PrintMessage("Engine", Quest::Log::Level::Trace, __VA_ARGS__)
+	#define LOG_DEBUG(...) Quest::Log::PrintMessage("Engine", Quest::Log::Level::Debug, __VA_ARGS__)
+	#define LOG_INFO(...) Quest::Log::PrintMessage("Engine", Quest::Log::Level::Info, __VA_ARGS__)
+	#define LOG_WARN(...) Quest::Log::PrintMessage("Engine", Quest::Log::Level::Warning, __VA_ARGS__)
+	#define LOG_ERROR(...) Quest::Log::PrintMessage("Engine", Quest::Log::Level::Error, __VA_ARGS__)
+	#define LOG_FATAL(...) Quest::Log::PrintMessage("Engine", Quest::Log::Level::Fatal, __VA_ARGS__)
 
-	#define LOG_TRACE_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Trace, tag, __VA_ARGS__)
-	#define LOG_DEBUG_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Debug, tag, __VA_ARGS__)
-	#define LOG_INFO_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Info, tag, __VA_ARGS__)
-	#define LOG_WARN_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Warning, tag, __VA_ARGS__)
-	#define LOG_ERROR_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Error, tag, __VA_ARGS__)
-	#define LOG_FATAL_TAG(tag, ...) QE::Log::PrintMessageTag("Engine", QE::Log::Level::Fatal, tag, __VA_ARGS__)
+	#define LOG_TRACE_TAG(tag, ...) Quest::Log::PrintMessageTag("Engine", Quest::Log::Level::Trace, tag, __VA_ARGS__)
+	#define LOG_DEBUG_TAG(tag, ...) Quest::Log::PrintMessageTag("Engine", Quest::Log::Level::Debug, tag, __VA_ARGS__)
+	#define LOG_INFO_TAG(tag, ...) Quest::Log::PrintMessageTag("Engine", Quest::Log::Level::Info, tag, __VA_ARGS__)
+	#define LOG_WARN_TAG(tag, ...) Quest::Log::PrintMessageTag("Engine", Quest::Log::Level::Warning, tag, __VA_ARGS__)
+	#define LOG_ERROR_TAG(tag, ...) Quest::Log::PrintMessageTag("Engine", Quest::Log::Level::Error, tag, __VA_ARGS__)
+	#define LOG_FATAL_TAG(tag, ...) Quest::Log::PrintMessageTag("Engine", Quest::Log::Level::Fatal, tag, __VA_ARGS__)
 	
-	#define LOG_ASSERT(failurePrefix, ...) QE::Log::PrintAssertMessage("Engine", failurePrefix, __VA_ARGS__)
+	#define LOG_ASSERT(failurePrefix, ...) Quest::Log::PrintAssertMessage("Engine", failurePrefix, __VA_ARGS__)
 #else
-	#define LOG_TRACE(...) QE::Log::PrintMessage("Game", QE::Log::Level::Trace, __VA_ARGS__)
-	#define LOG_DEBUG(...) QE::Log::PrintMessage("Game", QE::Log::Level::Debug, __VA_ARGS__)
-	#define LOG_INFO(...) QE::Log::PrintMessage("Game", QE::Log::Level::Info, __VA_ARGS__)
-	#define LOG_WARN(...) QE::Log::PrintMessage("Game", QE::Log::Level::Warning, __VA_ARGS__)
-	#define LOG_ERROR(...) QE::Log::PrintMessage("Game", QE::Log::Level::Error, __VA_ARGS__)
-	#define LOG_FATAL(...) QE::Log::PrintMessage("Game", QE::Log::Level::Fatal, __VA_ARGS__)
+	#define LOG_TRACE(...) Quest::Log::PrintMessage("Game", Quest::Log::Level::Trace, __VA_ARGS__)
+	#define LOG_DEBUG(...) Quest::Log::PrintMessage("Game", Quest::Log::Level::Debug, __VA_ARGS__)
+	#define LOG_INFO(...) Quest::Log::PrintMessage("Game", Quest::Log::Level::Info, __VA_ARGS__)
+	#define LOG_WARN(...) Quest::Log::PrintMessage("Game", Quest::Log::Level::Warning, __VA_ARGS__)
+	#define LOG_ERROR(...) Quest::Log::PrintMessage("Game", Quest::Log::Level::Error, __VA_ARGS__)
+	#define LOG_FATAL(...) Quest::Log::PrintMessage("Game", Quest::Log::Level::Fatal, __VA_ARGS__)
 
-	#define LOG_TRACE_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Trace, tag, __VA_ARGS__)
-	#define LOG_DEBUG_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Debug, tag, __VA_ARGS__)
-	#define LOG_INFO_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Info, tag, __VA_ARGS__)
-	#define LOG_WARN_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Warning, tag, __VA_ARGS__)
-	#define LOG_ERROR_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Error, tag, __VA_ARGS__)
-	#define LOG_FATAL_TAG(tag, ...) QE::Log::PrintMessageTag("Game", QE::Log::Level::Fatal, tag, __VA_ARGS__)
+	#define LOG_TRACE_TAG(tag, ...) Quest::Log::PrintMessageTag("Game", Quest::Log::Level::Trace, tag, __VA_ARGS__)
+	#define LOG_DEBUG_TAG(tag, ...) Quest::Log::PrintMessageTag("Game", Quest::Log::Level::Debug, tag, __VA_ARGS__)
+	#define LOG_INFO_TAG(tag, ...) Quest::Log::PrintMessageTag("Game", Quest::Log::Level::Info, tag, __VA_ARGS__)
+	#define LOG_WARN_TAG(tag, ...) Quest::Log::PrintMessageTag("Game", Quest::Log::Level::Warning, tag, __VA_ARGS__)
+	#define LOG_ERROR_TAG(tag, ...) Quest::Log::PrintMessageTag("Game", Quest::Log::Level::Error, tag, __VA_ARGS__)
+	#define LOG_FATAL_TAG(tag, ...) Quest::Log::PrintMessageTag("Game", Quest::Log::Level::Fatal, tag, __VA_ARGS__)
 
-	#define LOG_ASSERT(failurePrefix, ...) QE::Log::PrintAssertMessage("Game", failurePrefix, __VA_ARGS__)
+	#define LOG_ASSERT(failurePrefix, ...) Quest::Log::PrintAssertMessage("Game", failurePrefix, __VA_ARGS__)
 #endif
 
-namespace QE
+namespace Quest
 {
 	class QUEST_API Log
 	{

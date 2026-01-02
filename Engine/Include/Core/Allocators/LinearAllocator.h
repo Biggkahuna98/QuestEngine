@@ -1,7 +1,7 @@
 #pragma once
 #include "AllocatorBase.h"
 
-namespace QE
+namespace Quest
 {
     class QUEST_API LinearAllocator : public AllocatorBase
     {

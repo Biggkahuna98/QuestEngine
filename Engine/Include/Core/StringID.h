@@ -4,7 +4,7 @@
 #include <string_view>
 #include "Core/Log.h"
 
-namespace QE
+namespace Quest
 {
     using StringID = std::uint64_t;
     QUEST_API StringID InternString(std::string_view string);

@@ -5,7 +5,7 @@
 // https://johnfarrier.com/custom-allocators-in-c-high-performance-memory-management/
 // https://github.com/mtrebi/memory-allocators/tree/master
 
-namespace QE
+namespace Quest
 {
     class QUEST_API AllocatorBase
     {

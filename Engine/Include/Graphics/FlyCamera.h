@@ -4,7 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Core/Events/EngineEvents.h"
 
-namespace QE
+namespace Quest
 {
     // Defaults
     constexpr float g_YAW = -90.0f;

@@ -4,7 +4,7 @@
 #include "Core/Log.h"
 #include <utility>
 
-namespace QE
+namespace Quest
 {
     inline std::size_t align_forward_adjustment(const void* const ptr, const std::size_t & alignment) noexcept
     {

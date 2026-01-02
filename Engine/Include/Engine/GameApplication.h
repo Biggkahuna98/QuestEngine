@@ -2,7 +2,7 @@
 
 #include "Core/Core.h"
 
-namespace QE
+namespace Quest
 {
     class QUEST_API GameApplication
     {

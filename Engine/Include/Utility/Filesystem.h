@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace QE::Utils
+namespace Quest::Utils
 {
     inline const QUEST_API std::filesystem::path ResourcesPath{QE_RESOURCES_FOLDER};
     inline const QUEST_API std::filesystem::path ShaderPath{ResourcesPath / "Shaders/"};

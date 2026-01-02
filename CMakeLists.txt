@@ -24,7 +24,7 @@ add_subdirectory(Engine)
 add_subdirectory(Runtime)
 
 # Add the test project
-add_subdirectory(Sandbox)
+add_subdirectory(RHITest)
 
 # Add tracy profiler project wide
 option(TRACY_ENABLE "" ON)

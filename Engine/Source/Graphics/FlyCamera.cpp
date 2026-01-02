@@ -4,7 +4,7 @@
 
 #include <imgui.h>
 
-namespace QE
+namespace Quest
 {
     FlyCamera::FlyCamera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
                 Front(glm::vec3{0.0f, 0.0f, -1.0f}), MovementSpeed(g_SPEED), MouseSensitivity(g_SENSITIVITY), Zoom(g_ZOOM)
@@ -47,16 +47,16 @@ namespace QE
         if (PauseUpdates)
             return;
 
-        auto inputPtr = GetEngine()->GetInputPtr();
+        auto inputPtr = GetEngine()->GetInput();
 
         float velocity = MovementSpeed * deltaTime;
-        if (inputPtr->IsKeyDown(W))
+        if (inputPtr.IsKeyDown(W))
             Position += Front * velocity;
-        if (inputPtr->IsKeyDown(S))
+        if (inputPtr.IsKeyDown(S))
             Position -= Front * velocity;
-        if (inputPtr->IsKeyDown(A))
+        if (inputPtr.IsKeyDown(A))
             Position -= Right * velocity;
-        if (inputPtr->IsKeyDown(D))
+        if (inputPtr.IsKeyDown(D))
             Position += Right * velocity;
 
         //ProcessMouseMovement();

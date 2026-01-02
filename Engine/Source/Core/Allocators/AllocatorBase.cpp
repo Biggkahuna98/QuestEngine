@@ -1,7 +1,7 @@
 #include "Core/Allocators/AllocatorBase.h"
 #include "Core/Log.h"
 
-namespace QE
+namespace Quest
 {
     AllocatorBase::AllocatorBase(const std::size_t sizeInBytes, void *const addressOfAllocatedMemory) noexcept
         : m_TotalBytes(sizeInBytes), m_UsedBytes(0), m_NumAllocations(0), m_StartPtr(addressOfAllocatedMemory)

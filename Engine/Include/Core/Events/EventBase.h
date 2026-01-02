@@ -2,7 +2,7 @@
 #include "Core/Core.h"
 #include <functional>
 
-namespace QE
+namespace Quest
 {
     using EventID = size_t;
 

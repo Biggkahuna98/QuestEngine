@@ -1,6 +1,6 @@
 #include "Graphics/Renderer.h"
 
-namespace QE
+namespace Quest
 {
     Renderer::Renderer()
     {

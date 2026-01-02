@@ -2,7 +2,7 @@
 #include "Core/Log.h"
 #include "Core/Profiling.h"
 
-namespace QE
+namespace Quest
 {
 	InputManager::InputManager(const std::string_view windowName)
 		: m_WindowName(windowName.data())

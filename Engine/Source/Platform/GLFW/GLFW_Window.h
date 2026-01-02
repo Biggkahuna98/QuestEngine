@@ -5,7 +5,7 @@
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
-namespace QE
+namespace Quest
 {
 	class GLFW_Window : public Window
 	{

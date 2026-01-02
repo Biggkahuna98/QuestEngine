@@ -8,7 +8,7 @@
 #include "Core/Events/EventManager.h"
 #include "Core/Profiling.h"
 
-namespace QE
+namespace Quest
 {
 	static void GLFWErrorCallback(int error, const char* description)
 	{
@@ -50,7 +50,7 @@ namespace QE
 				auto win =  static_cast<GLFW_Window*>(glfwGetWindowUserPointer(window));
 				win->m_ScreenWidth = width;
 				win->m_ScreenHeight = height;
-				g_Engine.GetGraphicsDevice().UpdateWindowSize(width, height);
+				//g_Engine.GetGraphicsDevice().UpdateWindowSize(width, height);
 				WindowResizeEvent event;
 				event.Width = width;
 				event.Height = height;

@@ -5,7 +5,7 @@
 void SignalHandler(int signal)
 {
     // Flush all the loggers on crash
-    QE::Log::FlushAllLoggers();
+    Quest::Log::FlushAllLoggers();
 
     exit(signal);
 }
@@ -13,14 +13,14 @@ void SignalHandler(int signal)
 void TerminateHandler()
 {
     // Same thing as Signal handler, flush loggers
-    QE::Log::FlushAllLoggers();
+    Quest::Log::FlushAllLoggers();
 
     exit(1);
 }
 
 void InitializeEngineEntrypoint()
 {
-    using namespace QE;
+    using namespace Quest;
 
     // Signal handlers
     std::signal(SIGSEGV, SignalHandler);
@@ -39,14 +39,14 @@ void InitializeEngineEntrypoint()
 
 void RunEngine()
 {
-    using namespace QE;
+    using namespace Quest;
 
     g_Engine.Run();
 }
 
 void ShutdownEngineEntrypoint()
 {
-    using namespace QE;
+    using namespace Quest;
 
     g_Engine.Shutdown();
     Log::FlushAllLoggers();

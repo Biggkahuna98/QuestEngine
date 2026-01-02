@@ -2,7 +2,7 @@
 
 #include "Platform/GLFW/GLFW_Window.h"
 
-namespace QE
+namespace Quest
 {
 	bool Window::s_IsBackendInitialized = false;
 	int Window::s_WindowCount = 0;

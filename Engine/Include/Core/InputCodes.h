@@ -3,7 +3,7 @@
 
 #include "Core.h"
 
-namespace QE
+namespace Quest
 {
 	using KeyCode = uint16_t;
 
