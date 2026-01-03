@@ -101,12 +101,15 @@ set(VULKAN_LIBRARIES
 	${Vulkan_SPIRV-Tools_LIBRARY}
 )
 
+message(STATUS "VULKAN INCLUDE DIR: " ${Vulkan_INCLUDE_DIR})
+
 # Get the 3rd party dependencies
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glm ThirdParty/glm)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glfw ThirdParty/glfw)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/spdlog ThirdParty/spdlog)
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
+set(ASSIMP_WARNINGS_AS_ERRORS OFF)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/assimp ThirdParty/assimp)
 add_subdirectory(${THIRD_PARTY_ENGINE_DIR}/glaze ThirdParty/glaze)
 
@@ -128,11 +131,11 @@ set(VENDOR_INCLUDES
 )
 
 # Link private includes
-target_link_libraries(${TARGET_NAME} PRIVATE ${VULKAN_LIBRARIES} ${SPIRV_CROSS_LIBS} glfw spdlog assimp ${PREBUILT_BINARIES}/slang/lib/slang.lib ${PREBUILT_BINARIES}/slang/lib/slang-rt.lib ${PREBUILT_BINARIES}/slang/lib/gfx.lib)
+target_link_libraries(${TARGET_NAME} PRIVATE Vulkan::Vulkan ${SPIRV_CROSS_LIBS} glfw spdlog assimp ${PREBUILT_BINARIES}/slang/lib/slang.lib ${PREBUILT_BINARIES}/slang/lib/slang-rt.lib ${PREBUILT_BINARIES}/slang/lib/gfx.lib)
 target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze Tracy::TracyClient)
 
 # Include vendor includes
-target_include_directories(${TARGET_NAME} PRIVATE ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})
+target_include_directories(${TARGET_NAME} PUBLIC ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})
 target_include_directories(${TARGET_NAME} PUBLIC ${THIRD_PARTY_ENGINE_DIR}/glm/glm ${THIRD_PARTY_ENGINE_DIR}/imgui)
 
 message("Done building Quest Engine")
@@ -146,12 +149,14 @@ if(DEFINED CURRENT_CMAKE_PRESET_NAME)
 			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
 			COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
 	)
+	#[[
 	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
 			COMMAND "${CMAKE_COMMAND}" -E copy
 			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.ilk"
 			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
 			COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
 	)
+	]]
 	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
 			COMMAND "${CMAKE_COMMAND}" -E copy
 			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.pdb"

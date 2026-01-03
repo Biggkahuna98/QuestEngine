@@ -42,8 +42,8 @@ namespace qrhi
         virtual BindingSetHandle CreateBindingSet(const BindingSetDesc& desc, BindingLayout* layout) = 0;
 
         virtual CommandListHandle CreateCommandList(const CommandListParameters& params = CommandListParameters()) = 0;
-        virtual uint64_t ExecuteCommandList(CommandList* commandList, CommandQueue queue = CommandQueue::Graphics) = 0;
-        virtual void QueueWaitForCommandList(CommandQueue waitQueue, CommandQueue executionQueue, uint64_t instance) = 0;
+        virtual uint64_t ExecuteCommandList(CommandList* commandList, QueueType queue = QueueType::Graphics) = 0;
+        virtual void QueueWaitForCommandList(QueueType waitQueue, QueueType executionQueue, uint64_t instance) = 0;
 
         // true if success, false if problem
         virtual bool WaitForIdle() = 0;

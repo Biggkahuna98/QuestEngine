@@ -30,12 +30,14 @@ if(DEFINED CURRENT_CMAKE_PRESET_NAME)
 		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
 		COMMENT "Copying RHITest.dll to QuestRuntime.exe directory"
 	)
+	#[[
 	add_custom_command(TARGET RHITest POST_BUILD
 		COMMAND "${CMAKE_COMMAND}" -E copy
 		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/RHITest/RHITest.ilk"
 		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
 		COMMENT "Copying RHITest.ilk to QuestRuntime.exe directory"
 	)
+	]]
 	add_custom_command(TARGET RHITest POST_BUILD
 		COMMAND "${CMAKE_COMMAND}" -E copy
 		"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/RHITest/RHITest.pdb"

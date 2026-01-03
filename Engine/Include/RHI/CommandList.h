@@ -10,7 +10,7 @@ namespace qrhi
 {
     class Device;
 
-    enum class CommandQueue : uint8_t
+    enum class QueueType : uint8_t
     {
         Graphics,
         Compute,
@@ -22,7 +22,7 @@ namespace qrhi
     struct CommandListParameters
     {
         bool enableImmediateExecution = false;
-        CommandQueue queueType = CommandQueue::Graphics;
+        QueueType queueType = QueueType::Graphics;
     };
 
     class CommandList : public Resource
