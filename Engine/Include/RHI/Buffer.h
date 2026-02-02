@@ -75,11 +75,12 @@ namespace qrhi
     class Buffer : public Resource
     {
     public:
-        [[nodiscard]] virtual const BufferDesc& GetDesc() const = 0;
-        [[nodiscard]] virtual GpuVirtualAddress GetGpuVirtualAddress() const = 0;
+        virtual ~Buffer() = default;
+        virtual const BufferDesc& GetDesc() const = 0;
+        virtual GpuVirtualAddress GetGpuVirtualAddress() const = 0;
     };
 
-    using BufferHandle = Quest::RefCountPtr<Buffer>;
+    using BufferHandle = Handle_T<Buffer>;
 }
 
 namespace std

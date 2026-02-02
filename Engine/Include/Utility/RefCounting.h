@@ -229,6 +229,11 @@ namespace Quest
             return &ptr_;
         }
 
+        void Release() noexcept
+        {
+            InternalRelease();
+        }
+
         T* Detach() noexcept
         {
             T* ptr = ptr_;

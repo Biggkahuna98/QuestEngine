@@ -1,6 +1,7 @@
 #include "SandboxGameApplication.h"
-#include "Core/Log.h"
 
+#include "Launch/Entrypoint.h"
+#include "Core/Log.h"
 #include "Core/Engine.h"
 
 #include "imgui.h"
@@ -12,6 +13,8 @@
 #include "Core/Profiling.h"
 
 #include "Utility/RefCounting.h"
+
+#include "Utility/StaticVector.h"
 
 void RefTest(Quest::RefCountPtr<TestInterface> ref)
 {
@@ -41,6 +44,13 @@ void SandboxGameApplication::Init()
     };*/
 
     Engine* engine = Quest::GetEngine();
+    Quest::StaticVector<int, 10> vec{};
+    LOG_INFO("Size: {}", vec.size());
+    vec.push_back(1);
+    vec.push_back(2);
+    vec.push_back(3);
+    LOG_INFO("Size: {}", vec.size());
+    LOG_INFO("Value: {}", vec[2]);
 }
 
 void SandboxGameApplication::Shutdown()
@@ -60,4 +70,19 @@ void SandboxGameApplication::CreatePipelines()
 
     auto engine = Quest::GetEngine();
 
+}
+
+int main(int argc, char** argv)
+{
+    InitializeEngineEntrypoint();
+
+    Quest::GameApplication* app = new SandboxGameApplication();
+    Quest::GetEngine()->SetGameApplication(app);
+
+    RunEngine();
+
+    delete app;
+    ShutdownEngineEntrypoint();
+
+    return 0;
 }

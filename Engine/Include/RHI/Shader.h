@@ -8,14 +8,17 @@
 
 namespace qrhi
 {
-    enum class ShaderType
+    enum class ShaderType : uint16_t // set to vulkan values
     {
-        None,
-        Compute,
-        Vertex,
-        Fragment,
-        All
+        None = 0x0000,
+        Compute = 0x0020,
+        Vertex = 0x0001,
+        Fragment = 0x0010,
+        AllGraphics = 0x00DF,
+        All = 0x3FFF
     };
+
+    QRHI_ENUM_CLASS_FLAG_OPERATORS(ShaderType)
 
     struct ShaderDesc
     {
@@ -36,7 +39,7 @@ namespace qrhi
         virtual void GetBytecode(const void** ppBytecode, size_t* pSize) const = 0;
     };
 
-    using ShaderHandle = Quest::RefCountPtr<Shader>;
+    using ShaderHandle = Handle_T<Shader>;
 
     class ShaderLibrary : public Resource
     {
@@ -44,5 +47,5 @@ namespace qrhi
         virtual ShaderHandle GetShader(const char* entryName, ShaderType type) = 0;
     };
 
-    using ShaderLibraryHandle = Quest::RefCountPtr<ShaderLibrary>;
+    using ShaderLibraryHandle = Handle_T<ShaderLibrary>;
 }

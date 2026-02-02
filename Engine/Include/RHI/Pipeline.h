@@ -7,6 +7,8 @@
 #include "BindingLayout.h"
 #include "Shader.h"
 
+#include "Utility/StaticVector.h"
+
 namespace qrhi
 {
     enum class PrimitiveType : uint8_t
@@ -39,6 +41,8 @@ namespace qrhi
         constexpr SinglePassState& setRenderTargetIndexOffset(uint16_t value) { renderTargetIndexOffset = value; return *this; }
     };
 
+    using BindingLayoutVector = Quest::StaticVector<BindingLayoutHandle, c_MaxBindingLayouts>;
+
     struct RenderState
     {
         BlendState blendState;
@@ -67,10 +71,10 @@ namespace qrhi
 
         GraphicsPipelineDesc& setPrimitiveType(PrimitiveType value) { primitiveType = value; return *this; }
         GraphicsPipelineDesc& setPatchControlPoints(uint32_t value) { patchControlPoints = value; return *this; }
-        GraphicsPipelineDesc& setInputLayout(InputLayout* value) { inputLayout = value; return *this; }
-        GraphicsPipelineDesc& setVertexShader(Shader* value) { vertexShader = value; return *this; }
+        GraphicsPipelineDesc& setInputLayout(InputLayoutHandle value) { inputLayout = value; return *this; }
+        GraphicsPipelineDesc& setVertexShader(ShaderHandle value) { vertexShader = value; return *this; }
         GraphicsPipelineDesc& setRenderState(const RenderState& value) { renderState = value; return *this; }
-        GraphicsPipelineDesc& addBindingLayout(BindingLayout* layout) { bindingLayouts.push_back(layout); return *this; }
+        GraphicsPipelineDesc& addBindingLayout(BindingLayoutHandle layout) { bindingLayouts.push_back(layout); return *this; }
 
     };
 
@@ -81,15 +85,15 @@ namespace qrhi
         [[nodiscard]] virtual const FramebufferInfo& GetFramebufferInfo() const = 0;
     };
 
-    using GraphicsPipelineHandle = Quest::RefCountPtr<GraphicsPipeline>;
+    using GraphicsPipelineHandle = Handle_T<GraphicsPipeline>;
 
     struct ComputePipelineDesc
     {
         ShaderHandle computeShader;
         std::vector<BindingLayoutHandle> bindingLayouts;
 
-        ComputePipelineDesc& setComputeShader(Shader* value) { computeShader = value; return *this; }
-        ComputePipelineDesc& addBindingLayout(BindingLayout* layout) { bindingLayouts.push_back(layout); return *this; }
+        ComputePipelineDesc& setComputeShader(ShaderHandle value) { computeShader = value; return *this; }
+        ComputePipelineDesc& addBindingLayout(BindingLayoutHandle layout) { bindingLayouts.push_back(layout); return *this; }
     };
 
     class ComputePipeline : public Resource
@@ -98,5 +102,5 @@ namespace qrhi
         [[nodiscard]] virtual const ComputePipelineDesc& GetDesc() const = 0;
     };
 
-    using ComputePipelineHandle = Quest::RefCountPtr<ComputePipeline>;
+    using ComputePipelineHandle = Handle_T<ComputePipeline>;
 }

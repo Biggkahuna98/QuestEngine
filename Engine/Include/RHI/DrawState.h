@@ -54,9 +54,9 @@ namespace qrhi
         Color blendConstantColor{};
         uint8_t dynamicStencilRefValue = 0;
 
-        std::vector<BindingSet> bindings;
+        BindingSetVector bindings;
 
-        std::vector<VertexBufferBinding> vertexBuffers;
+        Quest::StaticVector<VertexBufferBinding, c_MaxVertexAttributes> vertexBuffers;
         IndexBufferBinding indexBuffer;
 
         Buffer* indirectParams = nullptr;
@@ -119,7 +119,7 @@ namespace qrhi
     {
         ComputePipeline* pipeline = nullptr;
 
-        std::vector<BindingSet> bindings;
+        BindingSetVector bindings;
 
         Buffer* indirectParams = nullptr;
 

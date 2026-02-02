@@ -24,7 +24,7 @@ namespace qrhi
 
     struct FramebufferDesc
     {
-        std::vector<FramebufferAttachment> colorAttachments;
+        Quest::StaticVector<FramebufferAttachment, c_MaxRenderTargets> colorAttachments;
         FramebufferAttachment depthAttachment;
 
         FramebufferDesc& addColorAttachment(const FramebufferAttachment& attachment) { colorAttachments.push_back(attachment); return *this; }
@@ -35,7 +35,7 @@ namespace qrhi
 
     struct FramebufferInfo
     {
-        std::vector<Format> colorFormats;
+        Quest::StaticVector<Format, c_MaxRenderTargets> colorFormats;
         Format depthFormat = Format::UNKNOWN;
         uint32_t sampleCount = 1;
         uint32_t sampleQuality = 0;
@@ -60,7 +60,7 @@ namespace qrhi
         bool operator !=(const FramebufferInfo& other) const { return !(*this == other); }
 
     private:
-        static bool formatsEqual(const std::vector<Format> a, const std::vector<Format> b)
+        static bool formatsEqual(const Quest::StaticVector<Format, c_MaxRenderTargets> a, const Quest::StaticVector<Format, c_MaxRenderTargets> b)
         {
             if (a.size() != b.size()) return false;
             for (size_t i = 0; i < a.size(); i++)
@@ -72,11 +72,12 @@ namespace qrhi
     class Framebuffer : public Resource
     {
     public:
-        [[nodiscard]] virtual const FramebufferDesc GetDesc() const = 0;
+        virtual ~Framebuffer() = default;
+        [[nodiscard]] virtual const FramebufferDesc& GetDesc() const = 0;
         [[nodiscard]] virtual const FramebufferInfo& GetInfo() const = 0;
     };
 
-    using FramebufferHandle = Quest::RefCountPtr<Framebuffer>;
+    using FramebufferHandle = Handle_T<Framebuffer>;
 }
 
 namespace std

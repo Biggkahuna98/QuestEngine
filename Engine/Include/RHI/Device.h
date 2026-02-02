@@ -8,13 +8,21 @@
 #include "Sampler.h"
 #include "Framebuffer.h"
 #include "InputLayout.h"
-#include "DrawState.h"
+
+#include <vector>
+
+namespace Quest
+{
+    class Window;
+}
 
 namespace qrhi
 {
     class Device : public Resource
     {
     public:
+        virtual ~Device() = default;
+
         virtual TextureHandle CreateTexture(const TextureDesc& desc) = 0;
 
         virtual BufferHandle CreateBuffer(const BufferDesc& desc) = 0;
@@ -26,9 +34,7 @@ namespace qrhi
 
         virtual SamplerHandle CreateSampler(const SamplerDesc& desc) = 0;
 
-        virtual InputLayoutHandle CreateInputLayout(const VertexAttributeDesc* desc, uint32_t attributeCount, Shader* vertexShader);
-
-        virtual GraphicsAPI GetGraphicsAPI() = 0;
+        virtual InputLayoutHandle CreateInputLayout(const VertexAttributeDesc* desc, uint32_t attributeCount, Shader* vertexShader) = 0;
 
         virtual FramebufferHandle CreateFramebuffer(const FramebufferDesc& desc) = 0;
 
@@ -45,9 +51,29 @@ namespace qrhi
         virtual uint64_t ExecuteCommandList(CommandList* commandList, QueueType queue = QueueType::Graphics) = 0;
         virtual void QueueWaitForCommandList(QueueType waitQueue, QueueType executionQueue, uint64_t instance) = 0;
 
+        virtual GraphicsAPI GetGraphicsAPI() = 0;
+
         // true if success, false if problem
         virtual bool WaitForIdle() = 0;
     };
 
-    using DeviceHandle = Quest::RefCountPtr<Device>;
+    using DeviceHandle = Handle_T<Device>;
+
+    struct DeviceDesc
+    {
+        GraphicsAPI api = GraphicsAPI::Vulkan;
+        Quest::Window* window = nullptr;
+
+        MessageCallback* messageCallback = nullptr;
+
+        std::vector<std::string> requestedInstanceExtensions;
+        std::vector<std::string> requestedDeviceExtensions;
+
+        // Create multiple queues if supported, or only use one
+        bool multipleQueues = true;
+
+        FramesInFlight framesInFlight = FramesInFlight::One;
+    };
+
+    //QUEST_API DeviceHandle CreateDevice(const DeviceDesc& desc);
 }

@@ -14,4 +14,7 @@ namespace Quest
         virtual void Shutdown() = 0;
         virtual void Update() = 0;
     };
+
+    // Define this in the client
+    GameApplication* CreateApplication();
 }

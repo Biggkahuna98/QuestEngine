@@ -1,5 +1,5 @@
 set (TARGET_NAME QuestEngine)
-set (QUEST_LIBRARY_TYPE SHARED)
+set (QUEST_LIBRARY_TYPE STATIC)
 set (CMAKE_CXX_STANDARD 23)
 
 set_property(TARGET PROPERTY USE_FOLDERS ON)
@@ -7,20 +7,26 @@ set_property(TARGET PROPERTY USE_FOLDERS ON)
 message("Building Quest Engine ${QUEST_LIBRARY_TYPE} library...")
 
 file (GLOB_RECURSE SOURCES 
-	Include/*.hpp
-	Include/*.h
-	Include/*.inl
+	#Include/*.hpp
+	#Include/*.h
+	#Include/*.inl
 	Include/*.cpp
 
-	Source/*.h 
-	Source/*.hpp
-	Source/*.inl
+	#Source/*.h
+	#Source/*.hpp
+	#Source/*.inl
 	Source/*.cpp
 
-	Tests/*.h 
-	Tests/*.hpp
-	Tests/*.inl
+	#Tests/*.h
+	#Tests/*.hpp
+	#Tests/*.inl
 	Tests/*.cpp  
+)
+
+file (GLOB_RECURSE PRIVATE_SOURCE_INCLUDES
+		Source/*.h
+		Source/*.hpp
+		Source/*.inl
 )
 
 file (GLOB_RECURSE ENGINE_SHADERS
@@ -44,7 +50,12 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${ENGINE_SHADERS}
 
 #set_source_files_properties(${SHADERS} PROPERTIES HEADER_FILE_ONLY TRUE)
 
-add_library(${TARGET_NAME} ${QUEST_LIBRARY_TYPE} ${SOURCES} ${IMGUI_SOURCES} ${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1/public/TracyClient.cpp)
+if (QUEST_LIBRARY_TYPE STREQUAL "SHARED" OR QUEST_LIBRARY_TYPE STREQUAL "STATIC")
+	add_library(${TARGET_NAME} ${QUEST_LIBRARY_TYPE} ${SOURCES} ${IMGUI_SOURCES} ${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1/public/TracyClient.cpp Source/VulkanRHI/VkBootstrap.cpp)
+else()
+	add_executable(${TARGET_NAME} ${SOURCES} ${IMGUI_SOURCES} ${THIRD_PARTY_ENGINE_DIR}/tracy-0.12.1/public/TracyClient.cpp Source/VulkanRHI/VkBootstrap.cpp)
+endif()
+
 set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE 
@@ -54,16 +65,30 @@ target_compile_definitions(${TARGET_NAME} PRIVATE
 	GLM_FORCE_DEPTH_ZERO_TO_ONE=1
 	QE_PLATFORM_WINDOWS=1
 	QE_INTERNAL_USE_ONLY=1
-	QE_RESOURCES_FOLDER="${QUEST_ROOT}/Engine/Resources/"
+	QE_RESOURCES_FOLDER="${QUEST_ROOT}/Engine/Resources"
+
+		# Vulkan
+		VULKAN_HPP_STORAGE_SHARED
+		VULKAN_HPP_STORAGE_SHARED_EXPORT
+		VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+		VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
 
 	$<$<CONFIG:Debug>:QE_DEBUG_MODE=1> 
 	$<$<CONFIG:RelWithDebInfo>:QE_DEBUG_MODE=1>
 )
 
+if (QUEST_LIBRARY_TYPE STREQUAL "SHARED")
+	target_compile_definitions(${TARGET_NAME} PRIVATE QE_BUILD_SHARED=1 QE_BUILD_AS_EXE=0)
+elseif(QUEST_LIBRARY_TYPE STREQUAL "STATIC")
+	target_compile_definitions(${TARGET_NAME} PRIVATE QE_BUILD_SHARED=0 QE_BUILD_AS_EXE=0)
+else()
+	target_compile_definitions(${TARGET_NAME} PRIVATE QE_BUILD_SHARED=0 QE_BUILD_AS_EXE=1)
+endif()
+
 # Guess I need this line to make sure I can find my local includes
 target_include_directories(${TARGET_NAME} PRIVATE 
-	${CMAKE_CURRENT_SOURCE_DIR}/Include/ # Public includes
-	${CMAKE_CURRENT_SOURCE_DIR}/Source/  # Private includes
+	${CMAKE_CURRENT_SOURCE_DIR}/Include # Public includes
+	${CMAKE_CURRENT_SOURCE_DIR}/Source  # Private includes
 )
 
 # disable the dll interface warning
@@ -138,29 +163,35 @@ target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze Tracy::Tracy
 target_include_directories(${TARGET_NAME} PUBLIC ${Vulkan_INCLUDE_DIR} ${VENDOR_INCLUDES})
 target_include_directories(${TARGET_NAME} PUBLIC ${THIRD_PARTY_ENGINE_DIR}/glm/glm ${THIRD_PARTY_ENGINE_DIR}/imgui)
 
+# Privately allow /Source includes locally
+target_include_directories(${TARGET_NAME} PRIVATE Source)
+
 message("Done building Quest Engine")
 
 if(DEFINED CURRENT_CMAKE_PRESET_NAME)
 	message(STATUS "Preset name: ${CURRENT_CMAKE_PRESET_NAME}")
-	# copy dll to runtime .exe folder
-	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-			COMMAND "${CMAKE_COMMAND}" -E copy
-			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.dll"
-			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
-			COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
-	)
-	#[[
-	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-			COMMAND "${CMAKE_COMMAND}" -E copy
-			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.ilk"
-			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
-			COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
-	)
-	]]
-	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-			COMMAND "${CMAKE_COMMAND}" -E copy
-			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.pdb"
-			"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
-			COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
-	)
+
+	if (QUEST_LIBRARY_TYPE STREQUAL "SHARED")
+		# copy dll to runtime .exe folder
+		add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+				COMMAND "${CMAKE_COMMAND}" -E copy
+				"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.dll"
+				"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
+				COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
+		)
+		#[[
+		add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+				COMMAND "${CMAKE_COMMAND}" -E copy
+				"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.ilk"
+				"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
+				COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
+		)
+		]]
+		add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+				COMMAND "${CMAKE_COMMAND}" -E copy
+				"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Engine/QuestEngine.pdb"
+				"${QUEST_ROOT}/Output/Build/${CURRENT_CMAKE_PRESET_NAME}/Runtime/"
+				COMMENT "Copying QuestEngine.dll to QuestRuntime.exe directory"
+		)
+	endif()
 endif()

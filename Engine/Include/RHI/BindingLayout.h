@@ -198,7 +198,7 @@ namespace qrhi
         [[nodiscard]] virtual const BindlessLayoutDesc* GetBindlessDesc() const = 0; // nullptr if it is a binding layout
     };
 
-    using BindingLayoutHandle = Quest::RefCountPtr<BindingLayout>;
+    using BindingLayoutHandle = Handle_T<BindingLayout>;
 
     struct BindingSetItem
     {
@@ -404,7 +404,7 @@ namespace qrhi
         BindingSetItem& setFormat(Format value) { format = value; return *this; }
         BindingSetItem& setDimension(TextureDimension value) { dimension = value; return *this; }
         BindingSetItem& setSubresources(TextureSubresourceSet value) { subresources = value; return *this; }
-        BindingSetItem& setRange(BufferRange value) { range = value; return *this; }
+        BindingSetItem& setRange(BufferRange value) { bufferRange = value; return *this; }
     };
 
     static_assert(sizeof(BindingSetItem) == 40, "sizeof(BindingSetItem) is supposed to be 40 bytes");
@@ -442,7 +442,9 @@ namespace qrhi
         [[nodiscard]] virtual BindingLayout* GetLayout() const = 0;
     };
 
-    using BindingSetHandle = Quest::RefCountPtr<BindingSet>;
+    using BindingSetHandle = Handle_T<BindingSet>;
+
+    using BindingSetVector = Quest::StaticVector<BindingSet*, c_MaxBindingLayouts>;
 }
 
 namespace std

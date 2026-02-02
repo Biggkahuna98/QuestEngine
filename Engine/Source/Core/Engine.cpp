@@ -17,9 +17,24 @@ namespace Quest
 		return &g_Engine;
 	}
 
+	class EngineMessageCallback : public qrhi::MessageCallback
+	{
+	public:
+		void Message(qrhi::MessageSeverity severity, std::string_view message) override
+		{
+			switch (severity)
+			{
+				case qrhi::MessageSeverity::Info: LOG_INFO("{}", message); break;
+				case qrhi::MessageSeverity::Warning: LOG_WARN("{}", message); break;
+				case qrhi::MessageSeverity::Error: LOG_ERROR("{}", message); break;
+			}
+		}
+	};
+
+	std::unique_ptr<qrhi::MessageCallback> g_RHIMessageCallback = std::make_unique<EngineMessageCallback>();
+
 	void Engine::Initialize()
 	{
-		//Microsoft::WRL::ComPtr<int> test = nullptr;
 		// Default init
 		m_GameApplication = nullptr;
 
@@ -30,7 +45,12 @@ namespace Quest
 
 		// Initialize graphics device and context
 		//m_GraphicsDevice = CreateGraphicsDeviceFactory(m_Window.get());
-		//m_GraphicsContext = m_GraphicsDevice->CreateGraphicsContext();
+		qrhi::DeviceDesc deviceDesc{};
+		deviceDesc.window = m_Window.get();
+		deviceDesc.messageCallback = g_RHIMessageCallback.get();
+		m_GraphicsContext.deviceManager = qrhi::CreateDeviceManager(deviceDesc);
+		m_GraphicsContext.device = m_GraphicsContext.deviceManager->GetDevice();
+
 		m_TestCamera = std::make_unique<FlyCamera>();
 		//m_GraphicsDevice->SetCamera(m_TestCamera.get());
 
@@ -41,6 +61,7 @@ namespace Quest
 
 	void Engine::Shutdown()
 	{
+		LOG_INFO("Shutting down engine...");
 		m_GameApplication->Shutdown();
 
 		// Delete renderer first
@@ -48,6 +69,9 @@ namespace Quest
 
 		//m_GraphicsContext.reset();
 		//m_GraphicsDevice->ShutdownAndCleanup();
+		m_GraphicsContext.device.reset();
+		m_GraphicsContext.deviceManager->Shutdown();
+		m_GraphicsContext.deviceManager.reset();
 	}
 
 	void Engine::Run()
@@ -79,6 +103,8 @@ namespace Quest
 
 			m_TestCamera->Update(deltaTime);
 
+			m_GraphicsContext.deviceManager->BeginFrame();
+
 			// Draw stats
 			{
 				/*ImGui::Begin("Engine Stats");
@@ -100,6 +126,8 @@ namespace Quest
 			//Stats = m_GraphicsDevice->GetStats();
 			//Stats.Frametime = elapsed.count() / 1000.0f;
 
+			m_GraphicsContext.deviceManager->EndFrame();
+			m_GraphicsContext.deviceManager->PresentFrame();
 			PROFILE_MARK_FRAME();
 		}
 	}

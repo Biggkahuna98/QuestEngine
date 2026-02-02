@@ -31,9 +31,9 @@ namespace qrhi
     class InputLayout : public Resource
     {
     public:
-        [[nodiscard]] virtual uint32_t getNumAttributes() const = 0;
-        [[nodiscard]] virtual const VertexAttributeDesc* getAttributeDesc(uint32_t index) const = 0;
+        [[nodiscard]] virtual uint32_t GetNumAttributes() const = 0;
+        [[nodiscard]] virtual const VertexAttributeDesc* GetAttributeDesc(uint32_t index) const = 0;
     };
 
-    using InputLayoutHandle = Quest::RefCountPtr<InputLayout>;
+    using InputLayoutHandle = Handle_T<InputLayout>;
 }

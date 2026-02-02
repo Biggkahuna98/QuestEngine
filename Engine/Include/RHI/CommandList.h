@@ -15,6 +15,7 @@ namespace qrhi
         Graphics,
         Compute,
         Copy,
+        Present,
 
         Count
     };
@@ -28,11 +29,20 @@ namespace qrhi
     class CommandList : public Resource
     {
     public:
+        virtual ~CommandList() = default;
         // Prepares the list for recording commands
         // must be called first before other commands are issued
         virtual void Begin() = 0;
         // Ends the recording, prepares for execution
         virtual void End() = 0;
+
+        virtual void ClearTexture(Texture* t, TextureSubresourceSet subresources, const Color& clearColor) = 0;
+
+        virtual void ClearDepthStencilTexture(Texture* t, TextureSubresourceSet subresources, bool clearDepth, float depth, bool clearStencil, uint8_t stencil) = 0;
+        virtual void ClearTextureUInt(Texture* t, TextureSubresourceSet subresources, uint32_t clearColor) = 0;
+
+        virtual void CopyTexture(Texture* src, const TextureSlice& srcSlice, Texture* dst, const TextureSlice& dstSlice) = 0;
+        virtual void WriteTexture(Texture* dst, uint32_t arraySlice, uint32_t mipLevel, const void* data, size_t x, size_t y = 0) = 0;
 
         // Upload data to the buffer
         virtual void WriteBuffer(Buffer* buffer, const void* data, size_t dataSize, uint64_t dstOffsetBytes = 0) = 0;
@@ -72,5 +82,5 @@ namespace qrhi
         virtual Device* GetDevice() = 0;
     };
 
-    using CommandListHandle = Quest::RefCountPtr<CommandList>;
+    using CommandListHandle = Handle_T<CommandList>;
 }

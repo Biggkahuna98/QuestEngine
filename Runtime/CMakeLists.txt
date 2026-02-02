@@ -9,7 +9,7 @@ file (GLOB_RECURSE SOURCES
 )
 
 add_executable(QuestRuntime ${SOURCES})
-target_link_libraries(QuestRuntime PRIVATE QuestEngine)
+#target_link_libraries(QuestRuntime PRIVATE QuestEngine)
 target_include_directories(QuestRuntime PRIVATE ${QUEST_ROOT}/Engine/Include/)
 
 add_custom_command(TARGET QuestRuntime POST_BUILD

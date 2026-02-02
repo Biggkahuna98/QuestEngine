@@ -2,7 +2,17 @@
 
 #include <cmath>
 #include <vector>
-#include "Utility/RefCounting.h"
+#include <memory>
+#include "Utility/StaticVector.h"
+
+// Enum flag operators
+#define QRHI_ENUM_CLASS_FLAG_OPERATORS(T) \
+    inline T operator | (T a, T b) { return T(uint32_t(a) | uint32_t(b)); } \
+    inline T operator & (T a, T b) { return T(uint32_t(a) & uint32_t(b)); } \
+    inline T operator ~ (T a) { return T(~uint32_t(a)); } \
+    inline bool operator !(T a) { return uint32_t(a) == 0; } \
+    inline bool operator ==(T a, uint32_t b) { return uint32_t(a) == b; } \
+    inline bool operator !=(T a, uint32_t b) { return uint32_t(a) != b; }
 
 namespace qrhi
 {
@@ -14,12 +24,21 @@ namespace qrhi
     static constexpr uint32_t c_MaxPushConstantSize = 128;
     static constexpr uint32_t c_MaxBindlessSlots = 16;
 
+    template <class T>
+    using Handle_T = std::shared_ptr<T>;
+
+    template <class T>
+    using WeakHandle_T = std::weak_ptr<T>;
+
     // RHI resources should derive from this
-    class Resource : public Quest::IRefCountable
+    class Resource
     {
-    protected:
-        ~Resource() override = default;
+    public:
+        //Resource() {}
+        //virtual ~Resource() {}
     };
+
+    using ResourceHandle = Handle_T<Resource>;
 
     struct Color
     {
@@ -113,6 +132,45 @@ namespace qrhi
         VK_Pipeline
     };
 
+    enum class MessageSeverity : uint8_t
+    {
+        Info,
+        Warning,
+        Error
+    };
+
+    class MessageCallback
+    {
+    public:
+        virtual ~MessageCallback() = default;
+
+        virtual void Message(MessageSeverity severity, std::string_view message) = 0;
+
+        MessageCallback(const MessageCallback&) = delete;
+        MessageCallback(MessageCallback&&) = delete;
+        MessageCallback& operator=(const MessageCallback&) = delete;
+        MessageCallback& operator=(MessageCallback&&) = delete;
+    protected:
+        MessageCallback() = default;
+    };
+
+    // If the message callback is empty, a default void message callback will be provided for the device
+    class VoidMessageCallback : public MessageCallback
+    {
+    public:
+        void Message(MessageSeverity severity, std::string_view message) override {}
+    };
+
+    // You can request a certain amount of frames in flight, but it might not be respected
+    // 1 frame in flight = single buffering, 2 frames in flight = double buffering, etc.
+    enum class FramesInFlight : uint8_t
+    {
+        One,
+        Two,
+        Three,
+        Four
+    };
+
     enum class Format : uint8_t
     {
         UNKNOWN,
@@ -165,6 +223,28 @@ namespace qrhi
         RGBA32_SINT,
         RGBA32_FLOAT,
 
+        D16,
+        D24S8,
+        X24G8_UINT,
+        D32,
+        D32S8,
+        X32G8_UINT,
+
+        BC1_UNORM,
+        BC1_UNORM_SRGB,
+        BC2_UNORM,
+        BC2_UNORM_SRGB,
+        BC3_UNORM,
+        BC3_UNORM_SRGB,
+        BC4_UNORM,
+        BC4_SNORM,
+        BC5_UNORM,
+        BC5_SNORM,
+        BC6H_UFLOAT,
+        BC6H_SFLOAT,
+        BC7_UNORM,
+        BC7_UNORM_SRGB,
+
         COUNT
     };
 
@@ -174,6 +254,13 @@ namespace qrhi
         Normalized,
         Float,
         DepthStencil
+    };
+
+    static inline std::unordered_map<Format, FormatUsedWith> DepthStencilFormatMap = {
+      {Format::D16, FormatUsedWith::DepthStencil},
+        {Format::D24S8, FormatUsedWith::DepthStencil},
+        {Format::D32, FormatUsedWith::DepthStencil},
+        {Format::D32S8, FormatUsedWith::DepthStencil},
     };
 
     enum class CPUAccessMode : uint8_t
@@ -321,8 +408,8 @@ namespace qrhi
     {
         // leaving these vectors empty means no state is set
         // TODO: refactor to be a fixed capacity array later
-        std::vector<Viewport> viewports;
-        std::vector<Rect> scissorRects;
+        Quest::StaticVector<Viewport, c_MaxViewports> viewports;
+        Quest::StaticVector<Rect, c_MaxViewports> scissorRects;
 
         ViewportState& addViewport(const Viewport& v) { viewports.push_back(v); return *this; }
         ViewportState& addScissorRect(const Rect& r) { scissorRects.push_back(r); return *this; }

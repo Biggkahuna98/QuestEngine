@@ -40,8 +40,11 @@ namespace qrhi
         std::string debugName;
 
         bool isRenderTarget = false;
+        bool isShaderResource = false;
         bool isUAV = false;
         bool isVirtual = false;
+        bool isTiled = false;
+        bool isTypeless = false;
         Color clearValue;
         bool useClearValue = false;
         bool keepInitialState = false;
@@ -137,10 +140,11 @@ namespace qrhi
     class Texture : public Resource
     {
     public:
+        virtual ~Texture() = default;
         [[nodiscard]] virtual const TextureDesc& GetDesc() const = 0;
     };
 
-    using TextureHandle = Quest::RefCountPtr<Texture>;
+    using TextureHandle = Handle_T<Texture>;
 }
 
 namespace std

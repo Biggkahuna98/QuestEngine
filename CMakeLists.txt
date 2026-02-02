@@ -21,7 +21,7 @@ set(THIRD_PARTY_ENGINE_DIR ${THIRD_PARTY_DIR}/Engine)
 add_subdirectory(Engine)
 
 # Add the runtime loader
-add_subdirectory(Runtime)
+#add_subdirectory(Runtime)
 
 # Add the test project
 add_subdirectory(RHITest)

@@ -7,11 +7,11 @@ namespace qrhi
 {
     enum class SamplerAddressMode : uint8_t
     {
-        Clamp,
-        Wrap,
+        ClampToEdge,
+        Repeat, // wrap
         ClampToBorder,
-        Mirror,
-        MirrorCClampToEdge
+        MirrorRepeat,
+        MirrorClampToEdge
     };
 
     enum class SamplerReductionType : uint8_t
@@ -31,9 +31,9 @@ namespace qrhi
         bool minFilter = true;
         bool magFilter = true;
         bool mipFilter = true;
-        SamplerAddressMode addressU = SamplerAddressMode::Clamp;
-        SamplerAddressMode addressV = SamplerAddressMode::Clamp;
-        SamplerAddressMode addressW = SamplerAddressMode::Clamp;
+        SamplerAddressMode addressU = SamplerAddressMode::ClampToEdge;
+        SamplerAddressMode addressV = SamplerAddressMode::ClampToEdge;
+        SamplerAddressMode addressW = SamplerAddressMode::ClampToEdge;
         SamplerReductionType reductionType = SamplerReductionType::Standard;
 
         SamplerDesc& setBorderColor(const Color& color) { borderColor = color; return *this; }
@@ -56,5 +56,5 @@ namespace qrhi
         [[nodiscard]] virtual const SamplerDesc& GetDesc() const = 0;
     };
 
-    using SamplerHandle = Quest::RefCountPtr<Sampler>;
+    using SamplerHandle = Handle_T<Sampler>;
 }

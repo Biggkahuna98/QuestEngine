@@ -9,6 +9,10 @@ namespace Quest
     class StaticVector
     {
     public:
+        using ArrayType = std::array<T, max_elements>;
+        using iterator = typename ArrayType::iterator;
+        using const_iterator = typename ArrayType::const_iterator;
+
         StaticVector() = default;
         StaticVector(std::initializer_list<T> list)
         {
@@ -88,19 +92,20 @@ namespace Quest
             return m_Data.data();
         }
 
-        std::array<T, max_elements>::iterator begin() { return m_Data.begin(); }
-        std::array<T, max_elements>::const_iterator cbegin() { return m_Data.cbegin(); }
+        const_iterator begin() const { return m_Data.begin(); }
+        const_iterator cbegin() const { return m_Data.cbegin(); }
 
-        std::array<T, max_elements>::iterator end() { return m_Data.end(); }
-        std::array<T, max_elements>::const_iterator cend() { return m_Data.cend(); }
+        iterator end() { return iterator(begin() + m_CurrentSize); }
+        const_iterator end() const { return cend(); }
+        const_iterator cend() const { return const_iterator(cbegin() + m_CurrentSize); }
 
         bool empty() const { return m_CurrentSize == 0; }
         uint32_t size() const { return m_CurrentSize; }
         uint32_t max_size() const { return max_elements; }
 
-        std::array<T, max_elements>& GetUnderlyingArray() { return m_Data; }
+        ArrayType& GetUnderlyingArray() { return m_Data; }
     private:
-        std::array<T, max_elements> m_Data;
+        ArrayType m_Data;
         uint32_t m_CurrentSize = 0;
     };
 }
