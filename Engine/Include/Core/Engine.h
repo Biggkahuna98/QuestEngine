@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 #include "Core/Log.h"
 #include "Core/Window.h"
-#include "RHI/DeviceManager.h"
+//#include "RHI/DeviceManager.h"
 #include "Graphics/Renderer.h"
 #include "../Engine/GameApplication.h"
 #include "Graphics/FlyCamera.h"
@@ -42,12 +42,12 @@ namespace Quest
 		InputManager* m_InputManager = nullptr; // active input manager from the active window, updated here for convenience
 
 		//std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
-		struct GraphicsContext
+		/*struct GraphicsContext
 		{
 			std::unique_ptr<qrhi::DeviceManager> deviceManager;
 			qrhi::DeviceHandle device;
 		};
-		GraphicsContext m_GraphicsContext;
+		GraphicsContext m_GraphicsContext;*/
 
 		std::unique_ptr<Renderer> m_Renderer;
 
