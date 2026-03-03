@@ -155,8 +155,15 @@ set(VENDOR_INCLUDES
 		${PREBUILT_BINARIES}/slang/include
 )
 
+set(SLANG_LIBS
+		${PREBUILT_BINARIES}/slang/lib/slang.lib
+		${PREBUILT_BINARIES}/slang/lib/slang-rt.lib
+		${PREBUILT_BINARIES}/slang/lib/gfx.lib
+		${PREBUILT_BINARIES}/slang/lib/slang-compiler.lib
+)
+
 # Link private includes
-target_link_libraries(${TARGET_NAME} PRIVATE Vulkan::Vulkan ${SPIRV_CROSS_LIBS} glfw spdlog assimp ${PREBUILT_BINARIES}/slang/lib/slang.lib ${PREBUILT_BINARIES}/slang/lib/slang-rt.lib ${PREBUILT_BINARIES}/slang/lib/gfx.lib)
+target_link_libraries(${TARGET_NAME} PRIVATE Vulkan::Vulkan ${SPIRV_CROSS_LIBS} glfw spdlog assimp ${SLANG_LIBS})
 target_link_libraries(${TARGET_NAME} PUBLIC glm spdlog glaze::glaze Tracy::TracyClient)
 
 # Include vendor includes

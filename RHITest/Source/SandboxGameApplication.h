@@ -20,7 +20,7 @@ private:
     void CreatePipelines();
 };
 
-class SANDBOX_API TestInterface : public Quest::IRefCountable
+/*class SANDBOX_API TestInterface : public Quest::IRefCountable
 {
 public:
     virtual void Interface() = 0;
@@ -34,4 +34,4 @@ public:
     ~TestStruct() = default;
 
     void Interface() override { x++; }
-};
+};*/

@@ -92,6 +92,7 @@ namespace Quest
             return m_Data.data();
         }
 
+        iterator begin() { return m_Data.begin(); }
         const_iterator begin() const { return m_Data.begin(); }
         const_iterator cbegin() const { return m_Data.cbegin(); }
 

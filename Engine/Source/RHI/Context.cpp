@@ -9,7 +9,7 @@ namespace qrhi
     {
         switch (desc.graphicsAPI)
         {
-        case API::Vulkan: return std::make_shared<vulkan::VulkanContext>(desc);
+        case API::Vulkan: return Quest::MakeRefCounted<qrhi::vulkan::VulkanContext>(desc);
         case API::None: return nullptr;
         }
     }

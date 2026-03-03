@@ -22,6 +22,17 @@ target_compile_definitions(RHITest PRIVATE
 target_include_directories(RHITest PRIVATE ${QUEST_ROOT}/Engine/Include/ ${THIRD_PARTY_ENGINE_DIR}/imgui)
 target_link_libraries(RHITest QuestEngine)
 
+# copy slang DLLs
+file(GLOB SLANG_DLLS
+		$ENV{PREBUILT_BINARIES}/slang/bin/*.dll
+)
+
+add_custom_command(TARGET RHITest POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		${SLANG_DLLS}
+		$<TARGET_FILE_DIR:RHITest>
+)
+
 if(DEFINED CURRENT_CMAKE_PRESET_NAME)
 	message(STATUS "Preset name: ${CURRENT_CMAKE_PRESET_NAME}")
 	# copy dll to runtime .exe folder

@@ -5,7 +5,8 @@
 #include "Core/Events/EventManager.h"
 #include "Core/Profiling.h"
 #include <chrono>
-#include <wrl/client.h>
+
+#include <string_view>
 
 namespace Quest
 {
@@ -17,21 +18,21 @@ namespace Quest
 		return &g_Engine;
 	}
 
-	/*class EngineMessageCallback : public qrhi::MessageCallback
+	class EngineMessageCallback : public qrhi::MessageCallback
 	{
 	public:
-		void Message(qrhi::MessageSeverity severity, std::string_view message) override
+		void Message(Severity level, std::string_view message) override
 		{
-			switch (severity)
+			switch (level)
 			{
-				case qrhi::MessageSeverity::Info: LOG_INFO("{}", message); break;
-				case qrhi::MessageSeverity::Warning: LOG_WARN("{}", message); break;
-				case qrhi::MessageSeverity::Error: LOG_ERROR("{}", message); break;
+				case Severity::Info: LOG_INFO("{}", message); break;
+				case Severity::Warning: LOG_WARN("{}", message); break;
+				case Severity::Error: LOG_ERROR("{}", message); break;
 			}
 		}
-	};*/
+	};
 
-	//std::unique_ptr<qrhi::MessageCallback> g_RHIMessageCallback = std::make_unique<EngineMessageCallback>();
+	std::unique_ptr<qrhi::MessageCallback> g_RHIMessageCallback = std::make_unique<EngineMessageCallback>();
 
 	void Engine::Initialize()
 	{
@@ -43,13 +44,13 @@ namespace Quest
 		m_Window = CreateWindowFactory("Quest Engine", 2560, 1440);
 		m_InputManager = m_Window->GetInputManagerPtr(); // This is the *ACTIVE* input manager from the active window
 
-		// Initialize graphics device and context
-		//m_GraphicsDevice = CreateGraphicsDeviceFactory(m_Window.get());
-		//qrhi::DeviceDesc deviceDesc{};
-		//deviceDesc.window = m_Window.get();
-		//deviceDesc.messageCallback = g_RHIMessageCallback.get();
-		//m_GraphicsContext.deviceManager = qrhi::CreateDeviceManager(deviceDesc);
-		//m_GraphicsContext.device = m_GraphicsContext.deviceManager->GetDevice();
+		// Initialize the context and device
+		qrhi::ContextDesc contextDesc{};
+		contextDesc.messageCallback = g_RHIMessageCallback.get();
+		contextDesc.window = m_Window.get();
+		m_GraphicsContext = qrhi::CreateContext(contextDesc);
+
+		m_GraphicsDevice = m_GraphicsContext->CreateDevice();
 
 		m_TestCamera = std::make_unique<FlyCamera>();
 		//m_GraphicsDevice->SetCamera(m_TestCamera.get());
@@ -67,11 +68,10 @@ namespace Quest
 		// Delete renderer first
 		m_Renderer.reset();
 
-		//m_GraphicsContext.reset();
-		//m_GraphicsDevice->ShutdownAndCleanup();
-		//m_GraphicsContext.device.reset();
-		//m_GraphicsContext.deviceManager->Shutdown();
-		//m_GraphicsContext.deviceManager.reset();
+		// Probably not necessary for the device but it's ok
+		m_GraphicsDevice.Reset();
+		m_GraphicsContext->Shutdown();
+		m_GraphicsContext.Reset();
 	}
 
 	void Engine::Run()

@@ -3,7 +3,7 @@
 #include "Core/Core.h"
 #include "Core/Log.h"
 #include "Core/Window.h"
-//#include "RHI/DeviceManager.h"
+#include "RHI/Context.h"
 #include "Graphics/Renderer.h"
 #include "../Engine/GameApplication.h"
 #include "Graphics/FlyCamera.h"
@@ -35,19 +35,17 @@ namespace Quest
 		GameApplication* GetGameApplication();
 		Renderer& GetRenderer();
 		FlyCamera* GetCamera();
+
+		qrhi::ContextHandle GetGraphicsContext() { return m_GraphicsContext; }
+		qrhi::DeviceHandle GetGraphicsDevice() { return m_GraphicsDevice; }
 	private:
 		bool m_Running = false;
 
 		std::unique_ptr<Window> m_Window;
 		InputManager* m_InputManager = nullptr; // active input manager from the active window, updated here for convenience
 
-		//std::unique_ptr<GraphicsDevice> m_GraphicsDevice;
-		/*struct GraphicsContext
-		{
-			std::unique_ptr<qrhi::DeviceManager> deviceManager;
-			qrhi::DeviceHandle device;
-		};
-		GraphicsContext m_GraphicsContext;*/
+		qrhi::ContextHandle m_GraphicsContext;
+		qrhi::DeviceHandle m_GraphicsDevice;
 
 		std::unique_ptr<Renderer> m_Renderer;
 

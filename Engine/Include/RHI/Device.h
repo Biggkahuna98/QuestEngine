@@ -1,20 +1,22 @@
 #pragma once
 
-#include "Common.h"
+#include "QRHI.h"
 
 namespace qrhi
 {
-    struct DeviceDesc
-    {
-
-    };
-
     // Graphics device, create gpu resources from this
-    class Device
+    class Device : public Quest::RefCounted
     {
     public:
+        virtual ~Device() = default;
 
+        virtual BufferHandle CreateBuffer(BufferDesc desc) = 0;
+        virtual TextureHandle CreateTexture(TextureDesc desc) = 0;
+        virtual ShaderHandle CreateShader(ShaderDesc desc) = 0;
+        virtual GraphicsPipelineHandle CreateGraphicsPipeline(GraphicsPipelineDesc desc) = 0;
+        virtual ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) = 0;
+        virtual CommandListHandle CreateCommandList(CommandListDesc desc) = 0;
     };
 
-    using DeviceHandle = std::shared_ptr<Device>;
+    using DeviceHandle = Quest::RefCountPtr<Device>;
 }

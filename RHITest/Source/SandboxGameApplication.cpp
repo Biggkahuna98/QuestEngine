@@ -13,13 +13,14 @@
 #include "Core/Profiling.h"
 
 #include "Utility/RefCounting.h"
-
 #include "Utility/StaticVector.h"
 
-void RefTest(Quest::RefCountPtr<TestInterface> ref)
+#include "RHI/QRHI.h"
+
+/*void RefTest(Quest::RefCountPtr<TestInterface> ref)
 {
     LOG_DEBUG("RefCount: {}", ref->GetRefCount());
-}
+}*/
 
 void SandboxGameApplication::Init()
 {
@@ -51,6 +52,12 @@ void SandboxGameApplication::Init()
     vec.push_back(3);
     LOG_INFO("Size: {}", vec.size());
     LOG_INFO("Value: {}", vec[2]);
+
+    qrhi::ShaderDesc sdesc{};
+    sdesc.name = "static_triangle.spv";
+    sdesc.type = qrhi::ShaderType::CombinedTypes;
+    sdesc.shaderTypeMask = static_cast<uint32_t>(qrhi::ShaderType::Vertex | qrhi::ShaderType::Fragment);
+    qrhi::ShaderHandle shader = engine->GetGraphicsDevice()->CreateShader(sdesc);
 }
 
 void SandboxGameApplication::Shutdown()
