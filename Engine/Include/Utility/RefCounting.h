@@ -152,13 +152,13 @@ namespace Quest
             return RefCountPtr<U>(dynamic_cast<U*>(m_Ptr));
         }
     private:
-        void AddRef()
+        void AddRef() const
         {
             if (m_Ptr)
                 m_Ptr->AddRef();
         }
 
-        void Release()
+        void Release() const
         {
             if (m_Ptr)
             {

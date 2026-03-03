@@ -4,6 +4,7 @@
 #include "Core/Log.h"
 #include "Core/Window.h"
 #include "RHI/Context.h"
+#include "RHI/QRHI.h"
 #include "Graphics/Renderer.h"
 #include "../Engine/GameApplication.h"
 #include "Graphics/FlyCamera.h"
@@ -46,6 +47,8 @@ namespace Quest
 
 		qrhi::ContextHandle m_GraphicsContext;
 		qrhi::DeviceHandle m_GraphicsDevice;
+		qrhi::GraphicsPipelineHandle m_GraphicsPipeline;
+		qrhi::CommandListHandle m_GraphicsCommandList;
 
 		std::unique_ptr<Renderer> m_Renderer;
 

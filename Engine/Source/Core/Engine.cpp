@@ -51,6 +51,17 @@ namespace Quest
 		m_GraphicsContext = qrhi::CreateContext(contextDesc);
 
 		m_GraphicsDevice = m_GraphicsContext->CreateDevice();
+		qrhi::CommandListDesc commandListDesc{};
+		commandListDesc.type = qrhi::QueueType::Graphics;
+		m_GraphicsCommandList = m_GraphicsDevice->CreateCommandList(commandListDesc);
+
+		qrhi::GraphicsPipelineDesc pipelineDesc{};
+		qrhi::ShaderDesc shaderDesc{};
+		shaderDesc.type = qrhi::ShaderType::Vertex;
+		shaderDesc.name = "static_triangle.spv";
+		qrhi::ShaderHandle vertexShader = m_GraphicsDevice->CreateShader(shaderDesc);
+		pipelineDesc.vertexShader = vertexShader;
+		m_GraphicsPipeline = m_GraphicsDevice->CreateGraphicsPipeline(pipelineDesc);
 
 		m_TestCamera = std::make_unique<FlyCamera>();
 		//m_GraphicsDevice->SetCamera(m_TestCamera.get());
@@ -69,6 +80,8 @@ namespace Quest
 		m_Renderer.reset();
 
 		// Probably not necessary for the device but it's ok
+		m_GraphicsPipeline.Reset();
+		m_GraphicsCommandList.Reset();
 		m_GraphicsDevice.Reset();
 		m_GraphicsContext->Shutdown();
 		m_GraphicsContext.Reset();
@@ -103,7 +116,11 @@ namespace Quest
 
 			m_TestCamera->Update(deltaTime);
 
-			//m_GraphicsContext.deviceManager->BeginFrame();
+			m_GraphicsContext->BeginFrame();
+			m_GraphicsCommandList->Open();
+			qrhi::GraphicsState state{};
+			state.pipeline = m_GraphicsPipeline.Get();
+			m_GraphicsCommandList->SetGraphicsState(state);
 
 			// Draw stats
 			{
@@ -119,6 +136,9 @@ namespace Quest
 
 			m_GameApplication->Update();
 
+			qrhi::DrawArguments drawArguments{};
+			m_GraphicsCommandList->Draw(drawArguments);
+
 
 			// Get engine stats
 			auto endTime = std::chrono::high_resolution_clock::now();
@@ -126,8 +146,9 @@ namespace Quest
 			//Stats = m_GraphicsDevice->GetStats();
 			//Stats.Frametime = elapsed.count() / 1000.0f;
 
-			//m_GraphicsContext.deviceManager->EndFrame();
-			//m_GraphicsContext.deviceManager->PresentFrame();
+			m_GraphicsCommandList->Close();
+			m_GraphicsContext->EndFrame();
+			m_GraphicsContext->PresentFrame();
 			PROFILE_MARK_FRAME();
 		}
 	}

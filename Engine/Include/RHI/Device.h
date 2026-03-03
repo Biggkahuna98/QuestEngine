@@ -13,6 +13,7 @@ namespace qrhi
         virtual BufferHandle CreateBuffer(BufferDesc desc) = 0;
         virtual TextureHandle CreateTexture(TextureDesc desc) = 0;
         virtual ShaderHandle CreateShader(ShaderDesc desc) = 0;
+        virtual ShaderHandle CreateShaderMutliDesc(std::vector<ShaderDesc> descs) = 0;
         virtual GraphicsPipelineHandle CreateGraphicsPipeline(GraphicsPipelineDesc desc) = 0;
         virtual ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) = 0;
         virtual CommandListHandle CreateCommandList(CommandListDesc desc) = 0;

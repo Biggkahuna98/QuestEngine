@@ -29,6 +29,11 @@ namespace qrhi::vulkan
         return Quest::RefCountPtr<VulkanShader>::Create(desc, m_Context);
     }
 
+    ShaderHandle VulkanDevice::CreateShaderMutliDesc(std::vector<ShaderDesc> descs)
+    {
+
+    }
+
     GraphicsPipelineHandle VulkanDevice::CreateGraphicsPipeline(GraphicsPipelineDesc desc)
     {
         return GraphicsPipelineHandle();

@@ -50,6 +50,7 @@ namespace qrhi::vulkan
         VmaAllocator GetAllocator() const { return m_Allocator; }
         Queue* GetQueue(QueueType type) const;
         FrameData& GetFrameData();
+        vk::Semaphore GetRenderFinishedSemaphore() { return m_RenderSemaphores[m_SwapchainIndex]; }
         uint32_t GetFrameIndex() const { return m_FrameCount % static_cast<uint32_t>(m_Desc.framesInFlight); }
         auto GetDynamicStates() const { return m_DynamicStates; }
 

@@ -19,6 +19,7 @@ namespace qrhi::vulkan
         BufferHandle CreateBuffer(BufferDesc desc) override;
         TextureHandle CreateTexture(TextureDesc desc) override;
         ShaderHandle CreateShader(ShaderDesc desc) override;
+        ShaderHandle CreateShaderMutliDesc(std::vector<ShaderDesc> descs) override;
         GraphicsPipelineHandle CreateGraphicsPipeline(GraphicsPipelineDesc desc) override;
         ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) override;
         CommandListHandle CreateCommandList(CommandListDesc desc) override;

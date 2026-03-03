@@ -151,6 +151,7 @@ namespace qrhi::vulkan
         // Push framedata
         for (int i = 0; i < static_cast<int>(FramesInFlight::Count); i++)
         {
+            LOG_DEBUG("Creating frame data {}", i);
             FrameData fd{};
             std::string semName = "presentCompleteSemaphore: " + std::to_string(i);
             std::string fenceName = "inFlightFence: " + std::to_string(i);
@@ -172,7 +173,7 @@ namespace qrhi::vulkan
 
     VulkanContext::~VulkanContext()
     {
-        m_Log->Info("Destroying Vulkan Context");
+        //m_Log->Info("Destroying Vulkan Context");
     }
 
     DeviceHandle VulkanContext::CreateDevice()
@@ -193,11 +194,21 @@ namespace qrhi::vulkan
     }
     void VulkanContext::EndFrame()
     {
-        m_Device.waitIdle();
+        //m_Device.waitIdle();
     }
 
     void VulkanContext::PresentFrame()
     {
+        vk::Semaphore renderFinishedSemaphore = GetRenderFinishedSemaphore();
+        vk::PresentInfoKHR presentInfoKHR{
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &renderFinishedSemaphore,
+            .swapchainCount = 1,
+            .pSwapchains = &m_Swapchain,
+            .pImageIndices = &m_SwapchainIndex};
+
+        vk::Result result = GetQueue(qrhi::QueueType::Present)->GetQueue().presentKHR(presentInfoKHR);
+
         m_FrameCount++;
     }
 
@@ -246,7 +257,8 @@ namespace qrhi::vulkan
 
     FrameData& VulkanContext::GetFrameData()
     {
-        return m_FrameData[m_FrameCount % static_cast<int>(m_Desc.framesInFlight)];
+        LOG_DEBUG("FrameDataIndex: {}", m_FrameCount % (static_cast<int>(m_Desc.framesInFlight) + 1));
+        return m_FrameData[m_FrameCount % (static_cast<int>(m_Desc.framesInFlight) + 1)];
     }
 
     void VulkanContext::CreateSwapchain()

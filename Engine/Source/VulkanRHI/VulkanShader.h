@@ -10,6 +10,7 @@ namespace qrhi::vulkan
     {
     public:
         VulkanShader(ShaderDesc desc, const VulkanContext* context);
+        VulkanShader(std::vector<ShaderDesc> descs, const VulkanContext* context);
         ~VulkanShader() override;
 
         Quest::OpaqueObject GetNativeType() override;
@@ -18,7 +19,7 @@ namespace qrhi::vulkan
 
         vk::ShaderModule GetShaderModule() const { return m_ShaderModule; }
     private:
-        const VulkanContext* m_Context;
+        const VulkanContext* m_Context{};
 
         ShaderDesc desc;
         vk::ShaderModule m_ShaderModule;

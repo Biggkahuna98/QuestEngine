@@ -1,10 +1,12 @@
 #include "VulkanCommandList.h"
 
+#include "VulkanPipeline.h"
+
 #include "VulkanContext.h"
 
 namespace qrhi::vulkan
 {
-    VulkanCommandList::VulkanCommandList(CommandListDesc desc, const VulkanContext* context)
+    VulkanCommandList::VulkanCommandList(CommandListDesc desc, VulkanContext* context)
         : m_Context(context), m_Desc(desc)
     {
         //m_CurrentCommandBuffer = m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer();
@@ -76,18 +78,32 @@ namespace qrhi::vulkan
 
         m_CurrentCommandBuffer->commandBuffer.end();
 
+        m_Context->GetQueue(m_Desc.type)->Submit(this,
+            m_Context->GetFrameData().presentCompleteSemaphore, m_Context->GetRenderFinishedSemaphore(),
+            m_Context->GetFrameData().inFlightFence);
     }
 
     void VulkanCommandList::SetGraphicsState(const GraphicsState& state)
     {
+        m_CurrentGraphicsState = state;
     }
 
     void VulkanCommandList::SetComputeState(const ComputeState& state)
     {
+        m_CurrentComputeState = state;
     }
 
     void VulkanCommandList::Draw(const DrawArguments& args)
     {
+        auto pipeline = dynamic_cast<VulkanGraphicsPipeline*>(m_CurrentGraphicsState.pipeline);
+        m_CurrentCommandBuffer->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetPipeline());
+        m_CurrentCommandBuffer->commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f,
+            static_cast<float>(m_Context->GetSwapchainExtent().width),
+            static_cast<float>(m_Context->GetSwapchainExtent().height), 0.0f, 1.0f));
+        m_CurrentCommandBuffer->commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0),
+            m_Context->GetSwapchainExtent()));
+
+        m_CurrentCommandBuffer->commandBuffer.draw(3, 1, 0, 0);
     }
 
     void VulkanCommandList::DrawIndexed(const DrawArguments& args)

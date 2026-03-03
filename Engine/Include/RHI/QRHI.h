@@ -114,12 +114,9 @@ namespace qrhi
     struct ShaderDesc
     {
         std::string name;
-        std::string entry_point = "main"; // if slang, both main functions must have same name
+        std::string entry_point = "main";
         ShaderType type = ShaderType::Vertex;
         ShaderLanguage language = ShaderLanguage::Slang;
-
-        // an idea to try to have multiple shaders in 1 file for slang
-        uint32_t shaderTypeMask = 0;
     };
 
     class Shader : public Resource
@@ -149,6 +146,8 @@ namespace qrhi
     {
         ShaderHandle vertexShader;
         ShaderHandle fragmentShader;
+
+        bool uberShader = true;
 
         FillMode fillMode = FillMode::Solid;
     };

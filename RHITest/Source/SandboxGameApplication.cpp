@@ -56,8 +56,8 @@ void SandboxGameApplication::Init()
     qrhi::ShaderDesc sdesc{};
     sdesc.name = "static_triangle.spv";
     sdesc.type = qrhi::ShaderType::CombinedTypes;
-    sdesc.shaderTypeMask = static_cast<uint32_t>(qrhi::ShaderType::Vertex | qrhi::ShaderType::Fragment);
     qrhi::ShaderHandle shader = engine->GetGraphicsDevice()->CreateShader(sdesc);
+    LOG_DEBUG("FramesInFlight1: {}", 1 % (static_cast<int>(qrhi::FramesInFlight::One) + 1));
 }
 
 void SandboxGameApplication::Shutdown()

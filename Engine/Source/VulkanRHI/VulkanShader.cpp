@@ -22,6 +22,15 @@ namespace qrhi::vulkan
         m_ShaderModule = m_Context->GetDevice().createShaderModule(createInfo);
     }
 
+    VulkanShader::VulkanShader(std::vector<ShaderDesc> descs, const VulkanContext* context)
+        : m_Context(context), desc(descs[0])
+    {
+        for (auto& desc : descs)
+        {
+
+        }
+    }
+
     VulkanShader::~VulkanShader()
     {
         m_Context->GetDevice().destroyShaderModule(m_ShaderModule);

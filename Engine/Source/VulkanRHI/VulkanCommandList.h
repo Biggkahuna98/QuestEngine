@@ -8,7 +8,7 @@ namespace qrhi::vulkan
     class VulkanCommandList : public CommandList
     {
     public:
-        VulkanCommandList(CommandListDesc desc, const VulkanContext* context);
+        VulkanCommandList(CommandListDesc desc, VulkanContext* context);
         ~VulkanCommandList() override;
 
         Quest::OpaqueObject GetNativeType() override;
@@ -29,7 +29,7 @@ namespace qrhi::vulkan
         vk::CommandBuffer GetCommandBuffer() const { return m_CurrentCommandBuffer->commandBuffer; }
         vk::CommandPool GetCommandPool() const { return m_CurrentCommandBuffer->commandPool; }
     private:
-        const VulkanContext* m_Context;
+        VulkanContext* m_Context;
         CommandListDesc m_Desc;
 
         GraphicsState m_CurrentGraphicsState{};
