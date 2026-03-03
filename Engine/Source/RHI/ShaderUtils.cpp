@@ -167,6 +167,9 @@ namespace qrhi
         std::vector<uint32_t> buffer(byteSize / 4);
         memcpy(buffer.data(), spirv->getBufferPointer(), byteSize);
 
+        // Make sure the cache exists
+        Quest::Utils::CreateDirectory(Quest::Utils::ShaderCachePath);
+
         std::string cacheName = shaderName.data();
         cacheName += ".spv";
         std::ofstream file{Quest::Utils::ShaderCachePath / cacheName, std::ios::binary};
@@ -192,6 +195,7 @@ namespace qrhi
     {
         std::string cachePath = QE_RESOURCES_FOLDER;
         cachePath += "/ShaderCache/";
+        Quest::Utils::CreateDirectory(cachePath);
         cachePath += shaderName;
 
         std::ifstream file(cachePath, std::ios::ate | std::ios::binary);

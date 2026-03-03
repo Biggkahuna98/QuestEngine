@@ -42,10 +42,16 @@ namespace qrhi::vulkan
         vk::Extent2D GetWindowExtent() const { return m_WindowExtent; }
         vk::Device GetDevice() const { return m_Device; }
         vk::PhysicalDevice GetPhysicalDevice() const { return m_PhysicalDevice; }
+        vk::Extent2D GetSwapchainExtent() const { return m_SwapchainExtent; }
+        auto GetSwapchainImageFormat() const { return m_SwapchainFormat; }
+        auto GetSwapchainImages() const { return m_SwapchainImages; }
+        auto GetSwapchainImageViews() const { return m_SwapchainImageViews; }
+        uint32_t GetSwapchainIndex() const { return m_SwapchainIndex; }
         VmaAllocator GetAllocator() const { return m_Allocator; }
         Queue* GetQueue(QueueType type) const;
         FrameData& GetFrameData();
         uint32_t GetFrameIndex() const { return m_FrameCount % static_cast<uint32_t>(m_Desc.framesInFlight); }
+        auto GetDynamicStates() const { return m_DynamicStates; }
 
         // Creation helpers
         void CreateSwapchain();
@@ -53,7 +59,7 @@ namespace qrhi::vulkan
         void RecreateSwapchain();
 
         // Idk where to put this, so here will do for now
-        void TransitionImage(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+        void TransitionImage(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
     private:
         ContextDesc m_Desc;
         MessageCallback* m_Log;
@@ -82,5 +88,8 @@ namespace qrhi::vulkan
 
         // Hardware queues
         std::array<std::unique_ptr<Queue>, static_cast<uint32_t>(QueueType::Count)> m_Queues;
+
+        // Dynamic State for now
+        std::vector<vk::DynamicState> m_DynamicStates;
     };
 }

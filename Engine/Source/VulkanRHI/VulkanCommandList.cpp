@@ -38,11 +38,44 @@ namespace qrhi::vulkan
         m_CurrentCommandBuffer->commandBuffer.reset();
         m_CurrentCommandBuffer->commandBuffer.begin(vk::CommandBufferBeginInfo()
             .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+
+        // Setup the framebuffer to draw to (swapchain image for now)
+        m_Context->TransitionImage(m_CurrentCommandBuffer->commandBuffer,
+            m_Context->GetSwapchainImages().at(m_Context->GetSwapchainIndex()),
+            vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+
+        // Set up the color attachment
+        vk::ClearValue clearColor = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);
+        vk::RenderingAttachmentInfo attachmentInfo = {
+            .imageView = m_Context->GetSwapchainImageViews().at(m_Context->GetSwapchainIndex()),
+            .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .loadOp = vk::AttachmentLoadOp::eClear,
+            .storeOp = vk::AttachmentStoreOp::eStore,
+            .clearValue = clearColor
+        };
+
+        // Set up the rendering info
+        vk::RenderingInfo renderingInfo = {
+            .renderArea = { .offset = { 0, 0 }, .extent = m_Context->GetSwapchainExtent() },
+            .layerCount = 1,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &attachmentInfo
+        };
+
+        // Begin rendering, yay!
+        m_CurrentCommandBuffer->commandBuffer.beginRendering(renderingInfo);
     }
 
     void VulkanCommandList::Close()
     {
+        m_CurrentCommandBuffer->commandBuffer.endRendering();
+
+        m_Context->TransitionImage(m_CurrentCommandBuffer->commandBuffer,
+            m_Context->GetSwapchainImages().at(m_Context->GetSwapchainIndex()),
+            vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
+
         m_CurrentCommandBuffer->commandBuffer.end();
+
     }
 
     void VulkanCommandList::SetGraphicsState(const GraphicsState& state)

@@ -163,6 +163,10 @@ namespace qrhi::vulkan
 
         CompileShader("static_triangle", "Shaders/static_triangle.slang");
 
+        // Setup the static dynamic state for now
+        m_DynamicStates.push_back(vk::DynamicState::eViewport);
+        m_DynamicStates.push_back(vk::DynamicState::eScissor);
+
         m_Log->Info("Vulkan Context created");
     }
 
@@ -300,7 +304,7 @@ namespace qrhi::vulkan
     }
 
     void VulkanContext::TransitionImage(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageLayout oldLayout,
-        vk::ImageLayout newLayout)
+        vk::ImageLayout newLayout) const
     {
         vk::ImageMemoryBarrier2 barrier = {};
         barrier.pNext = nullptr;
