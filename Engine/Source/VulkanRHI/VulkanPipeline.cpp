@@ -6,7 +6,7 @@
 namespace qrhi::vulkan
 {
     // Graphics pipeline
-    VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipelineDesc desc, const VulkanContext* context)
+    VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipelineDesc desc, VulkanContext* context)
         : m_Context(context), m_Desc(desc)
     {
         // Vertex input
@@ -115,6 +115,8 @@ namespace qrhi::vulkan
 
     VulkanGraphicsPipeline::~VulkanGraphicsPipeline()
     {
+        m_Context->GetDevice().waitIdle();
+		m_Context->GetDevice().destroyPipelineLayout(m_PipelineLayout);
         m_Context->GetDevice().destroyPipeline(m_Pipeline);
     }
 
@@ -131,7 +133,7 @@ namespace qrhi::vulkan
     }
     
     // Compute pipeline
-    VulkanComputePipeline::VulkanComputePipeline(ComputePipelineDesc desc, const VulkanContext* context)
+    VulkanComputePipeline::VulkanComputePipeline(ComputePipelineDesc desc, VulkanContext* context)
         : m_Context(context), m_Desc(desc)
     {
     }

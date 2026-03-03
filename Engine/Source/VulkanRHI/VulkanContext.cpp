@@ -257,7 +257,6 @@ namespace qrhi::vulkan
 
     FrameData& VulkanContext::GetFrameData()
     {
-        LOG_DEBUG("FrameDataIndex: {}", m_FrameCount % (static_cast<int>(m_Desc.framesInFlight) + 1));
         return m_FrameData[m_FrameCount % (static_cast<int>(m_Desc.framesInFlight) + 1)];
     }
 

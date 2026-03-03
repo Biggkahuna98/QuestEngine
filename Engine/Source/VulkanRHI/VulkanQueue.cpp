@@ -47,12 +47,14 @@ namespace qrhi::vulkan
     TrackedCommandBufferPtr Queue::CreateTrackedCommandBuffer()
     {
         TrackedCommandBufferPtr commandBuffer = std::make_shared<TrackedCommandBuffer>(m_Context);
+        QE_ASSERT(commandBuffer);
 
         auto commandPoolCreateInfo = vk::CommandPoolCreateInfo()
             .setQueueFamilyIndex(m_QueueFamilyIndex)
             .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer | vk::CommandPoolCreateFlagBits::eTransient);
 
         commandBuffer->commandPool = m_Context->GetDevice().createCommandPool(commandPoolCreateInfo);
+        QE_ASSERT(commandBuffer->commandPool);
 
         auto commandBufferAllocateInfo = vk::CommandBufferAllocateInfo()
             .setLevel(vk::CommandBufferLevel::ePrimary)
@@ -60,6 +62,7 @@ namespace qrhi::vulkan
             .setCommandBufferCount(1);
 
         commandBuffer->commandBuffer = m_Context->GetDevice().allocateCommandBuffers(commandBufferAllocateInfo).front();
+		QE_ASSERT(commandBuffer->commandBuffer);
 
         return commandBuffer;
     }

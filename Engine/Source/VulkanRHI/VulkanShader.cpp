@@ -20,6 +20,7 @@ namespace qrhi::vulkan
         createInfo.pCode = reinterpret_cast<const uint32_t*>(bytecode.data());
 
         m_ShaderModule = m_Context->GetDevice().createShaderModule(createInfo);
+		QE_ASSERT(m_ShaderModule);
     }
 
     VulkanShader::VulkanShader(std::vector<ShaderDesc> descs, const VulkanContext* context)

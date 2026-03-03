@@ -8,7 +8,7 @@ namespace qrhi::vulkan
     class VulkanGraphicsPipeline : public GraphicsPipeline
     {
     public:
-        VulkanGraphicsPipeline(GraphicsPipelineDesc desc, const VulkanContext* context);
+        VulkanGraphicsPipeline(GraphicsPipelineDesc desc, VulkanContext* context);
         ~VulkanGraphicsPipeline() override;
 
         vk::Pipeline GetPipeline() const { return m_Pipeline; }
@@ -18,7 +18,7 @@ namespace qrhi::vulkan
         void SetDebugName(const std::string& name) override;
         const GraphicsPipelineDesc& GetDesc() const override { return m_Desc; }
     private:
-        const VulkanContext* m_Context;
+        VulkanContext* m_Context;
         GraphicsPipelineDesc m_Desc;
 
         vk::PipelineLayout m_PipelineLayout;
@@ -28,7 +28,7 @@ namespace qrhi::vulkan
     class VulkanComputePipeline : public ComputePipeline
     {
     public:
-        VulkanComputePipeline(ComputePipelineDesc desc, const VulkanContext* context);
+        VulkanComputePipeline(ComputePipelineDesc desc, VulkanContext* context);
         ~VulkanComputePipeline() override;
 
         vk::Pipeline GetPipeline() const { return m_Pipeline; }
@@ -39,7 +39,7 @@ namespace qrhi::vulkan
         const ComputePipelineDesc& GetDesc() const override { return m_Desc; }
 
     private:
-        const VulkanContext* m_Context;
+        VulkanContext* m_Context;
         ComputePipelineDesc m_Desc;
 
         vk::PipelineLayout m_PipelineLayout;

@@ -51,7 +51,7 @@ namespace qrhi::vulkan
         Queue* GetQueue(QueueType type) const;
         FrameData& GetFrameData();
         vk::Semaphore GetRenderFinishedSemaphore() { return m_RenderSemaphores[m_SwapchainIndex]; }
-        uint32_t GetFrameIndex() const { return m_FrameCount % static_cast<uint32_t>(m_Desc.framesInFlight); }
+        uint32_t GetFrameIndex() const { return m_FrameCount % (static_cast<uint32_t>(m_Desc.framesInFlight) + 1); }
         auto GetDynamicStates() const { return m_DynamicStates; }
 
         // Creation helpers

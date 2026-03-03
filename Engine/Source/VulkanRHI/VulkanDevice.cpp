@@ -2,10 +2,12 @@
 
 #include "VulkanContext.h"
 #include "VulkanShader.h"
+#include "VulkanPipeline.h"
+#include "VulkanCommandList.h"
 
 namespace qrhi::vulkan
 {
-    VulkanDevice::VulkanDevice(const VulkanContext* context)
+    VulkanDevice::VulkanDevice(VulkanContext* context)
         : m_Context(context)
     {
     }
@@ -31,21 +33,21 @@ namespace qrhi::vulkan
 
     ShaderHandle VulkanDevice::CreateShaderMutliDesc(std::vector<ShaderDesc> descs)
     {
-
+        return ShaderHandle();
     }
 
     GraphicsPipelineHandle VulkanDevice::CreateGraphicsPipeline(GraphicsPipelineDesc desc)
     {
-        return GraphicsPipelineHandle();
+        return Quest::RefCountPtr<VulkanGraphicsPipeline>::Create(desc, m_Context);
     }
 
     ComputePipelineHandle VulkanDevice::CreateComputePipeline(ComputePipelineDesc desc)
     {
-        return ComputePipelineHandle();
+        return Quest::RefCountPtr<VulkanComputePipeline>::Create(desc, m_Context);
     }
 
     CommandListHandle VulkanDevice::CreateCommandList(CommandListDesc desc)
     {
-        return CommandListHandle();
+		return Quest::RefCountPtr<VulkanCommandList>::Create(desc, m_Context);
     }
 }

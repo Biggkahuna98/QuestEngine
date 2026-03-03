@@ -10,9 +10,15 @@ namespace qrhi::vulkan
         : m_Context(context), m_Desc(desc)
     {
         //m_CurrentCommandBuffer = m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer();
+        m_TrackedCommandBuffers.reserve(3);
         m_TrackedCommandBuffers.push_back(m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer());
         m_TrackedCommandBuffers.push_back(m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer());
         m_TrackedCommandBuffers.push_back(m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer());
+
+        for (auto& cmdBuffer : m_TrackedCommandBuffers)
+        {
+			QE_ASSERT(cmdBuffer.get()->commandBuffer);
+		}
     }
 
     VulkanCommandList::~VulkanCommandList()
@@ -36,6 +42,8 @@ namespace qrhi::vulkan
     void VulkanCommandList::Open()
     {
         //m_CurrentCommandBuffer = m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer();
+		auto str = fmt::format("CommandBuffer_Frame{}", m_Context->GetFrameIndex());
+        m_Context->logInfo(str);
         m_CurrentCommandBuffer = m_TrackedCommandBuffers[m_Context->GetFrameIndex()];
         m_CurrentCommandBuffer->commandBuffer.reset();
         m_CurrentCommandBuffer->commandBuffer.begin(vk::CommandBufferBeginInfo()
@@ -95,6 +103,7 @@ namespace qrhi::vulkan
 
     void VulkanCommandList::Draw(const DrawArguments& args)
     {
+		QE_ASSERT(m_CurrentGraphicsState.pipeline);
         auto pipeline = dynamic_cast<VulkanGraphicsPipeline*>(m_CurrentGraphicsState.pipeline);
         m_CurrentCommandBuffer->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetPipeline());
         m_CurrentCommandBuffer->commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f,

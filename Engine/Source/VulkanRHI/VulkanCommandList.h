@@ -38,6 +38,6 @@ namespace qrhi::vulkan
         TrackedCommandBufferPtr m_CurrentCommandBuffer;
 
         // For now, duplicate command buffers on a per-frame basis
-        std::vector<TrackedCommandBufferPtr> m_TrackedCommandBuffers{3};
+        std::vector<TrackedCommandBufferPtr> m_TrackedCommandBuffers;
     };
 }

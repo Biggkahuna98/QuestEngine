@@ -46,6 +46,7 @@ namespace Quest
 
 		// Initialize the context and device
 		qrhi::ContextDesc contextDesc{};
+		contextDesc.framesInFlight = qrhi::FramesInFlight::Two;
 		contextDesc.messageCallback = g_RHIMessageCallback.get();
 		contextDesc.window = m_Window.get();
 		m_GraphicsContext = qrhi::CreateContext(contextDesc);

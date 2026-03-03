@@ -104,9 +104,20 @@ namespace qrhi
             }
         }
 
-        std::array<slang::IComponentType*, 2> componentTypes = {
+        Slang::ComPtr<slang::IEntryPoint> entryPoint2;
+        {
+            slangModule->findEntryPointByName("fragMain", entryPoint2.writeRef());
+            if (!entryPoint2)
+            {
+                LOG_ERROR("Failed to find entry point: fragMain");
+                return;
+            }
+        }
+
+        std::array<slang::IComponentType*, 3> componentTypes = {
             slangModule,
-            entryPoint
+            entryPoint,
+            entryPoint2
         };
 
         Slang::ComPtr<slang::IComponentType> composedProgram;

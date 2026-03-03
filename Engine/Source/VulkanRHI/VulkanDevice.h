@@ -13,7 +13,7 @@ namespace qrhi::vulkan
     class VulkanDevice : public Device
     {
     public:
-        VulkanDevice(const VulkanContext* context);
+        VulkanDevice(VulkanContext* context);
         ~VulkanDevice() override;
 
         BufferHandle CreateBuffer(BufferDesc desc) override;
@@ -24,6 +24,6 @@ namespace qrhi::vulkan
         ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) override;
         CommandListHandle CreateCommandList(CommandListDesc desc) override;
     private:
-        const VulkanContext* m_Context;
+        VulkanContext* m_Context;
     };
 }
