@@ -14,11 +14,6 @@ namespace qrhi::vulkan
         m_TrackedCommandBuffers.push_back(m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer());
         m_TrackedCommandBuffers.push_back(m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer());
         m_TrackedCommandBuffers.push_back(m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer());
-
-        for (auto& cmdBuffer : m_TrackedCommandBuffers)
-        {
-			QE_ASSERT(cmdBuffer.get()->commandBuffer);
-		}
     }
 
     VulkanCommandList::~VulkanCommandList()
@@ -27,7 +22,7 @@ namespace qrhi::vulkan
 
     Quest::OpaqueObject VulkanCommandList::GetNativeType()
     {
-        Quest::OpaqueObject obj;
+        Quest::OpaqueObject obj{};
         obj.pointer = static_cast<void*>(this);
         return obj;
     }
@@ -42,13 +37,12 @@ namespace qrhi::vulkan
     void VulkanCommandList::Open()
     {
         //m_CurrentCommandBuffer = m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer();
-		auto str = fmt::format("CommandBuffer_Frame{}", m_Context->GetFrameIndex());
-        m_Context->logInfo(str);
         m_CurrentCommandBuffer = m_TrackedCommandBuffers[m_Context->GetFrameIndex()];
         m_CurrentCommandBuffer->commandBuffer.reset();
         m_CurrentCommandBuffer->commandBuffer.begin(vk::CommandBufferBeginInfo()
             .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
+        // From here down to the end should all probably be render pass related, will keep here for now.
         // Setup the framebuffer to draw to (swapchain image for now)
         m_Context->TransitionImage(m_CurrentCommandBuffer->commandBuffer,
             m_Context->GetSwapchainImages().at(m_Context->GetSwapchainIndex()),

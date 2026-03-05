@@ -16,10 +16,6 @@ namespace qrhi::vulkan
         vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo = {};
         inputAssemblyInfo.topology = vk::PrimitiveTopology::eTriangleList;
 
-        vk::Viewport{ 0.0f, 0.0f, static_cast<float>(m_Context->GetSwapchainExtent().width),
-            static_cast<float>(m_Context->GetSwapchainExtent().height), 0.0f, 1.0f};
-        vk::Rect2D scissor{ vk::Offset2D{ 0, 0 }, m_Context->GetSwapchainExtent()};
-
         auto dynStates = m_Context->GetDynamicStates();
         vk::PipelineDynamicStateCreateInfo dynamicStateInfo = {};
         dynamicStateInfo.dynamicStateCount = dynStates.size();
