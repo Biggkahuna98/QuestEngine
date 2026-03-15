@@ -7,6 +7,7 @@
 #include <chrono>
 
 #include <string_view>
+#include <Core/Window.h>
 
 namespace Quest
 {
