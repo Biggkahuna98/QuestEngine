@@ -47,9 +47,6 @@ namespace Quest
 
 		qrhi::ContextHandle m_GraphicsContext;
 		qrhi::DeviceHandle m_GraphicsDevice;
-		qrhi::GraphicsPipelineHandle m_GraphicsPipeline;
-		qrhi::CommandListHandle m_GraphicsCommandList;
-		qrhi::BufferHandle m_VertexBuffer;
 
 		std::unique_ptr<Renderer> m_Renderer;
 

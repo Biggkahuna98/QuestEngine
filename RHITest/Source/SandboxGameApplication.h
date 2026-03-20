@@ -1,6 +1,7 @@
 #pragma once
 #include "SandboxAPI.h"
 #include "Engine/GameApplication.h"
+#include "RHI/QRHI.h"
 
 #include <vector>
 
@@ -17,6 +18,10 @@ public:
     virtual void Update() override;
 
 private:
+    qrhi::GraphicsPipelineHandle m_GraphicsPipeline;
+    qrhi::CommandListHandle m_GraphicsCommandList;
+    qrhi::BufferHandle m_VertexBuffer;
+
     void CreatePipelines();
 };
 

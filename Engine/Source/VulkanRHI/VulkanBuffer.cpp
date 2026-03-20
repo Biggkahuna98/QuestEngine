@@ -47,7 +47,9 @@ namespace qrhi::vulkan
 
     VulkanBuffer::~VulkanBuffer()
     {
-        vmaDestroyBuffer(m_Context->GetAllocator(), static_cast<VkBuffer>(m_Buffer), allocation);
+        m_Context->GetDevice().waitIdle();
+        m_Context->GetDevice().destroyBuffer(m_Buffer);
+        vmaFreeMemory(m_Context->GetAllocator(), allocation);
     }
 
     Quest::OpaqueObject VulkanBuffer::GetNativeType()

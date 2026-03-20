@@ -16,6 +16,7 @@
 #include "Utility/StaticVector.h"
 
 #include "RHI/QRHI.h"
+#include "RHI/ShaderUtils.h"
 
 /*void RefTest(Quest::RefCountPtr<TestInterface> ref)
 {
@@ -53,22 +54,71 @@ void SandboxGameApplication::Init()
     LOG_INFO("Size: {}", vec.size());
     LOG_INFO("Value: {}", vec[2]);
 
-    qrhi::ShaderDesc sdesc{};
-    sdesc.name = "static_triangle.spv";
-    sdesc.type = qrhi::ShaderType::CombinedTypes;
-    qrhi::ShaderHandle shader = engine->GetGraphicsDevice()->CreateShader(sdesc);
-    LOG_DEBUG("FramesInFlight1: {}", 1 % (static_cast<int>(qrhi::FramesInFlight::One) + 1));
+    qrhi::CompileShader("static_triangle", "Shaders/static_triangle.slang");
+    qrhi::CompileShader("vertex_buffer", "Shaders/vertex_buffer.slang");
+
+    auto GraphicsDevice = engine->GetGraphicsDevice();
+
+    qrhi::CommandListDesc commandListDesc{};
+    commandListDesc.type = qrhi::QueueType::Graphics;
+    m_GraphicsCommandList = GraphicsDevice->CreateCommandList(commandListDesc);
+
+    qrhi::GraphicsPipelineDesc pipelineDesc{};
+    qrhi::ShaderDesc shaderDesc{};
+    shaderDesc.type = qrhi::ShaderType::Vertex;
+    shaderDesc.name = "vertex_buffer.spv";
+    qrhi::ShaderHandle vertexShader = GraphicsDevice->CreateShader(shaderDesc);
+    pipelineDesc.vertexShader = vertexShader;
+    m_GraphicsPipeline = GraphicsDevice->CreateGraphicsPipeline(pipelineDesc);
+
+    const std::vector<qrhi::Vertex> vertices1 = {
+        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    };
+
+    const std::vector<qrhi::Vertex> vertices = {
+        {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    };
+
+    qrhi::BufferDesc bufferDesc{};
+    bufferDesc.type = qrhi::BufferType::Vertex;
+    bufferDesc.sizeInBytes = sizeof(vertices[0]) * vertices.size();
+    m_VertexBuffer = GraphicsDevice->CreateBuffer(bufferDesc);
+
+    void* ptr = GraphicsDevice->MapBuffer(m_VertexBuffer.Get());
+    memcpy(ptr, vertices.data(), sizeof(vertices[0]) * vertices.size());
+    GraphicsDevice->UnmapBuffer(m_VertexBuffer.Get());
 }
 
 void SandboxGameApplication::Shutdown()
 {
     LOG_INFO("Sandbox Game Application Shutdown");
+
+    m_VertexBuffer.Reset();
+    m_GraphicsPipeline.Reset();
+    m_GraphicsCommandList.Reset();
 }
 
 void SandboxGameApplication::Update()
 {
     PROFILE_SCOPE("SandboxGameApplication::Update");
     using namespace Quest;
+
+    m_GraphicsCommandList->Open();
+    qrhi::GraphicsState state{};
+    state.vertexBuffer = m_VertexBuffer;
+    state.pipeline = m_GraphicsPipeline.Get();
+    m_GraphicsCommandList->SetGraphicsState(state);
+
+    qrhi::DrawArguments drawArguments{};
+    drawArguments.vertexCount = 3;
+    drawArguments.instanceCount = 1;
+    m_GraphicsCommandList->Draw(drawArguments);
+
+    m_GraphicsCommandList->Close();
 }
 
 void SandboxGameApplication::CreatePipelines()
