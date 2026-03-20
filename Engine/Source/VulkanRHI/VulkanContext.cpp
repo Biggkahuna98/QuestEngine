@@ -162,8 +162,6 @@ namespace qrhi::vulkan
             m_FrameData.push_back(fd);
         }
 
-        CompileShader("static_triangle", "Shaders/static_triangle.slang");
-
         // Setup the static dynamic state for now
         m_DynamicStates.push_back(vk::DynamicState::eViewport);
         m_DynamicStates.push_back(vk::DynamicState::eScissor);

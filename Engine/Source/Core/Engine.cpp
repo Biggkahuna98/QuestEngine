@@ -8,6 +8,7 @@
 
 #include <string_view>
 #include <Core/Window.h>
+#include <RHI/ShaderUtils.h>
 
 namespace Quest
 {
@@ -42,10 +43,15 @@ namespace Quest
 
 		// Create Window
 		//m_Window = CreateWindowFactory("Quest Engine", 3840, 2160);
-		m_Window = CreateWindowFactory("Quest Engine", 2560, 1440);
+		//m_Window = CreateWindowFactory("Quest Engine", 2560, 1440);
+		m_Window = CreateWindowFactory("Quest Engine", 1920, 1080);
 		m_InputManager = m_Window->GetInputManagerPtr(); // This is the *ACTIVE* input manager from the active window
 
 		// Initialize the context and device
+		qrhi::CompileShader("static_triangle", "Shaders/static_triangle.slang");
+		qrhi::CompileShader("vertex_buffer", "Shaders/vertex_buffer.slang");
+
+
 		qrhi::ContextDesc contextDesc{};
 		contextDesc.framesInFlight = qrhi::FramesInFlight::Two;
 		contextDesc.messageCallback = g_RHIMessageCallback.get();
@@ -60,10 +66,25 @@ namespace Quest
 		qrhi::GraphicsPipelineDesc pipelineDesc{};
 		qrhi::ShaderDesc shaderDesc{};
 		shaderDesc.type = qrhi::ShaderType::Vertex;
-		shaderDesc.name = "static_triangle.spv";
+		shaderDesc.name = "vertex_buffer.spv";
 		qrhi::ShaderHandle vertexShader = m_GraphicsDevice->CreateShader(shaderDesc);
 		pipelineDesc.vertexShader = vertexShader;
 		m_GraphicsPipeline = m_GraphicsDevice->CreateGraphicsPipeline(pipelineDesc);
+
+		const std::vector<qrhi::Vertex> vertices = {
+			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		};
+
+		qrhi::BufferDesc bufferDesc{};
+		bufferDesc.type = qrhi::BufferType::Vertex;
+		bufferDesc.sizeInBytes = sizeof(vertices[0]) * vertices.size();
+		m_VertexBuffer = m_GraphicsDevice->CreateBuffer(bufferDesc);
+
+		void* ptr = m_GraphicsDevice->MapBuffer(m_VertexBuffer.Get());
+		memcpy(ptr, vertices.data(), sizeof(vertices[0]) * vertices.size());
+		m_GraphicsDevice->UnmapBuffer(m_VertexBuffer.Get());
 
 		m_TestCamera = std::make_unique<FlyCamera>();
 		//m_GraphicsDevice->SetCamera(m_TestCamera.get());
@@ -121,6 +142,7 @@ namespace Quest
 			m_GraphicsContext->BeginFrame();
 			m_GraphicsCommandList->Open();
 			qrhi::GraphicsState state{};
+			state.vertexBuffer = m_VertexBuffer;
 			state.pipeline = m_GraphicsPipeline.Get();
 			m_GraphicsCommandList->SetGraphicsState(state);
 
@@ -139,6 +161,8 @@ namespace Quest
 			m_GameApplication->Update();
 
 			qrhi::DrawArguments drawArguments{};
+			drawArguments.vertexCount = 3;
+			drawArguments.instanceCount = 1;
 			m_GraphicsCommandList->Draw(drawArguments);
 
 

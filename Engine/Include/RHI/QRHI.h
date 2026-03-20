@@ -7,6 +7,8 @@
 #include "Utility/OpaqueObject.h"
 #include "Utility/RefCounting.h"
 
+#include <glm/glm.hpp>
+
 // Enum flag operators
 #define QRHI_ENUM_CLASS_FLAG_OPERATORS(T) \
     inline T operator | (T a, T b) { return T(uint32_t(a) | uint32_t(b)); } \
@@ -54,6 +56,12 @@ namespace qrhi
         bool operator !=(const Color& _b) const { return !(*this == _b); }
     };
 
+    struct Vertex
+    {
+        glm::vec2 position;
+        glm::vec3 color;
+    };
+
     class Resource : public Quest::RefCounted
     {
     public:
@@ -65,9 +73,18 @@ namespace qrhi
     };
 
     // Buffer
+    enum class BufferType
+    {
+        Vertex,
+        Index,
+        Uniform
+    };
+
     struct BufferDesc
     {
-
+        BufferType type;
+        uint64_t sizeInBytes;
+        uint64_t stride;
     };
 
     class Buffer : public Resource
@@ -179,6 +196,7 @@ namespace qrhi
     struct GraphicsState
     {
         GraphicsPipeline* pipeline = nullptr;
+        BufferHandle vertexBuffer = nullptr;
     };
 
     struct ComputeState

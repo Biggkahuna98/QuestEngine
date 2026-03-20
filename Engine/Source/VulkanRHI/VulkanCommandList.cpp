@@ -1,6 +1,7 @@
 #include "VulkanCommandList.h"
 
 #include "VulkanPipeline.h"
+#include "VulkanBuffer.h"
 
 #include "VulkanContext.h"
 
@@ -106,7 +107,15 @@ namespace qrhi::vulkan
         m_CurrentCommandBuffer->commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0),
             m_Context->GetSwapchainExtent()));
 
-        m_CurrentCommandBuffer->commandBuffer.draw(3, 1, 0, 0);
+        if (m_CurrentGraphicsState.vertexBuffer)
+        {
+            auto vertexBuffer = static_cast<VulkanBuffer*>(m_CurrentGraphicsState.vertexBuffer.Get());
+            vk::Buffer buffer = vertexBuffer->GetBuffer();
+            vk::DeviceSize offsets[] = {0};
+            m_CurrentCommandBuffer->commandBuffer.bindVertexBuffers(0, 1, &buffer, offsets);
+        }
+
+        m_CurrentCommandBuffer->commandBuffer.draw(args.vertexCount, args.instanceCount, 0, 0);
     }
 
     void VulkanCommandList::DrawIndexed(const DrawArguments& args)

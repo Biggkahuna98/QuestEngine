@@ -10,7 +10,15 @@ namespace qrhi::vulkan
         : m_Context(context), m_Desc(desc)
     {
         // Vertex input
-        vk::PipelineVertexInputStateCreateInfo vertexInputInfo = {};
+        //vk::PipelineVertexInputStateCreateInfo vertexInputInfo = {};
+        auto bindingDescription = GetVertexBindingDesc();
+        auto attributeDescriptions = GetVertexAttributeDescriptions();
+        vk::PipelineVertexInputStateCreateInfo vertexInputInfo = {
+            .vertexBindingDescriptionCount = 1,
+            .pVertexBindingDescriptions = &bindingDescription,
+            .vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
+            .pVertexAttributeDescriptions = attributeDescriptions.data()
+        };
 
         // Input assembly
         vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo = {};

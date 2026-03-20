@@ -23,6 +23,9 @@ namespace qrhi::vulkan
         GraphicsPipelineHandle CreateGraphicsPipeline(GraphicsPipelineDesc desc) override;
         ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) override;
         CommandListHandle CreateCommandList(CommandListDesc desc) override;
+
+        void* MapBuffer(Buffer* buffer) override;
+        void UnmapBuffer(Buffer* buffer) override;
     private:
         VulkanContext* m_Context;
     };

@@ -8,6 +8,8 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vk_enum_string_helper.h>
 
+#include <array>
+
 #define VK_CHECK_RES(res) assert((res) == vk::Result::eSuccess);
 
 #define VK_CHECK(x)                                                                      \
@@ -99,4 +101,17 @@ namespace qrhi::vulkan
         VmaAllocation allocation = nullptr;
         VmaAllocationInfo allocationInfo;
     };
+
+    inline vk::VertexInputBindingDescription GetVertexBindingDesc()
+    {
+        return { 0, sizeof(Vertex), vk::VertexInputRate::eVertex };
+    }
+
+    inline std::array<vk::VertexInputAttributeDescription, 2> GetVertexAttributeDescriptions()
+    {
+        return {
+            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, position)),
+            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color))
+        };
+    }
 }

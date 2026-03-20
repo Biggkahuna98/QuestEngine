@@ -17,6 +17,9 @@ namespace qrhi
         virtual GraphicsPipelineHandle CreateGraphicsPipeline(GraphicsPipelineDesc desc) = 0;
         virtual ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) = 0;
         virtual CommandListHandle CreateCommandList(CommandListDesc desc) = 0;
+
+        virtual void* MapBuffer(Buffer* buffer) = 0;
+        virtual void UnmapBuffer(Buffer* buffer) = 0;
     };
 
     using DeviceHandle = Quest::RefCountPtr<Device>;

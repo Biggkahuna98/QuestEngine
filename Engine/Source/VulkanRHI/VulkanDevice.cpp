@@ -1,5 +1,6 @@
 #include "VulkanDevice.h"
 
+#include "VulkanBuffer.h"
 #include "VulkanContext.h"
 #include "VulkanShader.h"
 #include "VulkanPipeline.h"
@@ -18,7 +19,7 @@ namespace qrhi::vulkan
 
     BufferHandle VulkanDevice::CreateBuffer(BufferDesc desc)
     {
-        return BufferHandle();
+        return Quest::RefCountPtr<VulkanBuffer>::Create(desc, m_Context);;
     }
 
     TextureHandle VulkanDevice::CreateTexture(TextureDesc desc)
@@ -49,5 +50,20 @@ namespace qrhi::vulkan
     CommandListHandle VulkanDevice::CreateCommandList(CommandListDesc desc)
     {
 		return Quest::RefCountPtr<VulkanCommandList>::Create(desc, m_Context);
+    }
+
+    void* VulkanDevice::MapBuffer(Buffer* buffer)
+    {
+        VulkanBuffer* buff = static_cast<VulkanBuffer*>(buffer);
+        void* mapping = nullptr;
+        vmaMapMemory(m_Context->GetAllocator(), buff->allocation, &mapping);
+
+        return mapping;
+    }
+
+    void VulkanDevice::UnmapBuffer(Buffer* buffer)
+    {
+        VulkanBuffer* buff = static_cast<VulkanBuffer*>(buffer);
+        vmaUnmapMemory(m_Context->GetAllocator(), buff->allocation);
     }
 }
