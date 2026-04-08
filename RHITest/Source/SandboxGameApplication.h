@@ -21,6 +21,7 @@ private:
     qrhi::GraphicsPipelineHandle m_GraphicsPipeline;
     qrhi::CommandListHandle m_GraphicsCommandList;
     qrhi::BufferHandle m_VertexBuffer;
+    qrhi::BufferHandle m_IndexBuffer;
 
     void CreatePipelines();
 };

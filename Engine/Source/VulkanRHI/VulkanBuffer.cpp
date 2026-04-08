@@ -4,6 +4,8 @@
 
 namespace qrhi::vulkan
 {
+    static int bufferCount = 0;
+
     vk::BufferUsageFlagBits ConvertBufferType(BufferType type)
     {
         switch (type)
@@ -23,8 +25,10 @@ namespace qrhi::vulkan
         vk::BufferCreateInfo bufferInfo {
             .size = desc.sizeInBytes,
             .usage = ConvertBufferType(desc.type) | vk::BufferUsageFlagBits::eShaderDeviceAddress,
-            .sharingMode = vk::SharingMode::eExclusive
+            .sharingMode = vk::SharingMode::eExclusive,
         };
+        std::string size = "Sizeinbytes: " + std::to_string(desc.sizeInBytes);
+        m_Context->GetLog()->Info(size);
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
@@ -32,17 +36,22 @@ namespace qrhi::vulkan
 
         VkBuffer buff;
         auto info = static_cast<VkBufferCreateInfo>(bufferInfo);
-        vmaCreateBuffer(m_Context->GetAllocator(), &info, &allocInfo, &buff, &allocation, &allocationInfo);
+        VK_CHECK_OLD(vmaCreateBuffer(m_Context->GetAllocator(), &info, &allocInfo, &buff, &allocation, &allocationInfo));
         m_Buffer = buff;
 
         vk::BufferDeviceAddressInfo addressInfo = {};
         addressInfo.buffer = m_Buffer;
         m_DeviceAddress = m_Context->GetDevice().getBufferAddress(addressInfo);
 
+        std::string name = "VulkanBuffer" + std::to_string(bufferCount);
+        bufferCount++;
+        m_Context->SetDebugName(m_Buffer, vk::ObjectType::eBuffer, name);
+
         if (m_DeviceAddress == 0)
         {
             m_Context->logError("Buffer Device Address is 0");
         }
+        m_Context->GetLog()->Info(name);
     }
 
     VulkanBuffer::~VulkanBuffer()

@@ -83,14 +83,37 @@ void SandboxGameApplication::Init()
         {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
     };
 
+    const std::vector<qrhi::Vertex> vertices3 = {
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
+
+    const std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
     qrhi::BufferDesc bufferDesc{};
     bufferDesc.type = qrhi::BufferType::Vertex;
-    bufferDesc.sizeInBytes = sizeof(vertices[0]) * vertices.size();
+    bufferDesc.sizeInBytes = sizeof(vertices3[0]) * vertices3.size();
+    bufferDesc.size = vertices3.size();
     m_VertexBuffer = GraphicsDevice->CreateBuffer(bufferDesc);
 
     void* ptr = GraphicsDevice->MapBuffer(m_VertexBuffer.Get());
-    memcpy(ptr, vertices.data(), sizeof(vertices[0]) * vertices.size());
+    memcpy(ptr, vertices3.data(), sizeof(vertices3[0]) * vertices.size());
     GraphicsDevice->UnmapBuffer(m_VertexBuffer.Get());
+
+    qrhi::BufferDesc bufferDesc2{};
+    bufferDesc2.type = qrhi::BufferType::Index;
+    bufferDesc2.size = indices.size();
+    bufferDesc2.sizeInBytes = sizeof(indices[0]) * indices.size();
+    LOG_INFO("Size: {}, SizeInBytes: {}", bufferDesc2.size, bufferDesc2.sizeInBytes);
+    m_IndexBuffer = GraphicsDevice->CreateBuffer(bufferDesc2);
+
+    ptr = GraphicsDevice->MapBuffer(m_IndexBuffer.Get());
+    memcpy(ptr, indices.data(), sizeof(indices[0]) * indices.size());
+    GraphicsDevice->UnmapBuffer(m_IndexBuffer.Get());
 }
 
 void SandboxGameApplication::Shutdown()
@@ -110,13 +133,14 @@ void SandboxGameApplication::Update()
     m_GraphicsCommandList->Open();
     qrhi::GraphicsState state{};
     state.vertexBuffer = m_VertexBuffer;
+    state.indexBuffer = m_IndexBuffer;
     state.pipeline = m_GraphicsPipeline.Get();
     m_GraphicsCommandList->SetGraphicsState(state);
 
     qrhi::DrawArguments drawArguments{};
-    drawArguments.vertexCount = 3;
+    drawArguments.vertexCount = 4;
     drawArguments.instanceCount = 1;
-    m_GraphicsCommandList->Draw(drawArguments);
+    m_GraphicsCommandList->DrawIndexed(drawArguments);
 
     m_GraphicsCommandList->Close();
 }

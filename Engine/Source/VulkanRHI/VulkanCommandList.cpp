@@ -120,6 +120,33 @@ namespace qrhi::vulkan
 
     void VulkanCommandList::DrawIndexed(const DrawArguments& args)
     {
+        QE_ASSERT(m_CurrentGraphicsState.pipeline);
+        auto pipeline = dynamic_cast<VulkanGraphicsPipeline*>(m_CurrentGraphicsState.pipeline);
+        m_CurrentCommandBuffer->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetPipeline());
+        m_CurrentCommandBuffer->commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f,
+            static_cast<float>(m_Context->GetSwapchainExtent().width),
+            static_cast<float>(m_Context->GetSwapchainExtent().height), 0.0f, 1.0f));
+        m_CurrentCommandBuffer->commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0),
+            m_Context->GetSwapchainExtent()));
+
+        if (m_CurrentGraphicsState.vertexBuffer)
+        {
+            auto vertexBuffer = static_cast<VulkanBuffer*>(m_CurrentGraphicsState.vertexBuffer.Get());
+            vk::Buffer buffer = vertexBuffer->GetBuffer();
+            vk::DeviceSize offsets[] = {0};
+            m_CurrentCommandBuffer->commandBuffer.bindVertexBuffers(0, 1, &buffer, offsets);
+        }
+
+        if (m_CurrentGraphicsState.indexBuffer)
+        {
+            auto indexBuffer = static_cast<VulkanBuffer*>(m_CurrentGraphicsState.indexBuffer.Get());
+            vk::Buffer buffer = indexBuffer->GetBuffer();
+            vk::DeviceSize offsets[] = {0};
+            // TODO: update the indextype to abstract it
+            m_CurrentCommandBuffer->commandBuffer.bindIndexBuffer(buffer, offsets[0], vk::IndexType::eUint16);
+        }
+
+        m_CurrentCommandBuffer->commandBuffer.drawIndexed(m_CurrentGraphicsState.indexBuffer->GetDesc().size, args.instanceCount, 0, 0, 0);
     }
 
     void VulkanCommandList::DispatchCompute(uint32_t groupsX, uint32_t groupsY, uint32_t groupsZ)

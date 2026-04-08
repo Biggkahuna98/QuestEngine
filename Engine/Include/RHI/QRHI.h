@@ -84,6 +84,7 @@ namespace qrhi
     {
         BufferType type;
         uint64_t sizeInBytes;
+        uint64_t size;
         uint64_t stride;
     };
 
@@ -197,6 +198,7 @@ namespace qrhi
     {
         GraphicsPipeline* pipeline = nullptr;
         BufferHandle vertexBuffer = nullptr;
+        BufferHandle indexBuffer = nullptr;
     };
 
     struct ComputeState
