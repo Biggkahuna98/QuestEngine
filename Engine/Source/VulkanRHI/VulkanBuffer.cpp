@@ -4,8 +4,6 @@
 
 namespace qrhi::vulkan
 {
-    static int bufferCount = 0;
-
     vk::BufferUsageFlagBits ConvertBufferType(BufferType type)
     {
         switch (type)
@@ -43,15 +41,10 @@ namespace qrhi::vulkan
         addressInfo.buffer = m_Buffer;
         m_DeviceAddress = m_Context->GetDevice().getBufferAddress(addressInfo);
 
-        std::string name = "VulkanBuffer" + std::to_string(bufferCount);
-        bufferCount++;
-        m_Context->SetDebugName(m_Buffer, vk::ObjectType::eBuffer, name);
-
         if (m_DeviceAddress == 0)
         {
             m_Context->logError("Buffer Device Address is 0");
         }
-        m_Context->GetLog()->Info(name);
     }
 
     VulkanBuffer::~VulkanBuffer()

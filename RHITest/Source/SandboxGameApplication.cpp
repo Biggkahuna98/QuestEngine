@@ -101,7 +101,7 @@ void SandboxGameApplication::Init()
     m_VertexBuffer = GraphicsDevice->CreateBuffer(bufferDesc);
 
     void* ptr = GraphicsDevice->MapBuffer(m_VertexBuffer.Get());
-    memcpy(ptr, vertices3.data(), sizeof(vertices3[0]) * vertices.size());
+    memcpy(ptr, vertices3.data(), sizeof(vertices3[0]) * vertices3.size());
     GraphicsDevice->UnmapBuffer(m_VertexBuffer.Get());
 
     qrhi::BufferDesc bufferDesc2{};
@@ -114,6 +114,10 @@ void SandboxGameApplication::Init()
     ptr = GraphicsDevice->MapBuffer(m_IndexBuffer.Get());
     memcpy(ptr, indices.data(), sizeof(indices[0]) * indices.size());
     GraphicsDevice->UnmapBuffer(m_IndexBuffer.Get());
+
+    m_VertexBuffer->SetDebugName("Rectangle Buffer - Vertices");
+    m_IndexBuffer->SetDebugName("Rectangle Buffer - Indices");
+    m_GraphicsPipeline->SetDebugName("Rectangle Pipeline");
 }
 
 void SandboxGameApplication::Shutdown()
