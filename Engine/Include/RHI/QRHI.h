@@ -146,6 +146,63 @@ namespace qrhi
 
     using ShaderHandle = Quest::RefCountPtr<Shader>;
 
+    // Shader binding items (descriptors)
+    enum class BindingResourceType
+    {
+        ConstantBuffer,
+        Texture2D,
+        Sampler2D,
+        PushConstants
+    };
+
+    struct BindingResourceItem
+    {
+        uint32_t slot;
+        BindingResourceType type;
+        uint16_t size = 1;
+
+        bool operator==(const BindingResourceItem& b) const
+        {
+            return slot == b.slot && type == b.type && size == b.size;
+        }
+        bool operator!=(const BindingResourceItem& b) const
+        {
+            return !(*this == b);
+        }
+
+        constexpr BindingResourceItem& SetSlot(uint32_t value) { slot = value; return *this; }
+        constexpr BindingResourceItem& SetType(BindingResourceType value) { type = value;  return *this; }
+        constexpr BindingResourceItem& SetSize(uint16_t value) { size = value; return *this; }
+
+        #define RESOURCE_ITEM_INIT(TYPE) \
+        static BindingResourceItem TYPE(const uint32_t slot) { \
+                BindingResourceItem item{}; \
+                item.slot = slot; \
+                item.type = BindingResourceType::TYPE; \
+                item.size = 1; \
+                return item; } \
+
+        RESOURCE_ITEM_INIT(ConstantBuffer)
+        RESOURCE_ITEM_INIT(Texture2D)
+        RESOURCE_ITEM_INIT(Sampler2D)
+
+        static BindingResourceItem PushConstants(const uint32_t slot, const uint16_t size)
+        {
+            BindingResourceItem item{};
+            item.slot = slot;
+            item.type = BindingResourceType::PushConstants;
+            item.size = size;
+            return item;
+        }
+    };
+
+    struct BindingDesc
+    {
+        std::vector<BindingResourceItem> resources;
+
+        constexpr BindingDesc& AddItem(BindingResourceItem value) { resources.push_back(value); return *this; }
+    };
+
     // Pipeline
     enum class FillMode
     {
