@@ -49,7 +49,7 @@ namespace Quest
 
 		// Initialize the context and device
 		qrhi::ContextDesc contextDesc{};
-		contextDesc.framesInFlight = qrhi::FramesInFlight::Two;
+		contextDesc.framesInFlight = qrhi::FramesInFlight::One;
 		contextDesc.messageCallback = g_RHIMessageCallback.get();
 		contextDesc.window = m_Window.get();
 		m_GraphicsContext = qrhi::CreateContext(contextDesc);
@@ -120,7 +120,6 @@ namespace Quest
 			}
 
 			//m_TestCamera->DrawDebugInfo();
-
 			m_GameApplication->Update();
 
 			// Get engine stats

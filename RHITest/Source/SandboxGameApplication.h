@@ -18,10 +18,14 @@ public:
     virtual void Update() override;
 
 private:
+    qrhi::BindingLayoutHandle m_BindingLayout;
+    qrhi::BindingSetHandle m_BindingSet;
     qrhi::GraphicsPipelineHandle m_GraphicsPipeline;
     qrhi::CommandListHandle m_GraphicsCommandList;
     qrhi::BufferHandle m_VertexBuffer;
     qrhi::BufferHandle m_IndexBuffer;
+    qrhi::BufferHandle m_UniformBuffer;
+    void* m_MappedUniformBuffer;
 
     void CreatePipelines();
 };

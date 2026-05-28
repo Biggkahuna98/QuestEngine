@@ -14,6 +14,9 @@ namespace qrhi
         virtual TextureHandle CreateTexture(TextureDesc desc) = 0;
         virtual ShaderHandle CreateShader(ShaderDesc desc) = 0;
         virtual ShaderHandle CreateShaderMutliDesc(std::vector<ShaderDesc> descs) = 0;
+        virtual BindingLayoutHandle CreateBindingLayout(BindingLayoutDesc desc) = 0;
+        virtual BindingLayoutHandle CreateBindlessLayout(BindlessLayoutDesc desc) = 0;
+        virtual BindingSetHandle CreateBindingSet(const BindingSetDesc& desc, BindingLayout* layout) = 0;
         virtual GraphicsPipelineHandle CreateGraphicsPipeline(GraphicsPipelineDesc desc) = 0;
         virtual ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) = 0;
         virtual CommandListHandle CreateCommandList(CommandListDesc desc) = 0;

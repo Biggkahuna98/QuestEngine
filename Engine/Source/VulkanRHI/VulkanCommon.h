@@ -33,6 +33,16 @@ do {                                                                            
 
 namespace qrhi::vulkan
 {
+    // Helper conversion functions
+    vk::Format ConvertFormat(Format format);
+    vk::DescriptorType ConvertDescriptorType(BindingResourceType type);
+    vk::PrimitiveTopology ConvertPrimitiveType(PrimitiveType type);
+    vk::ShaderStageFlagBits ConvertShaderType(ShaderType type);
+
+    vk::WriteDescriptorSet GenerateWriteDescriptorData(uint32_t bindingLocation, uint32_t arrayElement,
+        vk::DescriptorType descriptorType, vk::DescriptorSet *dstSet, vk::DescriptorImageInfo *imageInfo,
+        vk::DescriptorBufferInfo *bufferInfo, vk::BufferView *bufferView, const void* pNext = nullptr);
+
     class VulkanContext;
 
     class TrackedCommandBuffer final

@@ -1,5 +1,6 @@
 #include "VulkanCommandList.h"
 
+#include "VulkanBindingSet.h"
 #include "VulkanPipeline.h"
 #include "VulkanBuffer.h"
 
@@ -7,6 +8,21 @@
 
 namespace qrhi::vulkan
 {
+    // temporary
+    // Reverse-Z perspective matrix
+    glm::mat4 ReversedZPerspective(float fovYRadians, float aspect, float zNear)
+    {
+        float f = 1.0f / tan(fovYRadians / 2.0f);
+
+        glm::mat4 result(0.0f);
+        result[0][0] = f / aspect;
+        result[1][1] = f;
+        result[2][2] = 0.0f;
+        result[2][3] = -1.0f;
+        result[3][2] = zNear;
+        return result;
+    }
+
     VulkanCommandList::VulkanCommandList(CommandListDesc desc, VulkanContext* context)
         : m_Context(context), m_Desc(desc)
     {
@@ -89,6 +105,11 @@ namespace qrhi::vulkan
     void VulkanCommandList::SetGraphicsState(const GraphicsState& state)
     {
         m_CurrentGraphicsState = state;
+
+        VulkanGraphicsPipeline* pipeline = static_cast<VulkanGraphicsPipeline*>(state.pipeline);
+        auto bindingSet = static_cast<VulkanBindingSet*>(m_CurrentGraphicsState.bindingSet.Get());
+        m_CurrentCommandBuffer->commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(),
+            0, 1, &bindingSet->descriptorSet, 0, nullptr);
     }
 
     void VulkanCommandList::SetComputeState(const ComputeState& state)
@@ -98,6 +119,7 @@ namespace qrhi::vulkan
 
     void VulkanCommandList::Draw(const DrawArguments& args)
     {
+        LOG_DEBUG("Draw");
 		QE_ASSERT(m_CurrentGraphicsState.pipeline);
         auto pipeline = dynamic_cast<VulkanGraphicsPipeline*>(m_CurrentGraphicsState.pipeline);
         m_CurrentCommandBuffer->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetPipeline());
@@ -131,6 +153,7 @@ namespace qrhi::vulkan
 
         if (m_CurrentGraphicsState.vertexBuffer)
         {
+            //LOG_DEBUG("There is a vertex buffer");
             auto vertexBuffer = static_cast<VulkanBuffer*>(m_CurrentGraphicsState.vertexBuffer.Get());
             vk::Buffer buffer = vertexBuffer->GetBuffer();
             vk::DeviceSize offsets[] = {0};
@@ -139,6 +162,7 @@ namespace qrhi::vulkan
 
         if (m_CurrentGraphicsState.indexBuffer)
         {
+            //LOG_DEBUG("There is an index buffer");
             auto indexBuffer = static_cast<VulkanBuffer*>(m_CurrentGraphicsState.indexBuffer.Get());
             vk::Buffer buffer = indexBuffer->GetBuffer();
             vk::DeviceSize offsets[] = {0};
@@ -147,6 +171,7 @@ namespace qrhi::vulkan
         }
 
         m_CurrentCommandBuffer->commandBuffer.drawIndexed(m_CurrentGraphicsState.indexBuffer->GetDesc().size, args.instanceCount, 0, 0, 0);
+        //LOG_DEBUG("I did the draw command");
     }
 
     void VulkanCommandList::DispatchCompute(uint32_t groupsX, uint32_t groupsY, uint32_t groupsZ)

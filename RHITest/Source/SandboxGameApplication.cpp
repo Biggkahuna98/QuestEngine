@@ -23,6 +23,13 @@
     LOG_DEBUG("RefCount: {}", ref->GetRefCount());
 }*/
 
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
+};
+
 void SandboxGameApplication::Init()
 {
     using namespace Quest;
@@ -56,20 +63,13 @@ void SandboxGameApplication::Init()
 
     qrhi::CompileShader("static_triangle", "Shaders/static_triangle.slang");
     qrhi::CompileShader("vertex_buffer", "Shaders/vertex_buffer.slang");
+    qrhi::CompileShader("uniform_buffer", "Shaders/uniform_buffer.slang");
 
     auto GraphicsDevice = engine->GetGraphicsDevice();
 
     qrhi::CommandListDesc commandListDesc{};
     commandListDesc.type = qrhi::QueueType::Graphics;
     m_GraphicsCommandList = GraphicsDevice->CreateCommandList(commandListDesc);
-
-    qrhi::GraphicsPipelineDesc pipelineDesc{};
-    qrhi::ShaderDesc shaderDesc{};
-    shaderDesc.type = qrhi::ShaderType::Vertex;
-    shaderDesc.name = "vertex_buffer.spv";
-    qrhi::ShaderHandle vertexShader = GraphicsDevice->CreateShader(shaderDesc);
-    pipelineDesc.vertexShader = vertexShader;
-    m_GraphicsPipeline = GraphicsDevice->CreateGraphicsPipeline(pipelineDesc);
 
     const std::vector<qrhi::Vertex> vertices1 = {
         {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -117,16 +117,78 @@ void SandboxGameApplication::Init()
 
     m_VertexBuffer->SetDebugName("Rectangle Buffer - Vertices");
     m_IndexBuffer->SetDebugName("Rectangle Buffer - Indices");
+
+    qrhi::BindingLayoutDesc bindingLayoutDesc{};
+    bindingLayoutDesc.AddItem(
+        qrhi::BindingLayoutItem::UniformBuffer(0)
+    );
+    m_BindingLayout = GraphicsDevice->CreateBindingLayout(bindingLayoutDesc);
+
+    qrhi::BufferDesc uniformBufferDesc{};
+    uniformBufferDesc.type = qrhi::BufferType::Uniform;
+    uniformBufferDesc.size = 1;
+    uniformBufferDesc.sizeInBytes = sizeof(UniformBufferObject);
+    m_UniformBuffer = GraphicsDevice->CreateBuffer(uniformBufferDesc);
+    m_MappedUniformBuffer = GraphicsDevice->MapBuffer(m_UniformBuffer.Get());
+
+    m_UniformBuffer->SetDebugName("Uniform Buffer #1");
+
+    qrhi::BindingSetDesc bindingSetDesc{};
+    bindingSetDesc.AddItem(
+        qrhi::BindingSetItem::UniformBuffer(0, m_UniformBuffer.Get())
+    );
+
+    m_BindingSet = GraphicsDevice->CreateBindingSet(bindingSetDesc, m_BindingLayout.Get());
+
+    /*qrhi::GraphicsPipelineDesc pipelineDesc{};
+    qrhi::ShaderDesc shaderDesc{};
+    shaderDesc.type = qrhi::ShaderType::Vertex;
+    shaderDesc.name = "vertex_buffer.spv";
+    qrhi::ShaderHandle vertexShader = GraphicsDevice->CreateShader(shaderDesc);
+    pipelineDesc.vertexShader = vertexShader;
+    pipelineDesc.bindingLayouts.push_back(m_BindingLayout);
+    m_GraphicsPipeline = GraphicsDevice->CreateGraphicsPipeline(pipelineDesc);*/
+
+    qrhi::GraphicsPipelineDesc pipelineDesc{};
+    qrhi::ShaderDesc shaderDesc{};
+    shaderDesc.type = qrhi::ShaderType::Vertex;
+    shaderDesc.name = "uniform_buffer.spv";
+    qrhi::ShaderHandle vertexShader = GraphicsDevice->CreateShader(shaderDesc);
+    pipelineDesc.vertexShader = vertexShader;
+    pipelineDesc.bindingLayouts.push_back(m_BindingLayout);
+    m_GraphicsPipeline = GraphicsDevice->CreateGraphicsPipeline(pipelineDesc);
+
     m_GraphicsPipeline->SetDebugName("Rectangle Pipeline");
+
+    LOG_INFO("ShaderType: Vertex =  {:8b}", static_cast<uint16_t>(qrhi::ShaderType::Vertex));
+    LOG_INFO("ShaderType: Fragment = {:8b}", static_cast<uint16_t>(qrhi::ShaderType::Fragment));
+    LOG_INFO("ShaderType: Compute =  {:8b}", static_cast<uint16_t>(qrhi::ShaderType::Compute));
+    LOG_INFO("ShaderType: Vertex + Fragment = {:8b}", static_cast<uint16_t>(qrhi::ShaderType::Vertex | qrhi::ShaderType::Fragment));
 }
 
 void SandboxGameApplication::Shutdown()
 {
     LOG_INFO("Sandbox Game Application Shutdown");
 
+    auto GraphicsDevice = Quest::GetEngine()->GetGraphicsDevice();
+    GraphicsDevice->UnmapBuffer(m_UniformBuffer.Get());
+
+    m_BindingSet.Reset();
+    m_BindingLayout.Reset();
     m_VertexBuffer.Reset();
+    m_IndexBuffer.Reset();
+    m_UniformBuffer.Reset();
     m_GraphicsPipeline.Reset();
     m_GraphicsCommandList.Reset();
+}
+
+float updateUniformBuffer(uint32_t currentImage)
+{
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time       = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+    return time;
 }
 
 void SandboxGameApplication::Update()
@@ -139,7 +201,18 @@ void SandboxGameApplication::Update()
     state.vertexBuffer = m_VertexBuffer;
     state.indexBuffer = m_IndexBuffer;
     state.pipeline = m_GraphicsPipeline.Get();
+    state.bindingSet = m_BindingSet;
     m_GraphicsCommandList->SetGraphicsState(state);
+
+    UniformBufferObject ubo{};
+    float time = updateUniformBuffer(1);
+    //ubo.model = rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.model = glm::mat4(0.25f);
+    ubo.view = lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 10.0f);
+
+    //ubo.projection[1][1] *= -1;
+    memcpy(m_MappedUniformBuffer, &ubo, sizeof(ubo));
 
     qrhi::DrawArguments drawArguments{};
     drawArguments.vertexCount = 4;
@@ -166,8 +239,8 @@ int main(int argc, char** argv)
 
     RunEngine();
 
-    delete app;
     ShutdownEngineEntrypoint();
+    delete app;
 
     return 0;
 }

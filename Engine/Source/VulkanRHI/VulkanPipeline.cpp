@@ -2,6 +2,7 @@
 
 #include "VulkanContext.h"
 #include "VulkanShader.h"
+#include "VulkanBindingLayout.h"
 
 namespace qrhi::vulkan
 {
@@ -69,8 +70,17 @@ namespace qrhi::vulkan
             .pAttachments =  &colorBlendAttachment
         };
 
+        std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
+        for (auto& layout : desc.bindingLayouts)
+        {
+            VulkanBindingLayout* bindingLayout = static_cast<VulkanBindingLayout*>(layout.Get());
+            descriptorSetLayouts.push_back(bindingLayout->descriptorSetLayout);
+        }
+        LOG_DEBUG("Descriptor Set layout size: {}", descriptorSetLayouts.size());
+
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo {
-            .setLayoutCount = 0,
+            .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
+            .pSetLayouts = descriptorSetLayouts.data(),
             .pushConstantRangeCount = 0
         };
 
@@ -110,7 +120,8 @@ namespace qrhi::vulkan
             .pColorBlendState = &colorBlending,
             .pDynamicState = &dynamicStateInfo,
             .layout = m_PipelineLayout,
-            .renderPass = nullptr };
+            .renderPass = nullptr
+        };
 
         // Finally create the pipeline
         auto pipeline = m_Context->GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
