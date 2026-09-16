@@ -16,7 +16,7 @@ add_subdirectory(Modules/Core)
 #add_subdirectory(Modules/RHI)
 
 # Vulkan backend implementing the RHI interface
-#add_subdirectory(Modules/VulkanRHI)
+add_subdirectory(Modules/VulkanRHI)
 
 # Frame-management layer above the RHI (API-agnostic)
 add_subdirectory(Modules/Render)

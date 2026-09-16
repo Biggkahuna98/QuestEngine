@@ -19,15 +19,3 @@ target_include_directories(${MODULE_NAME} PRIVATE
 )
 target_compile_definitions(${MODULE_NAME} INTERFACE SANDBOX_BUILD_SHARED)
 target_compile_definitions(${MODULE_NAME} PRIVATE SANDBOX_INTERNAL_USE_ONLY)
-
-# Sandbox is the consuming code, so it owns deploying itself next to the
-# Launch executable that loads it at runtime. Depending on Launch guarantees
-# its output directory exists before we copy into it.
-add_dependencies(${MODULE_NAME} Launch)
-
-add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:${MODULE_NAME}> $<TARGET_FILE_DIR:Launch>
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_PDB_FILE:${MODULE_NAME}> $<TARGET_FILE_DIR:Launch>
-)

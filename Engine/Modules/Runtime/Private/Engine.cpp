@@ -3,6 +3,9 @@
 //#include "Render/Renderer.h"
 #include "Core/Core.h"
 #include "Core/Window.h"
+#include "Core/Module/ModuleBoilerplate.h"
+
+OVERRIDE_NEW_DELETE
 
 namespace Quest
 {
@@ -86,6 +89,7 @@ namespace Quest
     {
         QE_LOG(Engine, Info, "Shutting Down Engine");
         m_Renderer->Shutdown();
+        m_Renderer.reset();
         m_Application->Shutdown();
         m_Application.reset();
     }

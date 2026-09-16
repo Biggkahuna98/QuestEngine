@@ -45,7 +45,9 @@ namespace Quest
         const char* GetName() const { return m_Name; }
 
         void AddSink(LogSinkBase* sink);
-        void ClearSinks() { m_Sinks.clear(); }
+        // clear() keeps the vector's buffer alive until this category is destroyed, which is
+        // after main() returns. Swap with an empty vector so the storage is released now.
+        void ClearSinks() { std::vector<std::unique_ptr<LogSinkBase>>().swap(m_Sinks); }
 
         void Log(LogVerbosity verbosity, std::string_view message);
     private:
@@ -79,7 +81,7 @@ namespace Quest
     template<typename... Args>
     inline constexpr void LogFormatandDispatch(LogCategoryBase& category, LogVerbosity verbosity, std::format_string<Args...> format, Args&&... args)
     {
-        if (verbosity >= category.GetVerbosity())
+        if (verbosity <= category.GetVerbosity())
         {
             std::string message = std::format(format, std::forward<Args>(args)...);
             category.Log(verbosity, message);

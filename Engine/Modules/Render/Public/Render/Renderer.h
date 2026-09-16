@@ -1,8 +1,13 @@
 #pragma once
 
 #include "Render/RenderExport.h"
+#include "Core/Platform/DynamicLibrary.h"
+#include "Core/RHI/GraphicsContext.h"
+#include "Core/RHI/GraphicsDevice.h"
 
 #include <cstdint>
+
+QE_DECLARE_LOG_CATEGORY(Render, Info);
 
 namespace Quest
 {
@@ -37,6 +42,9 @@ namespace Quest
         bool Initialize(Window* window);
         void Shutdown();
 
+        GraphicsContext* GetContext() const { return m_Context.get(); }
+        GraphicsDevice* GetDevice() const { return m_Device.get(); }
+
         // The frame loop, composed from RHI primitives. See Renderer.cpp for the target
         // sequence; the RHI-touching bodies are stubbed until the RHI resource + command-list
         // types are defined (RHI/Device.h does not compile standalone yet).
@@ -48,8 +56,12 @@ namespace Quest
         void OnResize(uint32_t width, uint32_t height);
 
     private:
+        DynamicLibrary m_RHILib;
         Window* m_Window = nullptr;
+        std::unique_ptr<GraphicsContext> m_Context;
+        std::unique_ptr<GraphicsDevice> m_Device;
         uint64_t m_FrameNumber = 0;
+
 
         // TODO(rhi): once RHI/Device.h + the resource/command-list handle types compile, add:
         //   RHI::ContextHandle    m_Context;     // backend bootstrap + owner

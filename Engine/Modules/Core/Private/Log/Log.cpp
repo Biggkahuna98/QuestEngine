@@ -40,7 +40,7 @@ namespace Quest
 
     void LogCategoryBase::Log(LogVerbosity verbosity, std::string_view message)
     {
-        if (verbosity >= m_Verbosity)
+        if (verbosity <= m_Verbosity)
         {
             for (auto& sink : m_Sinks)
                 sink->Log(this, verbosity, message);

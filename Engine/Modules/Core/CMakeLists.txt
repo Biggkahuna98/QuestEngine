@@ -14,11 +14,12 @@ target_include_directories(${MODULE_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Pub
 
 target_include_directories(${MODULE_NAME} PRIVATE
     ${QUEST_THIRD_PARTY_LIBS}/Engine/SDL3-3.4.8/include
+        ${QUEST_THIRD_PARTY_LIBS}/Engine/glm
 )
 
 # Add private linkages here
 set (PRIVATE_LINKS
-    ${QUEST_THIRD_PARTY_LIBS}/Engine/SDL3-3.4.8/lib/x64/SDL3.lib
+    SDL3::SDL3
 )
 
 # Link the private libs
