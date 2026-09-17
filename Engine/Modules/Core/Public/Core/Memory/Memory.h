@@ -15,7 +15,7 @@ namespace Quest
 
     struct Memory
     {
-        CORE_API static void* Malloc(std::size_t size, std::size_t alignment = 0);
+        CORE_API static void* Malloc(std::size_t size, std::uint32_t alignment = 0);
         CORE_API static void Free(void* ptr);
         CORE_API static BasicMemoryStats GetStats();
     };
