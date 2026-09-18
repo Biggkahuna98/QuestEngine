@@ -10,11 +10,13 @@ file (GLOB_RECURSE SOURCES
 
 add_library(${MODULE_NAME} ${QUEST_BUILD_LIB_TYPE} ${SOURCES})
 target_compile_definitions(${MODULE_NAME} PRIVATE CORE_INTERNAL_USE_ONLY)
-target_include_directories(${MODULE_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Public)
+target_include_directories(${MODULE_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Public
+        ${QUEST_THIRD_PARTY_LIBS}/Engine/glm
+        ${QUEST_THIRD_PARTY_LIBS}/Engine/slang/include
+)
 
 target_include_directories(${MODULE_NAME} PRIVATE
     ${QUEST_THIRD_PARTY_LIBS}/Engine/SDL3-3.4.8/include
-        ${QUEST_THIRD_PARTY_LIBS}/Engine/glm
 )
 
 # Add private linkages here
@@ -22,8 +24,15 @@ set (PRIVATE_LINKS
     SDL3::SDL3
 )
 
+set(SLANG_LIBS
+        ${QUEST_THIRD_PARTY_LIBS}/Engine/slang/lib/slang.lib
+        ${QUEST_THIRD_PARTY_LIBS}/Engine/slang/lib/slang-rt.lib
+        ${QUEST_THIRD_PARTY_LIBS}/Engine/slang/lib/gfx.lib
+        ${QUEST_THIRD_PARTY_LIBS}/Engine/slang/lib/slang-compiler.lib
+)
+
 # Link the private libs
-target_link_libraries(${MODULE_NAME} PRIVATE ${PRIVATE_LINKS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${PRIVATE_LINKS} ${SLANG_LIBS})
 
 # Propagate QE_BUILD_SHARED to consumers so QUEST_API expands to dllimport
 if (QUEST_BUILD_LIB_TYPE STREQUAL "SHARED")

@@ -1,30 +1,63 @@
 #pragma once
 
-#include <VulkanRHI/VMA_Usage.h>
-#include "VulkanRHI/VulkanRHIExport.h"
+#include "VulkanCommon.h"
+#include "VMA_Usage.h"
+#include "Core/Containers/StaticVector.h"
+#include "Core/RHI/Device.h"
 #include "Core/RHI/GraphicsContext.h"
-
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vk_enum_string_helper.h>
-
-#include <format>
+#include <array>
 
 namespace Quest::Vulkan
 {
-    extern MessageCallback* g_Logger;
+    class VulkanDevice;
 
-    class VULKANRHI_API Context : public GraphicsContext
+    struct FrameData
+    {
+        vk::Semaphore presentCompleteSemaphore;
+        vk::Fence inFlightFence;
+    };
+
+    class VulkanContext : public GraphicsContext
     {
     public:
-        Context(const ContextDesc& desc);
-        ~Context() override;
+        VulkanContext(ContextDesc desc);
+        ~VulkanContext() override;
 
-        GraphicsDevice* CreateDevice(const DeviceDesc& desc) override;
+        Device* CreateDevice(DeviceDesc desc) override;
+
+        // VulkanContext specific functions
+        void SetDebugName(const void* handle, const vk::ObjectType objType, const std::string_view& name) const;
+        MessageCallback* GetLog() const { return m_Log; }
+        void logInfo(std::string_view message) const { m_Log->Info(message); }
+        void logWarning(std::string_view message) const { m_Log->Warning(message); }
+        void logError(std::string_view message) const { m_Log->Error(message); }
+
+        vk::Instance GetInstance() const { return m_Instance; }
+        vk::SurfaceKHR GetSurface() const { return m_Surface; }
+        vk::Extent2D GetWindowExtent() const { return m_WindowExtent; }
+        vk::Device GetDevice() const { return m_Device; }
+        vk::PhysicalDevice GetPhysicalDevice() const { return m_PhysicalDevice; }
+        vk::Extent2D GetSwapchainExtent() const { return m_SwapchainExtent; }
+        auto GetSwapchainImageFormat() const { return m_SwapchainFormat; }
+        auto GetSwapchainImages() const { return m_SwapchainImages; }
+        auto GetSwapchainImageViews() const { return m_SwapchainImageViews; }
+        uint32_t GetSwapchainIndex() const { return m_SwapchainIndex; }
+        VmaAllocator GetAllocator() const { return m_Allocator; }
+        Queue* GetQueue(QueueType type) const;
+        FrameData& GetFrameData();
+        vk::Semaphore GetRenderFinishedSemaphore() { return m_RenderSemaphores[m_SwapchainIndex]; }
+        uint32_t GetFrameIndex() const { return m_FrameCount % (static_cast<uint32_t>(m_Desc.framesInFlight) + 1); }
+        auto GetDynamicStates() const { return m_DynamicStates; }
+
+        // Creation helpers
+        void CreateSwapchain();
+        void DestroySwapchain() const;
+        void RecreateSwapchain();
+
+        // Idk where to put this, so here will do for now
+        void TransitionImage(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
     private:
-        ContextDesc m_Desc;
-
-        MessageCallback* m_Log = nullptr;
+        MessageCallback* m_Log;
 
         // Vulkan objects
         vk::Instance m_Instance;
@@ -36,33 +69,27 @@ namespace Quest::Vulkan
         vk::Device m_Device;
         VmaAllocator m_Allocator;
 
-        vk::Queue m_GraphicsQueue;
-        vk::Queue m_PresentQueue;
-        vk::Queue m_TransferQueue;
-        vk::Queue m_ComputeQueue;
+        vk::SwapchainKHR m_Swapchain;
+        vk::Format m_SwapchainFormat;
+        vk::Extent2D m_SwapchainExtent;
+        std::vector<vk::Image> m_SwapchainImages;
+        std::vector<vk::ImageView> m_SwapchainImageViews;
+        uint32_t m_SwapchainIndex = 0;
+
+        std::vector<vk::Semaphore> m_RenderSemaphores;
+
+        //Core::StaticVector<FrameData, static_cast<int>(FramesInFlight::Count)> m_FrameData;
+        uint64_t m_FrameCount = 0;
+
+        // Hardware queues
+        std::array<std::unique_ptr<Queue>, static_cast<uint32_t>(QueueType::Count)> m_Queues;
+
+        // Dynamic State for now
+        std::vector<vk::DynamicState> m_DynamicStates;
     };
+
+    // There should only be one context per API.... just going to have to make that assumption for now
 }
-
-#define VK_CHECK_RES(res) assert((res) == vk::Result::eSuccess);
-
-#define VK_CHECK(x)                                                                      \
-do {                                                                                     \
-    vk::Result err = x;                                                                  \
-    if (static_cast<uint32_t>(err)) {                                                    \
-        g_Logger->Error(std::format("Vulkan", "Detected Vulkan error: {}", vk::to_string(err)));        \
-        abort();                                                                         \
-    }                                                                                    \
-} while (0)
-
-// Old C one for any needs, like VMA
-#define VK_CHECK_OLD(x)                                                                  \
-do {                                                                                     \
-    VkResult err = x;                                                                    \
-    if (err) {                                                                           \
-        g_Logger->Error(std::format("Vulkan", "Detected Vulkan error: {}", string_VkResult(err)));      \
-        abort();                                                                         \
-    }                                                                                    \
-} while (0)
 
 extern "C" VULKANRHI_API Quest::GraphicsContext* CreateGraphicsContext(Quest::ContextDesc desc);
 extern "C" VULKANRHI_API void DestroyGraphicsContext(Quest::GraphicsContext* context);

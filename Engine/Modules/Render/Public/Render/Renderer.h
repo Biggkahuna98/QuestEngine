@@ -3,7 +3,7 @@
 #include "Render/RenderExport.h"
 #include "Core/Platform/DynamicLibrary.h"
 #include "Core/RHI/GraphicsContext.h"
-#include "Core/RHI/GraphicsDevice.h"
+#include "Core/RHI/Device.h"
 
 #include <cstdint>
 
@@ -42,8 +42,8 @@ namespace Quest
         bool Initialize(Window* window);
         void Shutdown();
 
-        GraphicsContext* GetContext() const { return m_Context.get(); }
-        GraphicsDevice* GetDevice() const { return m_Device.get(); }
+        //GraphicsContext* GetContext() const { return m_Context.get(); }
+        //GraphicsDevice* GetDevice() const { return m_Device.get(); }
 
         // The frame loop, composed from RHI primitives. See Renderer.cpp for the target
         // sequence; the RHI-touching bodies are stubbed until the RHI resource + command-list
@@ -58,8 +58,8 @@ namespace Quest
     private:
         DynamicLibrary m_RHILib;
         Window* m_Window = nullptr;
-        std::unique_ptr<GraphicsContext> m_Context;
-        std::unique_ptr<GraphicsDevice> m_Device;
+        GraphicsContextHandle m_Context;
+        DeviceHandle m_Device;
         uint64_t m_FrameNumber = 0;
 
 

@@ -1,0 +1,27 @@
+#pragma once
+
+#include "VulkanCommon.h"
+#include "VulkanDevice.h"
+#include "Core/RHI/Shader.h"
+
+namespace Quest::Vulkan
+{
+    class VulkanShader : public Shader
+    {
+    public:
+        VulkanShader(ShaderDesc desc, const VulkanContext* context);
+        VulkanShader(std::vector<ShaderDesc> descs, const VulkanContext* context);
+        ~VulkanShader() override;
+
+        OpaqueObject GetNativeType() override;
+        void SetDebugName(const std::string& name) override;
+        const ShaderDesc& GetDesc() const override;
+
+        vk::ShaderModule GetShaderModule() const { return m_ShaderModule; }
+    private:
+        const VulkanContext* m_Context{};
+
+        ShaderDesc desc;
+        vk::ShaderModule m_ShaderModule;
+    };
+}

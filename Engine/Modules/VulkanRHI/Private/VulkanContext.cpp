@@ -1,29 +1,29 @@
 #include "VulkanRHI/VulkanContext.h"
-#include "VulkanRHI/VulkanGraphicsDevice.h"
-
-#include "Core/Module/ModuleBoilerplate.h"
+#include "VulkanRHI/VulkanDevice.h"
 
 #include "VulkanRHI/VkBootstrap.h"
-#include "Core/Window.h"
+#include "Core/Core.h"
+#include "Core/RefCounting.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+
+#include "Core/RHI/GraphicsContext.h"
+#include "Core/RHI/ShaderUtils.h"
 
 // Vulkan hpp global dispatcher
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
-// Module boilerplate
-OVERRIDE_NEW_DELETE
-
 namespace Quest::Vulkan
 {
-    // Workaround for not able to lambda capture for the debug callback
-    MessageCallback* g_Logger = nullptr;
+    // Workaround for not being able to lambda capture the debug callback for the vulkan debug callback signature
+    MessageCallback *g_Logger = nullptr;
 
-    Context::Context(const ContextDesc& desc)
-        : m_Desc(desc)
+    VulkanContext::VulkanContext(ContextDesc desc)
+        : m_Log(desc.messageCallback)
     {
-        m_Log = desc.messageCallback;
+        QE_ASSERT(desc.messageCallback != nullptr);
         g_Logger = desc.messageCallback;
+        m_Log->Info("Creating Vulkan Context");
 
         VULKAN_HPP_DEFAULT_DISPATCHER.init();
 
@@ -76,6 +76,7 @@ namespace Quest::Vulkan
         QE_ASSERT(m_Surface);
 
         // Physical device/logical device
+
         VkPhysicalDeviceVulkan14Features features14{ .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES };
         features14.dynamicRenderingLocalRead = true;
         features14.pushDescriptor = true;
@@ -135,32 +136,220 @@ namespace Quest::Vulkan
 
         QE_ASSERT(m_Allocator);
 
-        m_GraphicsQueue = device.get_queue(vkb::QueueType::graphics).value();
-        m_PresentQueue = device.get_queue(vkb::QueueType::present).value();
-        m_TransferQueue = device.get_queue(vkb::QueueType::transfer).value();
-        m_ComputeQueue = device.get_queue(vkb::QueueType::compute).value();
+        // Assume all queues exist for now
+        m_Queues[static_cast<uint32_t>(QueueType::Graphics)] = std::make_unique<Queue>(this, QueueType::Graphics,
+            device.get_queue(vkb::QueueType::graphics).value(), device.get_queue_index(vkb::QueueType::graphics).value());
+        m_Queues[static_cast<uint32_t>(QueueType::Present)] = std::make_unique<Queue>(this, QueueType::Present,
+            device.get_queue(vkb::QueueType::present).value(), device.get_queue_index(vkb::QueueType::present).value());
+        m_Queues[static_cast<uint32_t>(QueueType::Compute)] = std::make_unique<Queue>(this, QueueType::Compute,
+            device.get_queue(vkb::QueueType::compute).value(), device.get_queue_index(vkb::QueueType::compute).value());
+        m_Queues[static_cast<uint32_t>(QueueType::Transfer)] = std::make_unique<Queue>(this, QueueType::Transfer,
+            device.get_queue(vkb::QueueType::transfer).value(), device.get_queue_index(vkb::QueueType::transfer).value());
 
-        QE_ASSERT(m_GraphicsQueue);
-        QE_ASSERT(m_PresentQueue);
-        QE_ASSERT(m_TransferQueue);
-        QE_ASSERT(m_ComputeQueue);
+        QE_ASSERT(m_Queues[static_cast<uint32_t>(QueueType::Graphics)]);
+        QE_ASSERT(m_Queues[static_cast<uint32_t>(QueueType::Present)]);
+        QE_ASSERT(m_Queues[static_cast<uint32_t>(QueueType::Compute)]);
+        QE_ASSERT(m_Queues[static_cast<uint32_t>(QueueType::Transfer)]);
+
+        CreateSwapchain();
+
+        // Push framedata
+        for (int i = 0; i < static_cast<int>(FramesInFlight::Count); i++)
+        {
+            LOG_DEBUG("Creating frame data {}", i);
+            FrameData fd{};
+            std::string semName = "presentCompleteSemaphore: " + std::to_string(i);
+            std::string fenceName = "inFlightFence: " + std::to_string(i);
+            fd.presentCompleteSemaphore = m_Device.createSemaphore(vk::SemaphoreCreateInfo());
+            fd.inFlightFence = m_Device.createFence(vk::FenceCreateInfo{ .flags = vk::FenceCreateFlagBits::eSignaled });
+            SetDebugName(fd.presentCompleteSemaphore, vk::ObjectType::eSemaphore, semName.c_str());
+            SetDebugName(fd.inFlightFence, vk::ObjectType::eFence, fenceName.c_str());
+            m_FrameData.push_back(fd);
+        }
+
+        // Setup the static dynamic state for now
+        m_DynamicStates.push_back(vk::DynamicState::eViewport);
+        m_DynamicStates.push_back(vk::DynamicState::eScissor);
+
+        m_Log->Info("Vulkan Context created");
     }
 
-    Context::~Context()
+    VulkanContext::~VulkanContext()
     {
-
+        //m_Log->Info("Destroying Vulkan Context");
     }
 
-    GraphicsDevice* Context::CreateDevice(const DeviceDesc& desc)
+    DeviceHandle VulkanContext::CreateDevice()
     {
-        return new Device(desc);
+        return MakeRefCounted<VulkanDevice>(this);
+    }
+
+    void VulkanContext::BeginFrame()
+    {
+        auto frameData = GetFrameData();
+        auto fenceRes = m_Device.waitForFences(frameData.inFlightFence, true, std::numeric_limits<uint64_t>::max());
+        VK_CHECK(fenceRes);
+        m_Device.resetFences(frameData.inFlightFence);
+
+        auto [result, imageIndex] = m_Device.acquireNextImageKHR(m_Swapchain, std::numeric_limits<uint64_t>::max(), frameData.presentCompleteSemaphore, nullptr);
+        VK_CHECK(result);
+        m_SwapchainIndex = imageIndex;
+    }
+    void VulkanContext::EndFrame()
+    {
+        //m_Device.waitIdle();
+    }
+
+    void VulkanContext::PresentFrame()
+    {
+        vk::Semaphore renderFinishedSemaphore = GetRenderFinishedSemaphore();
+        vk::PresentInfoKHR presentInfoKHR{
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &renderFinishedSemaphore,
+            .swapchainCount = 1,
+            .pSwapchains = &m_Swapchain,
+            .pImageIndices = &m_SwapchainIndex};
+
+        vk::Result result = GetQueue(Quest::QueueType::Present)->GetQueue().presentKHR(presentInfoKHR);
+
+        m_FrameCount++;
+    }
+
+    void VulkanContext::Shutdown()
+    {
+        m_Log->Info("Shutting down and cleaning up resources of Vulkan Context");
+
+        m_Device.waitIdle();
+
+        for (auto fd : m_FrameData)
+        {
+            m_Device.destroyFence(fd.inFlightFence, nullptr);
+            m_Device.destroySemaphore(fd.presentCompleteSemaphore, nullptr);
+        }
+
+        DestroySwapchain();
+
+        // Make sure the semaphores inside the queues are deleted before the device is deleted
+        for (auto& queue : m_Queues)
+            queue.reset();
+
+        vmaDestroyAllocator(m_Allocator);
+        m_Device.destroy();
+
+        m_Instance.destroySurfaceKHR(m_Surface);
+        m_Instance.destroyDebugUtilsMessengerEXT(m_DebugMessenger);
+        m_Instance.destroy();
+    }
+
+    void VulkanContext::SetDebugName(const void* handle, const vk::ObjectType objType, const std::string_view& name) const
+    {
+        if (!handle)
+            return;
+
+        auto info = vk::DebugUtilsObjectNameInfoEXT()
+            .setObjectType(objType)
+            .setObjectHandle(reinterpret_cast<uint64_t>(handle))
+            .setPObjectName(name.data());
+        m_Device.setDebugUtilsObjectNameEXT(info);
+    }
+
+    Queue* VulkanContext::GetQueue(QueueType type) const
+    {
+        return m_Queues[static_cast<uint32_t>(type)].get();
+    }
+
+    FrameData& VulkanContext::GetFrameData()
+    {
+        return m_FrameData[m_FrameCount % (static_cast<int>(m_Desc.framesInFlight) + 1)];
+    }
+
+    void VulkanContext::CreateSwapchain()
+    {
+        logInfo("Creating Swapchain");
+
+        vkb::SwapchainBuilder swapchain_builder{m_PhysicalDevice, m_Device, m_Surface};
+        m_SwapchainFormat = vk::Format::eB8G8R8A8Unorm;
+        vkb::Swapchain swapchain = swapchain_builder
+            .set_desired_format({.format = static_cast<VkFormat>(m_SwapchainFormat),
+                                    .colorSpace = static_cast<VkColorSpaceKHR>(vk::ColorSpaceKHR::eSrgbNonlinear)})
+            .set_desired_present_mode(static_cast<VkPresentModeKHR>(vk::PresentModeKHR::eFifo))
+            .set_desired_extent(m_WindowExtent.width, m_WindowExtent.height)
+            .add_image_usage_flags(static_cast<VkImageUsageFlags>(vk::ImageUsageFlagBits::eTransferDst))
+            .build()
+            .value();
+
+        m_Swapchain = swapchain.swapchain;
+        m_SwapchainExtent = swapchain.extent;
+        auto images = swapchain.get_images().value();
+        auto imageViews = swapchain.get_image_views().value();
+        m_SwapchainImages = std::vector<vk::Image>(images.begin(), images.end());
+        m_SwapchainImageViews = std::vector<vk::ImageView>(imageViews.begin(), imageViews.end());
+
+        m_RenderSemaphores.resize(m_SwapchainImages.size());
+        for (int i = 0; i < m_RenderSemaphores.size(); i++)
+        {
+            vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+            VK_CHECK(m_Device.createSemaphore(&semaphoreCreateInfo, nullptr, &m_RenderSemaphores[i]));
+            SetDebugName(m_RenderSemaphores[i], vk::ObjectType::eSemaphore, "renderSemaphore: " + std::to_string(i));
+        }
+    }
+
+    void VulkanContext::DestroySwapchain() const
+    {
+        logInfo("Destroying Swapchain");
+
+        for (int i = 0; i < m_RenderSemaphores.size(); i++)
+        {
+            m_Device.destroySemaphore(m_RenderSemaphores[i], nullptr);
+        }
+
+        for (int i = 0; i < m_SwapchainImageViews.size(); i++)
+        {
+            m_Device.destroyImageView(m_SwapchainImageViews[i], nullptr);
+        }
+
+        m_Device.destroySwapchainKHR(m_Swapchain, nullptr);
+    }
+
+    void VulkanContext::RecreateSwapchain()
+    {
+        DestroySwapchain();
+        CreateSwapchain();
+    }
+
+    void VulkanContext::TransitionImage(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageLayout oldLayout,
+        vk::ImageLayout newLayout) const
+    {
+        vk::ImageMemoryBarrier2 barrier = {};
+        barrier.pNext = nullptr;
+        barrier.srcAccessMask = {};
+        barrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+        barrier.oldLayout = oldLayout;
+        barrier.newLayout = newLayout;
+        barrier.image = image;
+        barrier.srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+        barrier.dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+        barrier.subresourceRange = vk::ImageSubresourceRange{
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        };
+
+        vk::DependencyInfo dependencyInfo = {
+            .dependencyFlags = {},
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &barrier,
+        };
+
+        cmdBuffer.pipelineBarrier2(dependencyInfo);
     }
 }
 
 Quest::GraphicsContext* CreateGraphicsContext(Quest::ContextDesc desc)
 {
-    Quest::GraphicsContext* ctx = new Quest::Vulkan::Context(desc);
-    return ctx;
+    return new Quest::Vulkan::VulkanContext(desc);
 }
 
 void DestroyGraphicsContext(Quest::GraphicsContext* context)

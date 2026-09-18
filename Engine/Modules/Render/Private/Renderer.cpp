@@ -68,10 +68,6 @@ namespace Quest
 
         m_Window = window;
 
-        // TODO(rhi): bootstrap the backend and per-frame ring:
-        //   ContextDesc desc{ .window = window, ... };
-        //   m_Context   = RHI::CreateContext(desc);
-        //   m_Device    = m_Context->GetDevice();
         //   m_Swapchain = m_Context->GetSwapchain();
         //   m_Timeline  = m_Context->CreateTimeline();
         //   for (auto& f : m_Frames) f.cmd = m_Device->CreateCommandList({...});

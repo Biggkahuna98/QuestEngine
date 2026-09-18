@@ -1,47 +1,24 @@
 #pragma once
-
-#include <string_view>
-
-#include "Core/Core.h"
-#include "GraphicsDevice.h"
+#include "Core/RefCounting.h"
+#include "RHICommon.h"
+#include "Device.h"
 
 namespace Quest
 {
-    enum class GraphicsAPI
-    {
-        Vulkan
-    };
-
-    class MessageCallback
-    {
-    public:
-        enum class Severity
-        {
-            Info,
-            Warning,
-            Error
-        };
-        virtual ~MessageCallback() = default;
-        virtual void Message(Severity level, std::string_view message) = 0;
-        virtual void Info(std::string_view message) { Message(Severity::Info, message); }
-        virtual void Warning(std::string_view message) { Message(Severity::Warning, message); }
-        virtual void Error(std::string_view message) { Message(Severity::Error, message); }
-    };
-
     struct ContextDesc
     {
-        GraphicsAPI api = GraphicsAPI::Vulkan;
         MessageCallback* messageCallback = nullptr;
-        Window* window = nullptr;
         bool enableAPISpecificValidation = true;
+        Window* window = nullptr;
     };
 
-    class GraphicsContext
+    class GraphicsContext : public RefCounted
     {
     public:
-        virtual ~GraphicsContext() = default;
-        virtual GraphicsDevice* CreateDevice(const DeviceDesc& desc) = 0;
+        virtual Device* CreateDevice(DeviceDesc desc) = 0;
     };
+
+    using GraphicsContextHandle = RefCountPtr<GraphicsContext>;
 }
 
 using CreateGraphicsContextFn = Quest::GraphicsContext* (*)(Quest::ContextDesc desc);
