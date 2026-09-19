@@ -1,14 +1,14 @@
-#include "VulkanDevice.h"
+#include "VulkanRHI/VulkanDevice.h"
 
-#include "VulkanBuffer.h"
-#include "VulkanContext.h"
-#include "VulkanShader.h"
-#include "VulkanBindingLayout.h"
-#include "VulkanBindingSet.h"
-#include "VulkanPipeline.h"
-#include "VulkanCommandList.h"
+#include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanContext.h"
+#include "VulkanRHI/VulkanShader.h"
+#include "VulkanRHI/VulkanBindingLayout.h"
+#include "VulkanRHI/VulkanBindingSet.h"
+#include "VulkanRHI/VulkanPipeline.h"
+#include "VulkanRHI/VulkanCommandList.h"
 
-namespace Quest::RHI
+namespace Quest::Vulkan
 {
     VulkanDevice::VulkanDevice(VulkanContext* context)
         : m_Context(context)
@@ -21,7 +21,7 @@ namespace Quest::RHI
 
     BufferHandle VulkanDevice::CreateBuffer(BufferDesc desc)
     {
-        return Quest::RefCountPtr<VulkanBuffer>::Create(desc, m_Context);;
+        return RefCountPtr<VulkanBuffer>::Create(desc, m_Context);;
     }
 
     TextureHandle VulkanDevice::CreateTexture(TextureDesc desc)
@@ -164,9 +164,23 @@ namespace Quest::RHI
 		return Quest::RefCountPtr<VulkanCommandList>::Create(desc, m_Context);
     }
 
+    SyncObjectHandle VulkanDevice::CreateTimeline(uint64_t initialValue)
+    {
+        return SyncObjectHandle();
+    }
+
+    SwapchainHandle VulkanDevice::CreateSwapchain(SwapchainDesc desc)
+    {
+        return SwapchainHandle();
+    }
+
+    void VulkanDevice::WaitIdle()
+    {
+    }
+
     void* VulkanDevice::MapBuffer(Buffer* buffer)
     {
-        LOG_DEBUG("Buffer Mapped");
+        m_Context->logInfo("Buffer Mapped");
         VulkanBuffer* buff = static_cast<VulkanBuffer*>(buffer);
         void* mapping = nullptr;
         vmaMapMemory(m_Context->GetAllocator(), buff->allocation, &mapping);
@@ -176,7 +190,7 @@ namespace Quest::RHI
 
     void VulkanDevice::UnmapBuffer(Buffer* buffer)
     {
-        LOG_DEBUG("Buffer Unmapped");
+        m_Context->logInfo("Buffer Unmapped");
         VulkanBuffer* buff = static_cast<VulkanBuffer*>(buffer);
         vmaUnmapMemory(m_Context->GetAllocator(), buff->allocation);
     }

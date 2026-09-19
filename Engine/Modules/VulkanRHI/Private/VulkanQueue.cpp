@@ -1,8 +1,8 @@
-#include "VulkanCommandList.h"
-#include "VulkanCommon.h"
-#include "VulkanContext.h"
+#include "VulkanRHI/VulkanCommandList.h"
+#include "VulkanRHI/VulkanCommon.h"
+#include "VulkanRHI/VulkanContext.h"
 
-namespace Quest::RHI
+namespace Quest::Vulkan
 {
     TrackedCommandBuffer::~TrackedCommandBuffer()
     {

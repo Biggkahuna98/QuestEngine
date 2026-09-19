@@ -2,7 +2,7 @@
 
 #include "VulkanRHI/VulkanContext.h"
 
-namespace Quest::RHI::Vulkan
+namespace Quest::Vulkan
 {
     vk::BufferUsageFlagBits ConvertBufferType(BufferType type)
     {

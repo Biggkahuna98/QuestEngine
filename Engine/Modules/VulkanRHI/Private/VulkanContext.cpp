@@ -154,9 +154,9 @@ namespace Quest::Vulkan
         CreateSwapchain();
 
         // Push framedata
-        for (int i = 0; i < static_cast<int>(FramesInFlight::Count); i++)
+        /*for (int i = 0; i < static_cast<int>(FramesInFlight::Count); i++)
         {
-            LOG_DEBUG("Creating frame data {}", i);
+            logInfo(std::format("Creating frame data {}", i));
             FrameData fd{};
             std::string semName = "presentCompleteSemaphore: " + std::to_string(i);
             std::string fenceName = "inFlightFence: " + std::to_string(i);
@@ -165,7 +165,7 @@ namespace Quest::Vulkan
             SetDebugName(fd.presentCompleteSemaphore, vk::ObjectType::eSemaphore, semName.c_str());
             SetDebugName(fd.inFlightFence, vk::ObjectType::eFence, fenceName.c_str());
             m_FrameData.push_back(fd);
-        }
+        }*/
 
         // Setup the static dynamic state for now
         m_DynamicStates.push_back(vk::DynamicState::eViewport);
@@ -177,14 +177,40 @@ namespace Quest::Vulkan
     VulkanContext::~VulkanContext()
     {
         //m_Log->Info("Destroying Vulkan Context");
+        m_Log->Info("Shutting down and cleaning up resources of Vulkan Context");
+
+        m_Device.waitIdle();
+
+        /*for (auto fd : m_FrameData)
+        {
+            m_Device.destroyFence(fd.inFlightFence, nullptr);
+            m_Device.destroySemaphore(fd.presentCompleteSemaphore, nullptr);
+        }*/
+
+        DestroySwapchain();
+
+        // Make sure the semaphores inside the queues are deleted before the device is deleted
+        for (auto& queue : m_Queues)
+            queue.reset();
+
+        vmaDestroyAllocator(m_Allocator);
+        m_Device.destroy();
+
+        m_Instance.destroySurfaceKHR(m_Surface);
+        m_Instance.destroyDebugUtilsMessengerEXT(m_DebugMessenger);
+        m_Instance.destroy();
     }
 
-    DeviceHandle VulkanContext::CreateDevice()
+    /*DeviceHandle VulkanContext::CreateDevice()
     {
         return MakeRefCounted<VulkanDevice>(this);
+    }*/
+    Device* VulkanContext::CreateDevice(DeviceDesc desc)
+    {
+        return new VulkanDevice(this);
     }
 
-    void VulkanContext::BeginFrame()
+    /*void VulkanContext::BeginFrame()
     {
         auto frameData = GetFrameData();
         auto fenceRes = m_Device.waitForFences(frameData.inFlightFence, true, std::numeric_limits<uint64_t>::max());
@@ -213,33 +239,7 @@ namespace Quest::Vulkan
         vk::Result result = GetQueue(Quest::QueueType::Present)->GetQueue().presentKHR(presentInfoKHR);
 
         m_FrameCount++;
-    }
-
-    void VulkanContext::Shutdown()
-    {
-        m_Log->Info("Shutting down and cleaning up resources of Vulkan Context");
-
-        m_Device.waitIdle();
-
-        for (auto fd : m_FrameData)
-        {
-            m_Device.destroyFence(fd.inFlightFence, nullptr);
-            m_Device.destroySemaphore(fd.presentCompleteSemaphore, nullptr);
-        }
-
-        DestroySwapchain();
-
-        // Make sure the semaphores inside the queues are deleted before the device is deleted
-        for (auto& queue : m_Queues)
-            queue.reset();
-
-        vmaDestroyAllocator(m_Allocator);
-        m_Device.destroy();
-
-        m_Instance.destroySurfaceKHR(m_Surface);
-        m_Instance.destroyDebugUtilsMessengerEXT(m_DebugMessenger);
-        m_Instance.destroy();
-    }
+    }*/
 
     void VulkanContext::SetDebugName(const void* handle, const vk::ObjectType objType, const std::string_view& name) const
     {
@@ -256,11 +256,6 @@ namespace Quest::Vulkan
     Queue* VulkanContext::GetQueue(QueueType type) const
     {
         return m_Queues[static_cast<uint32_t>(type)].get();
-    }
-
-    FrameData& VulkanContext::GetFrameData()
-    {
-        return m_FrameData[m_FrameCount % (static_cast<int>(m_Desc.framesInFlight) + 1)];
     }
 
     void VulkanContext::CreateSwapchain()

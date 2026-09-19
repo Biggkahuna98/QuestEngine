@@ -99,7 +99,7 @@ namespace qrhi
             slangModule->findEntryPointByName("vertMain", entryPoint.writeRef());
             if (!entryPoint)
             {
-                QE_LOG(Core, Error"Failed to find entry point: vertMain");
+                QE_LOG(Core, Error, "Failed to find entry point: vertMain");
                 return;
             }
         }

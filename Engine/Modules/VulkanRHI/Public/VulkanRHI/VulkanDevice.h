@@ -26,6 +26,9 @@ namespace Quest::Vulkan
         GraphicsPipelineHandle CreateGraphicsPipeline(GraphicsPipelineDesc desc) override;
         ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) override;
         CommandListHandle CreateCommandList(CommandListDesc desc) override;
+        SyncObjectHandle CreateTimeline(uint64_t initialValue) override;
+        SwapchainHandle CreateSwapchain(SwapchainDesc desc) override;
+        void WaitIdle() override;
 
         void* MapBuffer(Buffer* buffer) override;
         void UnmapBuffer(Buffer* buffer) override;

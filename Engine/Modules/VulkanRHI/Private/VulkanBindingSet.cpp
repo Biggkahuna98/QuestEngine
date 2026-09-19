@@ -1,7 +1,7 @@
 #include "VulkanRHI/VulkanBindingSet.h"
 #include "VulkanRHI/VulkanContext.h"
 
-namespace Quest::RHI::Vulkan
+namespace Quest::Vulkan
 {
     VulkanBindingSet::VulkanBindingSet(VulkanContext* context)
         : m_Context(context)

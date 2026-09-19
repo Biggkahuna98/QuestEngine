@@ -6,7 +6,7 @@
 
 #include "VulkanRHI/VulkanContext.h"
 
-namespace Quest::RHI::Vulkan
+namespace Quest::Vulkan
 {
     // temporary
     // Reverse-Z perspective matrix
@@ -37,9 +37,9 @@ namespace Quest::RHI::Vulkan
     {
     }
 
-    Quest::Core::OpaqueObject VulkanCommandList::GetNativeType()
+    OpaqueObject VulkanCommandList::GetNativeType()
     {
-        Quest::Core::OpaqueObject obj{};
+        OpaqueObject obj{};
         obj.pointer = static_cast<void*>(this);
         return obj;
     }
@@ -54,7 +54,9 @@ namespace Quest::RHI::Vulkan
     void VulkanCommandList::Open()
     {
         //m_CurrentCommandBuffer = m_Context->GetQueue(m_Desc.type)->GetOrCreateTrackedCommandBuffer();
-        m_CurrentCommandBuffer = m_TrackedCommandBuffers[m_Context->GetFrameIndex()];
+        // TODO: FIX THIS LINE BELOW
+        //m_CurrentCommandBuffer = m_TrackedCommandBuffers[m_Context->GetFrameIndex()];
+        m_CurrentCommandBuffer = m_TrackedCommandBuffers[0];
         m_CurrentCommandBuffer->commandBuffer.reset();
         m_CurrentCommandBuffer->commandBuffer.begin(vk::CommandBufferBeginInfo()
             .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
@@ -97,9 +99,10 @@ namespace Quest::RHI::Vulkan
 
         m_CurrentCommandBuffer->commandBuffer.end();
 
-        m_Context->GetQueue(m_Desc.type)->Submit(this,
+        // TODO: FIX THIS WITH PROPER FRAME ABSTRACTION
+        /*m_Context->GetQueue(m_Desc.type)->Submit(this,
             m_Context->GetFrameData().presentCompleteSemaphore, m_Context->GetRenderFinishedSemaphore(),
-            m_Context->GetFrameData().inFlightFence);
+            m_Context->GetFrameData().inFlightFence);*/
     }
 
     void VulkanCommandList::SetGraphicsState(const GraphicsState& state)
@@ -119,7 +122,7 @@ namespace Quest::RHI::Vulkan
 
     void VulkanCommandList::Draw(const DrawArguments& args)
     {
-        LOG_DEBUG("Draw");
+        m_Context->logInfo("Draw");
 		QE_ASSERT(m_CurrentGraphicsState.pipeline);
         auto pipeline = dynamic_cast<VulkanGraphicsPipeline*>(m_CurrentGraphicsState.pipeline);
         m_CurrentCommandBuffer->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->GetPipeline());

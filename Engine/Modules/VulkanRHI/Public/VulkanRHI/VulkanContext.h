@@ -44,9 +44,9 @@ namespace Quest::Vulkan
         uint32_t GetSwapchainIndex() const { return m_SwapchainIndex; }
         VmaAllocator GetAllocator() const { return m_Allocator; }
         Queue* GetQueue(QueueType type) const;
-        FrameData& GetFrameData();
+        //FrameData& GetFrameData();
         vk::Semaphore GetRenderFinishedSemaphore() { return m_RenderSemaphores[m_SwapchainIndex]; }
-        uint32_t GetFrameIndex() const { return m_FrameCount % (static_cast<uint32_t>(m_Desc.framesInFlight) + 1); }
+        //uint32_t GetFrameIndex() const { return m_FrameCount % (static_cast<uint32_t>(m_Desc.framesInFlight) + 1); }
         auto GetDynamicStates() const { return m_DynamicStates; }
 
         // Creation helpers

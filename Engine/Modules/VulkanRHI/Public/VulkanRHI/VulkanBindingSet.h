@@ -3,7 +3,7 @@
 #include "Core/RHI/ShaderBindings.h"
 #include "VulkanCommon.h"
 
-namespace Quest::RHI::Vulkan
+namespace Quest::Vulkan
 {
     class VulkanBindingSet : public BindingSet
     {

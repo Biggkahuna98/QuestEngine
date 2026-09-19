@@ -1,9 +1,8 @@
-#include "VulkanCommon.h"
-
-#include "RHI/RHICommon.h"
 #include "VulkanRHI/VulkanCommon.h"
 
-namespace Quest::RHI::Vulkan
+#include "Core/RHI/RHICommon.h"
+
+namespace Quest::Vulkan
 {
     vk::Format ConvertFormat(Format format)
     {

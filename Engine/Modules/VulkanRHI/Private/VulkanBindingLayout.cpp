@@ -1,7 +1,7 @@
 #include "VulkanRHI/VulkanBindingLayout.h"
 #include "VulkanRHI/VulkanContext.h"
 
-namespace Quest::RHI::Vulkan
+namespace Quest::Vulkan
 {
     VulkanBindingLayout::VulkanBindingLayout(BindingLayoutDesc desc, VulkanContext* context)
         : desc(desc), isBindless(false), m_Context(context)
@@ -65,9 +65,9 @@ namespace Quest::RHI::Vulkan
         }
     }
 
-    Quest::Core::OpaqueObject VulkanBindingLayout::GetNativeType()
+    OpaqueObject VulkanBindingLayout::GetNativeType()
     {
-        Quest::Core::OpaqueObject ret{};
+        OpaqueObject ret{};
         ret.pointer = static_cast<void*>(this);
         return ret;
     }

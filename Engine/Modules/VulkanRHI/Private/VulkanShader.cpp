@@ -1,14 +1,14 @@
-#include "VulkanShader.h"
+#include "VulkanRHI/VulkanShader.h"
 
-#include "VulkanContext.h"
-#include "RHI/ShaderUtils.h"
+#include "VulkanRHI/VulkanContext.h"
+#include "Core/RHI/ShaderUtils.h"
 
-namespace Quest::RHI
+namespace Quest::Vulkan
 {
     VulkanShader::VulkanShader(ShaderDesc desc, const VulkanContext* context)
         : m_Context(context), desc(desc)
     {
-        auto bytecode = ReadShaderCache(desc.name);
+        auto bytecode = qrhi::ReadShaderCache(desc.name);
         if (bytecode.empty())
         {
             m_Context->logError("Failed to read shader file: " + desc.name);

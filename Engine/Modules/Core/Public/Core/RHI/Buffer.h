@@ -2,6 +2,7 @@
 
 #include "RHICommon.h"
 
+#include <algorithm>
 #include <cstdint>
 
 namespace Quest
@@ -34,7 +35,15 @@ namespace Quest
             : offsetInBytes(offset), sizeInBytes(size)
         {}
 
-        BufferRange Resolve(const BufferDesc& desc) const;
+        constexpr BufferRange Resolve(const BufferDesc& desc) const
+        {
+            BufferRange result;
+            result.offsetInBytes = std::min(offsetInBytes, desc.sizeInBytes);
+            result.sizeInBytes = (sizeInBytes == 0)
+                ? desc.sizeInBytes - result.offsetInBytes
+                : std::min(sizeInBytes, desc.sizeInBytes - result.offsetInBytes);
+            return result;
+        }
         constexpr bool IsEntireBuffer(const BufferDesc& desc) const { return (offsetInBytes == 0) && (sizeInBytes == ~0ull) || sizeInBytes == desc.sizeInBytes; }
         constexpr bool operator==(const BufferRange& other) const { return offsetInBytes == other.offsetInBytes && sizeInBytes == other.sizeInBytes; }
 

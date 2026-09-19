@@ -4,7 +4,7 @@
 
 #include <Core/RefCounting.h>
 
-namespace Quest::RHI
+namespace Quest
 {
     // A monotonic timeline (Vulkan timeline semaphore / D3D12 fence). The graphics queue
     // signals it to an ever-increasing value on submit (see Device::ExecuteCommandList);

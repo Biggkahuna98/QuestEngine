@@ -4,7 +4,6 @@
 #include "Core/Log/Log.h"
 #include "Core/Log/BasicSink.h"
 #include "Core/Window.h"
-#include "Core/RHI/RHI.h"
 
 OVERRIDE_NEW_DELETE
 
@@ -88,10 +87,10 @@ namespace Quest
         ContextDesc desc{};
         desc.window = m_Window;
         desc.messageCallback = g_RHICallback;
-        m_Context.reset(CreateContext(desc));
+        m_Context = CreateContext(desc);
         DeviceDesc desc2{};
         desc2.window = m_Window;
-        m_Device.reset(m_Context->CreateDevice(desc2));
+        m_Device = m_Context->CreateDevice(desc2);
 
         return true;
     }
@@ -101,19 +100,20 @@ namespace Quest
         // TODO(rhi): m_Context->WaitIdle(); drain m_DeferredDeletes; release handles.
         m_Window = nullptr;
 
-        m_Device.reset();
+        m_Device.Reset();
 
         // release(), not get(): the DLL's DestroyGraphicsContext owns the delete from here on.
         // Leaving the pointer in m_Context would delete it a second time in ~Renderer(), after
         // Unload() has unmapped the vtable it dispatches through.
-        if (GraphicsContext* ctx = m_Context.release())
+        /*if (GraphicsContext* ctx = m_Context.Release())
         {
             auto DestroyContext = m_RHILib.GetFunction<DestroyGraphicsContextFn>("DestroyGraphicsContext");
             if (DestroyContext)
                 DestroyContext(ctx);
             else
                 delete ctx;
-        }
+        }*/
+        m_Context.Reset();
 
         m_RHILib.Unload();
 

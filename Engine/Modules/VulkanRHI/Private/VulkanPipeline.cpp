@@ -1,10 +1,10 @@
-#include "VulkanPipeline.h"
+#include "VulkanRHI/VulkanPipeline.h"
 
-#include "VulkanContext.h"
-#include "VulkanShader.h"
-#include "VulkanBindingLayout.h"
+#include "VulkanRHI/VulkanContext.h"
+#include "VulkanRHI/VulkanShader.h"
+#include "VulkanRHI/VulkanBindingLayout.h"
 
-namespace Quest::RHI
+namespace Quest::Vulkan
 {
     // Graphics pipeline
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(GraphicsPipelineDesc desc, VulkanContext* context)
@@ -76,7 +76,7 @@ namespace Quest::RHI
             VulkanBindingLayout* bindingLayout = static_cast<VulkanBindingLayout*>(layout.Get());
             descriptorSetLayouts.push_back(bindingLayout->descriptorSetLayout);
         }
-        LOG_DEBUG("Descriptor Set layout size: {}", descriptorSetLayouts.size());
+        m_Context->logInfo(std::format("Descriptor Set layout size: {}", descriptorSetLayouts.size()));
 
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo {
             .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
@@ -157,9 +157,9 @@ namespace Quest::RHI
     {
     }
 
-    Quest::OpaqueObject VulkanComputePipeline::GetNativeType()
+    OpaqueObject VulkanComputePipeline::GetNativeType()
     {
-        Quest::OpaqueObject obj{};
+        OpaqueObject obj{};
         obj.pointer = static_cast<void*>(this);
         return obj;
     }

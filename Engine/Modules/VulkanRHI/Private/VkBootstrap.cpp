@@ -14,7 +14,7 @@
  * Copyright © 2020 Charles Giessen (charles@lunarg.com)
  */
 
-#include "VkBootstrap.h"
+#include "VulkanRHI/VkBootstrap.h"
 
 #include <cstring>
 
@@ -33,7 +33,7 @@
 #include <mutex>
 #include <algorithm>
 
-#include "VkBootstrapFeatureChain.inl"
+#include "VulkanRHI/VkBootstrapFeatureChain.inl"
 
 namespace vkb {
 
