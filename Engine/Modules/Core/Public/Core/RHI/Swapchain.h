@@ -26,8 +26,6 @@ namespace Quest
         uint32_t height = 0;
         uint32_t imageCount = 3;        // backbuffers; independent of frames-in-flight
         Format format = Format::BGRA8_UNORM;
-        // Requested present mode. The backend falls back to Fifo if unsupported (it is the
-        // only mode Vulkan guarantees), so query the actual mode after creation if it matters.
         PresentMode presentMode = PresentMode::Fifo;
     };
 

@@ -13,10 +13,12 @@ OVERRIDE_NEW_DELETE
 
 using CreateApplicationFn = Quest::Application* (*)();
 using DestroyApplicationFn = void (*)(Quest::Application*);
-using VoidFn = void (*)();
 
 int main(int argc, char** argv)
 {
+    // Base memory allocations for pre-alloc stat exclusion
+    BasicMemoryStats baseStats = Memory::GetStats();
+
     // Startup Core module
     ModuleStartup();
 
@@ -58,7 +60,7 @@ int main(int argc, char** argv)
 
     // Print out memory stats for debugging
     BasicMemoryStats stats = Memory::GetStats();
-    std::cout << "Memory Stats: Allocs - " << stats.Allocs << ", Frees - " << stats.Frees << std::endl;
+    std::cout << "Memory Stats: Allocs - " << stats.Allocs - baseStats.Allocs << ", Frees - " << stats.Frees - baseStats.Frees << std::endl;
 
     return 0;
 }
