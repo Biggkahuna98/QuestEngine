@@ -151,8 +151,6 @@ namespace Quest::Vulkan
         QE_ASSERT(m_Queues[static_cast<uint32_t>(QueueType::Compute)]);
         QE_ASSERT(m_Queues[static_cast<uint32_t>(QueueType::Transfer)]);
 
-        CreateSwapchain();
-
         // Push framedata
         /*for (int i = 0; i < static_cast<int>(FramesInFlight::Count); i++)
         {
@@ -186,8 +184,6 @@ namespace Quest::Vulkan
             m_Device.destroyFence(fd.inFlightFence, nullptr);
             m_Device.destroySemaphore(fd.presentCompleteSemaphore, nullptr);
         }*/
-
-        DestroySwapchain();
 
         // Make sure the semaphores inside the queues are deleted before the device is deleted
         for (auto& queue : m_Queues)
@@ -256,60 +252,6 @@ namespace Quest::Vulkan
     Queue* VulkanContext::GetQueue(QueueType type) const
     {
         return m_Queues[static_cast<uint32_t>(type)].get();
-    }
-
-    void VulkanContext::CreateSwapchain()
-    {
-        logInfo("Creating Swapchain");
-
-        vkb::SwapchainBuilder swapchain_builder{m_PhysicalDevice, m_Device, m_Surface};
-        m_SwapchainFormat = vk::Format::eB8G8R8A8Unorm;
-        vkb::Swapchain swapchain = swapchain_builder
-            .set_desired_format({.format = static_cast<VkFormat>(m_SwapchainFormat),
-                                    .colorSpace = static_cast<VkColorSpaceKHR>(vk::ColorSpaceKHR::eSrgbNonlinear)})
-            .set_desired_present_mode(static_cast<VkPresentModeKHR>(vk::PresentModeKHR::eFifo))
-            .set_desired_extent(m_WindowExtent.width, m_WindowExtent.height)
-            .add_image_usage_flags(static_cast<VkImageUsageFlags>(vk::ImageUsageFlagBits::eTransferDst))
-            .build()
-            .value();
-
-        m_Swapchain = swapchain.swapchain;
-        m_SwapchainExtent = swapchain.extent;
-        auto images = swapchain.get_images().value();
-        auto imageViews = swapchain.get_image_views().value();
-        m_SwapchainImages = std::vector<vk::Image>(images.begin(), images.end());
-        m_SwapchainImageViews = std::vector<vk::ImageView>(imageViews.begin(), imageViews.end());
-
-        m_RenderSemaphores.resize(m_SwapchainImages.size());
-        for (int i = 0; i < m_RenderSemaphores.size(); i++)
-        {
-            vk::SemaphoreCreateInfo semaphoreCreateInfo{};
-            VK_CHECK(m_Device.createSemaphore(&semaphoreCreateInfo, nullptr, &m_RenderSemaphores[i]));
-            SetDebugName(m_RenderSemaphores[i], vk::ObjectType::eSemaphore, "renderSemaphore: " + std::to_string(i));
-        }
-    }
-
-    void VulkanContext::DestroySwapchain() const
-    {
-        logInfo("Destroying Swapchain");
-
-        for (int i = 0; i < m_RenderSemaphores.size(); i++)
-        {
-            m_Device.destroySemaphore(m_RenderSemaphores[i], nullptr);
-        }
-
-        for (int i = 0; i < m_SwapchainImageViews.size(); i++)
-        {
-            m_Device.destroyImageView(m_SwapchainImageViews[i], nullptr);
-        }
-
-        m_Device.destroySwapchainKHR(m_Swapchain, nullptr);
-    }
-
-    void VulkanContext::RecreateSwapchain()
-    {
-        DestroySwapchain();
-        CreateSwapchain();
     }
 
     void VulkanContext::TransitionImage(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageLayout oldLayout,

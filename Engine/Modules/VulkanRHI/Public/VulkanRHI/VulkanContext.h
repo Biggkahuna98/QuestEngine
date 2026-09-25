@@ -37,22 +37,12 @@ namespace Quest::Vulkan
         vk::Extent2D GetWindowExtent() const { return m_WindowExtent; }
         vk::Device GetDevice() const { return m_Device; }
         vk::PhysicalDevice GetPhysicalDevice() const { return m_PhysicalDevice; }
-        vk::Extent2D GetSwapchainExtent() const { return m_SwapchainExtent; }
-        auto GetSwapchainImageFormat() const { return m_SwapchainFormat; }
-        auto GetSwapchainImages() const { return m_SwapchainImages; }
-        auto GetSwapchainImageViews() const { return m_SwapchainImageViews; }
-        uint32_t GetSwapchainIndex() const { return m_SwapchainIndex; }
         VmaAllocator GetAllocator() const { return m_Allocator; }
         Queue* GetQueue(QueueType type) const;
         //FrameData& GetFrameData();
-        vk::Semaphore GetRenderFinishedSemaphore() { return m_RenderSemaphores[m_SwapchainIndex]; }
+        //vk::Semaphore GetRenderFinishedSemaphore() { return m_RenderSemaphores[m_SwapchainIndex]; }
         //uint32_t GetFrameIndex() const { return m_FrameCount % (static_cast<uint32_t>(m_Desc.framesInFlight) + 1); }
         auto GetDynamicStates() const { return m_DynamicStates; }
-
-        // Creation helpers
-        void CreateSwapchain();
-        void DestroySwapchain() const;
-        void RecreateSwapchain();
 
         // Idk where to put this, so here will do for now
         void TransitionImage(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
@@ -68,15 +58,6 @@ namespace Quest::Vulkan
         vk::PhysicalDevice m_PhysicalDevice;
         vk::Device m_Device;
         VmaAllocator m_Allocator;
-
-        vk::SwapchainKHR m_Swapchain;
-        vk::Format m_SwapchainFormat;
-        vk::Extent2D m_SwapchainExtent;
-        std::vector<vk::Image> m_SwapchainImages;
-        std::vector<vk::ImageView> m_SwapchainImageViews;
-        uint32_t m_SwapchainIndex = 0;
-
-        std::vector<vk::Semaphore> m_RenderSemaphores;
 
         //Core::StaticVector<FrameData, static_cast<int>(FramesInFlight::Count)> m_FrameData;
         uint64_t m_FrameCount = 0;

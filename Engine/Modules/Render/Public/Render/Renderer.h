@@ -4,6 +4,7 @@
 #include "Core/Platform/DynamicLibrary.h"
 #include "Core/RHI/GraphicsContext.h"
 #include "Core/RHI/Device.h"
+#include "Core/RHI/Swapchain.h"
 
 #include <cstdint>
 
@@ -60,6 +61,7 @@ namespace Quest
         Window* m_Window = nullptr;
         GraphicsContextHandle m_Context;
         DeviceHandle m_Device;
+        SwapchainHandle m_Swapchain;
         uint64_t m_FrameNumber = 0;
 
 

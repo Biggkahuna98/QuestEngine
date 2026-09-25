@@ -92,6 +92,9 @@ namespace Quest
         desc2.window = m_Window;
         m_Device = m_Context->CreateDevice(desc2);
 
+        SwapchainDesc swapchain_desc{};
+        m_Swapchain = m_Device->CreateSwapchain(swapchain_desc);
+
         return true;
     }
 
@@ -99,6 +102,8 @@ namespace Quest
     {
         // TODO(rhi): m_Context->WaitIdle(); drain m_DeferredDeletes; release handles.
         m_Window = nullptr;
+
+        m_Swapchain.Reset();
 
         m_Device.Reset();
 
