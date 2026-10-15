@@ -8,6 +8,7 @@
 #include "VulkanRHI/VulkanPipeline.h"
 #include "VulkanRHI/VulkanCommandList.h"
 #include "VulkanRHI/VulkanSwapchain.h"
+#include "VulkanRHI/VulkanSyncObject.h"
 
 namespace Quest::Vulkan
 {
@@ -167,7 +168,7 @@ namespace Quest::Vulkan
 
     SyncObjectHandle VulkanDevice::CreateTimeline(uint64_t initialValue)
     {
-        return SyncObjectHandle();
+        return SyncObjectHandle(m_Context->GetQueue(QueueType::Graphics)->GetTimeline());
     }
 
     SwapchainHandle VulkanDevice::CreateSwapchain(SwapchainDesc desc)
@@ -175,7 +176,7 @@ namespace Quest::Vulkan
         return Quest::RefCountPtr<VulkanSwapchain>::Create(m_Context, desc);
     }
 
-    void VulkanDevice::ExecuteCommandList(CommandList* commandList, Swapchain* presentTarget)
+    uint64_t VulkanDevice::ExecuteCommandList(CommandList* commandList, Swapchain* presentTarget)
     {
         vk::Semaphore waitSemaphore = nullptr;
         vk::Semaphore signalSemaphore = nullptr;
@@ -186,7 +187,7 @@ namespace Quest::Vulkan
             signalSemaphore = swapchain->GetRenderFinishedSemaphore();
         }
 
-        m_Context->GetQueue(commandList->GetDesc().type)->Submit(commandList, waitSemaphore, signalSemaphore, nullptr);
+        return m_Context->GetQueue(commandList->GetDesc().type)->Submit(commandList, waitSemaphore, signalSemaphore, nullptr);
     }
 
     void VulkanDevice::WaitIdle()

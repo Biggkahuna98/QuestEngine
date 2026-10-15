@@ -121,18 +121,6 @@ namespace Quest
         m_Swapchain.Reset();
 
         m_Device.Reset();
-
-        // release(), not get(): the DLL's DestroyGraphicsContext owns the delete from here on.
-        // Leaving the pointer in m_Context would delete it a second time in ~Renderer(), after
-        // Unload() has unmapped the vtable it dispatches through.
-        /*if (GraphicsContext* ctx = m_Context.Release())
-        {
-            auto DestroyContext = m_RHILib.GetFunction<DestroyGraphicsContextFn>("DestroyGraphicsContext");
-            if (DestroyContext)
-                DestroyContext(ctx);
-            else
-                delete ctx;
-        }*/
         m_Context.Reset();
 
         m_RHILib.Unload();

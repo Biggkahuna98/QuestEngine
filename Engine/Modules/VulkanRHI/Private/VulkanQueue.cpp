@@ -1,6 +1,7 @@
 #include "VulkanRHI/VulkanCommandList.h"
 #include "VulkanRHI/VulkanCommon.h"
 #include "VulkanRHI/VulkanContext.h"
+#include "VulkanRHI/VulkanSyncObject.h"
 
 namespace Quest::Vulkan
 {
@@ -31,17 +32,11 @@ namespace Quest::Vulkan
     Queue::Queue(const VulkanContext* context, QueueType id, vk::Queue queue, uint32_t queueFamilyIndex)
         : m_Context(context), m_Queue(queue), m_ID(id), m_QueueFamilyIndex(queueFamilyIndex)
     {
-        auto semaphoreTypeCreateInfo = vk::SemaphoreTypeCreateInfo()
-            .setSemaphoreType(vk::SemaphoreType::eBinary);
-        auto semaphoreCreateInfo = vk::SemaphoreCreateInfo()
-            .setPNext(&semaphoreTypeCreateInfo);
-        m_TrackingSemaphore = m_Context->GetDevice().createSemaphore(semaphoreCreateInfo);
-        m_Context->SetDebugName(m_TrackingSemaphore, vk::ObjectType::eSemaphore, "Tracking Semaphore: " + QueueTypeToString(id));
+        m_Timeline = RefCountPtr<VulkanSyncObject>::Create(m_Context, 0, "Tracking Timeline: " + QueueTypeToString(id));
     }
 
     Queue::~Queue()
     {
-        m_Context->GetDevice().destroySemaphore(m_TrackingSemaphore);
     }
 
     TrackedCommandBufferPtr Queue::CreateTrackedCommandBuffer()
@@ -97,28 +92,63 @@ namespace Quest::Vulkan
         VulkanCommandList* cmdList = static_cast<VulkanCommandList*>(commandList);
         TrackedCommandBufferPtr commandBuffer = cmdList->GetCurrentCommandBuffer();
 
+        RetireCompletedCommandBuffers();
+
         m_LastSubmittedID++;
+        commandBuffer->submissionID = m_LastSubmittedID;
 
         m_TrackedCommandBuffersInFlight.push_back(commandBuffer);
 
-        //m_SignalSemaphores.push_back(m_TrackingSemaphore);
-        //m_SignalSemaphoreValues.push_back(m_LastSubmittedID);
-
-        // Come back for the wait stage stuff
-        vk::PipelineStageFlags waitStage(vk::PipelineStageFlagBits::eColorAttachmentOutput);
         // Semaphores are optional -- only a present-target submit has acquire/render-finished ones.
-        vk::SubmitInfo submitInfo = vk::SubmitInfo()
-            .setWaitSemaphoreCount(waitSemaphore ? 1 : 0)
-            .setPWaitSemaphores(&waitSemaphore)
-            .setWaitDstStageMask(waitStage)
-            .setCommandBufferCount(1)
-            .setPCommandBuffers(&commandBuffer->commandBuffer)
-            .setSignalSemaphoreCount(signalSemaphore ? 1 : 0)
-            .setPSignalSemaphores(&signalSemaphore);
+        // These are binary, so their values are ignored.
+        std::vector<vk::SemaphoreSubmitInfo> waitInfos;
+        waitInfos.reserve(m_WaitSemaphores.size() + 1);
+        if (waitSemaphore)
+        {
+            // Swapchain acquire: only the attachment write has to wait for the image.
+            waitInfos.push_back(vk::SemaphoreSubmitInfo()
+                .setSemaphore(waitSemaphore)
+                .setStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput));
+        }
+        for (size_t i = 0; i < m_WaitSemaphores.size(); i++)
+        {
+            waitInfos.push_back(vk::SemaphoreSubmitInfo()
+                .setSemaphore(m_WaitSemaphores[i])
+                .setValue(m_WaitSemaphoreValues[i])
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands));
+        }
+
+        std::vector<vk::SemaphoreSubmitInfo> signalInfos;
+        signalInfos.reserve(m_SignalSemaphores.size() + 2);
+        if (signalSemaphore)
+        {
+            signalInfos.push_back(vk::SemaphoreSubmitInfo()
+                .setSemaphore(signalSemaphore)
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands));
+        }
+        for (size_t i = 0; i < m_SignalSemaphores.size(); i++)
+        {
+            signalInfos.push_back(vk::SemaphoreSubmitInfo()
+                .setSemaphore(m_SignalSemaphores[i])
+                .setValue(m_SignalSemaphoreValues[i])
+                .setStageMask(vk::PipelineStageFlagBits2::eAllCommands));
+        }
+        signalInfos.push_back(vk::SemaphoreSubmitInfo()
+            .setSemaphore(m_Timeline->GetSemaphore())
+            .setValue(m_LastSubmittedID)
+            .setStageMask(vk::PipelineStageFlagBits2::eAllCommands));
+
+        auto commandBufferInfo = vk::CommandBufferSubmitInfo()
+            .setCommandBuffer(commandBuffer->commandBuffer);
+
+        auto submitInfo = vk::SubmitInfo2()
+            .setWaitSemaphoreInfos(waitInfos)
+            .setCommandBufferInfos(commandBufferInfo)
+            .setSignalSemaphoreInfos(signalInfos);
 
         try
         {
-            m_Queue.submit(submitInfo, fence);
+            m_Queue.submit2(submitInfo, fence);
         } catch (vk::DeviceLostError&)
         {
             m_Context->logError("Device was lost");
@@ -130,5 +160,14 @@ namespace Quest::Vulkan
         m_SignalSemaphoreValues.clear();
 
         return m_LastSubmittedID;
+    }
+
+    void Queue::RetireCompletedCommandBuffers()
+    {
+        const uint64_t completed = m_Timeline->GetCompletedValue();
+        std::erase_if(m_TrackedCommandBuffersInFlight, [completed](const TrackedCommandBufferPtr& commandBuffer)
+        {
+            return commandBuffer->submissionID <= completed;
+        });
     }
 }

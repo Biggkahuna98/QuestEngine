@@ -28,7 +28,7 @@ namespace Quest::Vulkan
         CommandListHandle CreateCommandList(CommandListDesc desc) override;
         SyncObjectHandle CreateTimeline(uint64_t initialValue) override;
         SwapchainHandle CreateSwapchain(SwapchainDesc desc) override;
-        void ExecuteCommandList(CommandList* commandList, Swapchain* presentTarget) override;
+        uint64_t ExecuteCommandList(CommandList* commandList, Swapchain* presentTarget) override;
         void WaitIdle() override;
 
         void* MapBuffer(Buffer* buffer) override;

@@ -32,6 +32,7 @@ namespace Quest::Vulkan
         vk::DescriptorBufferInfo *bufferInfo, vk::BufferView *bufferView, const void* pNext = nullptr);
 
     class VulkanContext;
+    class VulkanSyncObject;
 
     class TrackedCommandBuffer final
     {
@@ -71,15 +72,19 @@ namespace Quest::Vulkan
 
         QueueType GetID() const { return m_ID; }
         vk::Queue GetQueue() const { return m_Queue; }
-        vk::Semaphore GetTrackingSemaphore() const { return m_TrackingSemaphore; }
+        // Signaled to the submission ID on every Submit().
+        const RefCountPtr<VulkanSyncObject>& GetTimeline() const { return m_Timeline; }
         uint64_t GetLastSubmittedID() const { return m_LastSubmittedID; }
     private:
+        // Drop in-flight command buffers whose submission the timeline has passed.
+        void RetireCompletedCommandBuffers();
+
         const VulkanContext* m_Context;
         vk::Queue m_Queue;
         QueueType m_ID;
         uint32_t m_QueueFamilyIndex = -1;
 
-        vk::Semaphore m_TrackingSemaphore;
+        RefCountPtr<VulkanSyncObject> m_Timeline;
         uint64_t m_LastSubmittedID = 0;
 
         std::mutex m_Mutex;

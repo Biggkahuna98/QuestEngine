@@ -39,10 +39,13 @@ namespace Quest
         virtual GraphicsPipelineHandle CreateGraphicsPipeline(GraphicsPipelineDesc desc) = 0;
         virtual ComputePipelineHandle CreateComputePipeline(ComputePipelineDesc desc) = 0;
         virtual CommandListHandle CreateCommandList(CommandListDesc desc) = 0;
+        // Returns the graphics queue's timeline, which every ExecuteCommandList signals.
+        // TODO: initialValue is currently ignored -- the queue owns the timeline's values.
         virtual SyncObjectHandle CreateTimeline(uint64_t initialValue = 0) = 0;
         virtual SwapchainHandle CreateSwapchain(SwapchainDesc desc) = 0;
 
-        virtual void ExecuteCommandList(CommandList* commandList, Swapchain* presentTarget = nullptr) = 0;
+        // Returns the timeline value this submission signals on completion; Wait() on it.
+        virtual uint64_t ExecuteCommandList(CommandList* commandList, Swapchain* presentTarget = nullptr) = 0;
 
         virtual void* MapBuffer(Buffer* buffer) = 0;
         virtual void UnmapBuffer(Buffer* buffer) = 0;
