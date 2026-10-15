@@ -25,6 +25,11 @@ namespace Quest::Vulkan
         auto GetSwapchainImages() const { return m_SwapchainImages; }
         auto GetSwapchainImageViews() const { return m_SwapchainImageViews; }
         uint32_t GetSwapchainIndex() const { return m_SwapchainIndex; }
+
+        // Signaled by the most recent AcquireNextImage(); the present-target submit waits on it.
+        vk::Semaphore GetAcquireSemaphore() const { return m_AcquireSemaphores[m_AcquireSemaphoreIndex]; }
+        // Signaled by the present-target submit; Present() waits on it.
+        vk::Semaphore GetRenderFinishedSemaphore() const { return m_RenderSemaphores[m_SwapchainIndex]; }
     private:
         VulkanContext* m_Context;
         SwapchainDesc m_Desc;
@@ -40,6 +45,11 @@ namespace Quest::Vulkan
         std::vector<vk::ImageView> m_SwapchainImageViews;
         uint32_t m_SwapchainIndex = 0;
 
+        // Indexed by image -- the image index is known before submit/present.
         std::vector<vk::Semaphore> m_RenderSemaphores;
+        // Ring indexed by acquire count -- the image index isn't known until after acquire.
+        // Reuse is safe as long as frames in flight <= ring size (asserted by the Renderer).
+        std::vector<vk::Semaphore> m_AcquireSemaphores;
+        uint32_t m_AcquireSemaphoreIndex = 0;
     };
 }

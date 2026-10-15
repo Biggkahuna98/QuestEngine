@@ -9,6 +9,7 @@
 
 #include "Core/RHI/GraphicsContext.h"
 #include "Core/RHI/ShaderUtils.h"
+#include "VulkanRHI/VulkanSwapchain.h"
 
 // Vulkan hpp global dispatcher
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
@@ -204,6 +205,41 @@ namespace Quest::Vulkan
     Device* VulkanContext::CreateDevice(DeviceDesc desc)
     {
         return new VulkanDevice(this);
+    }
+
+    void VulkanContext::SetSwapchain(Swapchain* swapchain)
+    {
+        m_CurrentSwapchain = swapchain;
+    }
+
+    std::vector<vk::Image> VulkanContext::GetSwapchainImages()
+    {
+        VulkanSwapchain* swapchain = static_cast<VulkanSwapchain*>(m_CurrentSwapchain);
+        return swapchain->GetSwapchainImages();
+    }
+
+    std::vector<vk::ImageView> VulkanContext::GetSwapchainImageViews()
+    {
+        VulkanSwapchain* swapchain = static_cast<VulkanSwapchain*>(m_CurrentSwapchain);
+        return swapchain->GetSwapchainImageViews();
+    }
+
+    int VulkanContext::GetSwapchainIndex()
+    {
+        VulkanSwapchain* swapchain = static_cast<VulkanSwapchain*>(m_CurrentSwapchain);
+        return swapchain->GetCurrentImageIndex();
+    }
+
+    vk::Extent2D VulkanContext::GetSwapchainExtent()
+    {
+        VulkanSwapchain* swapchain = static_cast<VulkanSwapchain*>(m_CurrentSwapchain);
+        return swapchain->GetSwapchainExtent();
+    }
+
+    vk::Format VulkanContext::GetSwapchainImageFormat()
+    {
+        VulkanSwapchain* swapchain = static_cast<VulkanSwapchain*>(m_CurrentSwapchain);
+        return swapchain->GetSwapchainImageFormat();
     }
 
     /*void VulkanContext::BeginFrame()

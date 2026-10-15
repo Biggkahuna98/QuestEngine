@@ -95,6 +95,13 @@ namespace Quest
         SwapchainDesc swapchain_desc{};
         m_Swapchain = m_Device->CreateSwapchain(swapchain_desc);
 
+        // The backend recycles its acquire semaphores in a ring sized to the image count; reuse
+        // is only safe if the frame that last waited on one has retired, which pacing guarantees
+        // only while frames in flight <= image count.
+        QE_ASSERT(kFramesInFlight <= m_Swapchain->GetImageCount());
+
+        m_Context->SetSwapchain(m_Swapchain.Get());
+
         return true;
     }
 

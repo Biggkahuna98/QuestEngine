@@ -16,6 +16,7 @@ namespace Quest
     {
     public:
         virtual Device* CreateDevice(DeviceDesc desc) = 0;
+        virtual void SetSwapchain(Swapchain* swapchain) = 0;
     };
 
     using GraphicsContextHandle = RefCountPtr<GraphicsContext>;

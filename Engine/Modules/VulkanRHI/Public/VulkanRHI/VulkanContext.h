@@ -7,6 +7,8 @@
 #include "Core/RHI/GraphicsContext.h"
 #include <array>
 
+#include "VulkanSwapchain.h"
+
 namespace Quest::Vulkan
 {
     class VulkanDevice;
@@ -24,9 +26,10 @@ namespace Quest::Vulkan
         ~VulkanContext() override;
 
         Device* CreateDevice(DeviceDesc desc) override;
+        void SetSwapchain(Swapchain* swapchain) override;
 
         // VulkanContext specific functions
-        void SetDebugName(const void* handle, const vk::ObjectType objType, const std::string_view& name) const;
+        void SetDebugName(const void* handle, vk::ObjectType objType, const std::string_view& name) const;
         MessageCallback* GetLog() const { return m_Log; }
         void logInfo(std::string_view message) const { m_Log->Info(message); }
         void logWarning(std::string_view message) const { m_Log->Warning(message); }
@@ -43,6 +46,12 @@ namespace Quest::Vulkan
         //vk::Semaphore GetRenderFinishedSemaphore() { return m_RenderSemaphores[m_SwapchainIndex]; }
         //uint32_t GetFrameIndex() const { return m_FrameCount % (static_cast<uint32_t>(m_Desc.framesInFlight) + 1); }
         auto GetDynamicStates() const { return m_DynamicStates; }
+
+        std::vector<vk::Image> GetSwapchainImages();
+        std::vector<vk::ImageView> GetSwapchainImageViews();
+        int GetSwapchainIndex();
+        vk::Extent2D GetSwapchainExtent();
+        vk::Format GetSwapchainImageFormat();
 
         // Idk where to put this, so here will do for now
         void TransitionImage(vk::CommandBuffer cmdBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
@@ -67,6 +76,8 @@ namespace Quest::Vulkan
 
         // Dynamic State for now
         std::vector<vk::DynamicState> m_DynamicStates;
+
+        Swapchain* m_CurrentSwapchain = nullptr;
     };
 
     // There should only be one context per API.... just going to have to make that assumption for now

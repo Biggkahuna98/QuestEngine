@@ -171,7 +171,7 @@ namespace Quest::Vulkan
 
     SwapchainHandle VulkanDevice::CreateSwapchain(SwapchainDesc desc)
     {
-        return SwapchainHandle();
+        return Quest::RefCountPtr<VulkanSwapchain>::Create(m_Context, desc);
     }
 
     void VulkanDevice::WaitIdle()

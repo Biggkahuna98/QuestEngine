@@ -16,7 +16,10 @@ namespace Quest::Vulkan
 
     uint32_t VulkanSwapchain::AcquireNextImage()
     {
-        auto [result, imageIndex] = m_Context->GetDevice().acquireNextImageKHR(m_Swapchain, std::numeric_limits<uint64_t>::max(), frameData.presentCompleteSemaphore, nullptr);
+        m_AcquireSemaphoreIndex = (m_AcquireSemaphoreIndex + 1) % m_AcquireSemaphores.size();
+        vk::Semaphore acquireSemaphore = m_AcquireSemaphores[m_AcquireSemaphoreIndex];
+
+        auto [result, imageIndex] = m_Context->GetDevice().acquireNextImageKHR(m_Swapchain, std::numeric_limits<uint64_t>::max(), acquireSemaphore, nullptr);
         VK_CHECK(result);
         m_SwapchainIndex = imageIndex;
 
@@ -95,6 +98,15 @@ namespace Quest::Vulkan
             VK_CHECK(device.createSemaphore(&semaphoreCreateInfo, nullptr, &m_RenderSemaphores[i]));
             m_Context->SetDebugName(m_RenderSemaphores[i], vk::ObjectType::eSemaphore, "renderSemaphore: " + std::to_string(i));
         }
+
+        m_AcquireSemaphores.resize(m_SwapchainImages.size());
+        for (int i = 0; i < m_AcquireSemaphores.size(); i++)
+        {
+            vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+            VK_CHECK(device.createSemaphore(&semaphoreCreateInfo, nullptr, &m_AcquireSemaphores[i]));
+            m_Context->SetDebugName(m_AcquireSemaphores[i], vk::ObjectType::eSemaphore, "acquireSemaphore: " + std::to_string(i));
+        }
+        m_AcquireSemaphoreIndex = 0;
     }
 
     void VulkanSwapchain::DestroySwapchain()
@@ -104,6 +116,11 @@ namespace Quest::Vulkan
         for (int i = 0; i < m_RenderSemaphores.size(); i++)
         {
             device.destroySemaphore(m_RenderSemaphores[i], nullptr);
+        }
+
+        for (int i = 0; i < m_AcquireSemaphores.size(); i++)
+        {
+            device.destroySemaphore(m_AcquireSemaphores[i], nullptr);
         }
 
         for (int i = 0; i < m_SwapchainImageViews.size(); i++)
