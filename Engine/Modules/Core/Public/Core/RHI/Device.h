@@ -42,6 +42,8 @@ namespace Quest
         virtual SyncObjectHandle CreateTimeline(uint64_t initialValue = 0) = 0;
         virtual SwapchainHandle CreateSwapchain(SwapchainDesc desc) = 0;
 
+        virtual void ExecuteCommandList(CommandList* commandList, Swapchain* presentTarget = nullptr) = 0;
+
         virtual void* MapBuffer(Buffer* buffer) = 0;
         virtual void UnmapBuffer(Buffer* buffer) = 0;
 

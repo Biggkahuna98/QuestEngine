@@ -102,6 +102,9 @@ namespace Quest
 
         m_Context->SetSwapchain(m_Swapchain.Get());
 
+        CommandListDesc commandlistDesc{};
+        m_MainCommandList = m_Device->CreateCommandList(commandlistDesc);
+
         return true;
     }
 
@@ -110,6 +113,11 @@ namespace Quest
         // TODO(rhi): m_Context->WaitIdle(); drain m_DeferredDeletes; release handles.
         m_Window = nullptr;
 
+        // The last frame's submit/present may still be in flight.
+        if (m_Device)
+            m_Device->WaitIdle();
+
+        m_MainCommandList.Reset();
         m_Swapchain.Reset();
 
         m_Device.Reset();
@@ -144,6 +152,12 @@ namespace Quest
         //   fc.ringAllocator.Reset();
         //   m_BackbufferIndex = m_Swapchain->AcquireNextImage();
         //   fc.cmd->Open();
+
+        // Temporary pacing until timelines exist: one frame in flight. Makes reusing the single
+        // command buffer and the swapchain's acquire semaphores safe.
+        m_Device->WaitIdle();
+        m_Swapchain->AcquireNextImage();
+        m_MainCommandList->Open();
     }
 
     void Renderer::EndFrame()
@@ -154,12 +168,13 @@ namespace Quest
         //   fc.fenceValue = ++m_TimelineValue;
         //   m_Device->ExecuteCommandList(fc.cmd, m_Timeline, fc.fenceValue,
         //                                /*presentTarget*/ m_Swapchain);
+        m_MainCommandList->Close();
+        m_Device->ExecuteCommandList(m_MainCommandList.Get(), m_Swapchain.Get());
     }
 
     void Renderer::Present()
     {
-        // Target sequence:
-        //   m_Swapchain->Present();
+        m_Swapchain->Present();
         ++m_FrameNumber;
     }
 

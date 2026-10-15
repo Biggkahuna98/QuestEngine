@@ -68,7 +68,7 @@ namespace Quest::Vulkan
             vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
         // Set up the color attachment
-        vk::ClearValue clearColor = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);
+        vk::ClearValue clearColor = vk::ClearColorValue(29.0f / 255.0f, 222.0f / 255.0f, 154.0f / 255.0f, 1.0f);
         vk::RenderingAttachmentInfo attachmentInfo = {
             .imageView = m_Context->GetSwapchainImageViews().at(m_Context->GetSwapchainIndex()),
             .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
@@ -99,10 +99,7 @@ namespace Quest::Vulkan
 
         m_CurrentCommandBuffer->commandBuffer.end();
 
-        // TODO: FIX THIS WITH PROPER FRAME ABSTRACTION
-        /*m_Context->GetQueue(m_Desc.type)->Submit(this,
-            m_Context->GetFrameData().presentCompleteSemaphore, m_Context->GetRenderFinishedSemaphore(),
-            m_Context->GetFrameData().inFlightFence);*/
+        // Submission happens in Device::ExecuteCommandList.
     }
 
     void VulkanCommandList::SetGraphicsState(const GraphicsState& state)

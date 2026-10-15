@@ -106,13 +106,14 @@ namespace Quest::Vulkan
 
         // Come back for the wait stage stuff
         vk::PipelineStageFlags waitStage(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+        // Semaphores are optional -- only a present-target submit has acquire/render-finished ones.
         vk::SubmitInfo submitInfo = vk::SubmitInfo()
-            .setWaitSemaphoreCount(1)
+            .setWaitSemaphoreCount(waitSemaphore ? 1 : 0)
             .setPWaitSemaphores(&waitSemaphore)
             .setWaitDstStageMask(waitStage)
             .setCommandBufferCount(1)
             .setPCommandBuffers(&commandBuffer->commandBuffer)
-            .setSignalSemaphoreCount(1)
+            .setSignalSemaphoreCount(signalSemaphore ? 1 : 0)
             .setPSignalSemaphores(&signalSemaphore);
 
         try

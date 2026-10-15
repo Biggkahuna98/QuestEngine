@@ -43,8 +43,9 @@ namespace Quest
         bool Initialize(Window* window);
         void Shutdown();
 
-        //GraphicsContext* GetContext() const { return m_Context.get(); }
-        //GraphicsDevice* GetDevice() const { return m_Device.get(); }
+        GraphicsContextHandle GetGraphicsContext() const { return m_Context; }
+        DeviceHandle GetDevice() const { return m_Device; }
+        SwapchainHandle GetSwapchain() const { return m_Swapchain; }
 
         // The frame loop, composed from RHI primitives. See Renderer.cpp for the target
         // sequence; the RHI-touching bodies are stubbed until the RHI resource + command-list
@@ -63,6 +64,12 @@ namespace Quest
         DeviceHandle m_Device;
         SwapchainHandle m_Swapchain;
         uint64_t m_FrameNumber = 0;
+
+        void SetupDefaultPipelines();
+        GraphicsPipelineHandle m_GraphicsPipeline;
+        ComputePipelineHandle m_ComputePipeline;
+
+        CommandListHandle m_MainCommandList;
 
 
         // TODO(rhi): once RHI/Device.h + the resource/command-list handle types compile, add:

@@ -7,6 +7,7 @@
 #include "VulkanRHI/VulkanBindingSet.h"
 #include "VulkanRHI/VulkanPipeline.h"
 #include "VulkanRHI/VulkanCommandList.h"
+#include "VulkanRHI/VulkanSwapchain.h"
 
 namespace Quest::Vulkan
 {
@@ -174,8 +175,23 @@ namespace Quest::Vulkan
         return Quest::RefCountPtr<VulkanSwapchain>::Create(m_Context, desc);
     }
 
+    void VulkanDevice::ExecuteCommandList(CommandList* commandList, Swapchain* presentTarget)
+    {
+        vk::Semaphore waitSemaphore = nullptr;
+        vk::Semaphore signalSemaphore = nullptr;
+        if (presentTarget)
+        {
+            VulkanSwapchain* swapchain = static_cast<VulkanSwapchain*>(presentTarget);
+            waitSemaphore = swapchain->GetAcquireSemaphore();
+            signalSemaphore = swapchain->GetRenderFinishedSemaphore();
+        }
+
+        m_Context->GetQueue(commandList->GetDesc().type)->Submit(commandList, waitSemaphore, signalSemaphore, nullptr);
+    }
+
     void VulkanDevice::WaitIdle()
     {
+        m_Context->GetDevice().waitIdle();
     }
 
     void* VulkanDevice::MapBuffer(Buffer* buffer)
