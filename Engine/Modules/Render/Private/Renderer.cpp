@@ -172,4 +172,31 @@ namespace Quest
         (void)width;
         (void)height;
     }
+
+    void Renderer::SetupDefaultPipelines()
+    {
+        // Compute shader
+        ShaderDesc gradientDesc{};
+        gradientDesc.name = "gradient";
+        gradientDesc.entry_point = "main";
+        gradientDesc.language = ShaderLanguage::SPIRV;
+        gradientDesc.type = ShaderType::Compute;
+
+        m_GradientShader = m_Device->CreateShader(gradientDesc);
+
+        BindingLayoutDesc gradientLayoutDesc{};
+        gradientLayoutDesc
+            .SetVisibility(ShaderType::Compute)
+            .AddItem(BindingLayoutItem::Texture_UAV(0));
+
+        m_GradientBindingLayout = m_Device->CreateBindingLayout(gradientLayoutDesc);
+
+        ComputePipelineDesc mainComputePipelineDesc{};
+        mainComputePipelineDesc
+            .SetComputeShader(m_GradientShader)
+            .AddBindingLayout(m_GradientBindingLayout.Get());
+
+        m_ComputePipeline = m_Device->CreateComputePipeline(mainComputePipelineDesc);
+
+    }
 }

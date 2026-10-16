@@ -67,7 +67,12 @@ namespace Quest
 
         void SetupDefaultPipelines();
         GraphicsPipelineHandle m_GraphicsPipeline;
+
+        BindingLayoutHandle m_GradientBindingLayout;
+        BindingSetHandle m_GradientBindingSet;
         ComputePipelineHandle m_ComputePipeline;
+
+        ShaderHandle m_GradientShader;
 
         CommandListHandle m_MainCommandList;
 
